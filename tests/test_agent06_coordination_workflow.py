@@ -225,6 +225,69 @@ class Agent06WorkflowRecoveryTests(unittest.TestCase):
                 )
                 self.assertEqual(reentry.snapshot.phase, "WORLD")
 
+    def test_delayed_preturn_proof_supersedes_matching_recovery(self):
+        cases = (
+            ("FIGHT_ENTRY", "PARTY_JOIN_PROVEN", "PARTY_JOIN"),
+            ("PARTY_JOIN", "PLACEMENT_PROVEN", "PLACEMENT"),
+            ("PLACEMENT", "READY_PROVEN", "READY"),
+            ("READY", "FIRST_TURN_PROVEN", "FIGHT_ACTIVE"),
+        )
+        for resume_phase, proof_kind, expected_phase in cases:
+            with self.subTest(resume_phase=resume_phase, proof=proof_kind):
+                workflow = MissionWorkflow(
+                    f"run-agent06-proof-{resume_phase.lower().replace('_', '-')}",
+                    mission(watchdog=1, recovery=1),
+                )
+                self._advance_to(workflow, resume_phase)
+                recovering = workflow.apply(
+                    signal(
+                        54,
+                        "WATCHDOG",
+                        workflow.snapshot().watchdog_deadline_tick + 1,
+                    )
+                )
+                self.assertEqual(recovering.snapshot.phase, "RECOVERING")
+                proof = workflow.apply(
+                    signal(
+                        55,
+                        proof_kind,
+                        recovering.snapshot.phase_started_tick + 1,
+                        fight_epoch=1,
+                    )
+                )
+                self.assertEqual(proof.status, "APPLIED", proof.reason)
+                self.assertEqual(
+                    proof.reason, proof_kind + "_SUPERSEDES_RECOVERY"
+                )
+                self.assertEqual(proof.snapshot.phase, expected_phase)
+                self.assertIsNone(proof.snapshot.resume_phase)
+
+    def test_delayed_preturn_proof_with_wrong_epoch_stays_blocked_in_recovery(self):
+        workflow = MissionWorkflow(
+            "run-agent06-proof-wrong-epoch",
+            mission(watchdog=1, recovery=1),
+        )
+        self._advance_to(workflow, "READY")
+        recovering = workflow.apply(
+            signal(
+                56,
+                "WATCHDOG",
+                workflow.snapshot().watchdog_deadline_tick + 1,
+            )
+        )
+        rejected = workflow.apply(
+            signal(
+                57,
+                "FIRST_TURN_PROVEN",
+                recovering.snapshot.phase_started_tick + 1,
+                fight_epoch=2,
+            )
+        )
+        self.assertEqual(rejected.status, "REJECTED")
+        self.assertEqual(rejected.reason, "FIGHT_EPOCH_MISMATCH")
+        self.assertEqual(rejected.snapshot.phase, "RECOVERING")
+        self.assertEqual(rejected.snapshot.resume_phase, "READY")
+
     def test_repeated_recovery_timeouts_are_bounded(self):
         workflow = MissionWorkflow(
             "run-agent06-recovery-budget",
