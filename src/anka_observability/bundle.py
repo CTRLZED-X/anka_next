@@ -360,6 +360,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     next_verification={'schema_version':1,'recommended_next_test':next_test,'missing_evidence':missing}
     graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,'edges':boundary_graph}
     action_lifecycles=action_lifecycle_report(events)
+    pre_action_outcomes=action_lifecycles.get('pre_action_outcomes',[]) if isinstance(action_lifecycles,dict) else []
+    latest_pre_action_outcome=(pre_action_outcomes[-1] if pre_action_outcomes else None)
     historical_matches=historical_similarity_report(events,code=code,boundary=boundary)
     recovery_history=recovery_history_report(events)
     workflow_lifecycle=workflow_lifecycle_report(events)
@@ -386,7 +388,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'next_targeted_verification':sanitize(next_test),'diagnostic_coverage_gaps':gap_summary,
         'snapshot_names':snapshot_names,'snapshot_omissions':snapshot_omissions,
         'settled_action_count':proven_facts.get('settled_action_count',0),
-        'unresolved_actions':unresolved_actions,'recovery_attempt_count':recovery_count,
+        'unresolved_actions':unresolved_actions,'latest_pre_action_outcome':latest_pre_action_outcome,
+        'recovery_attempt_count':recovery_count,
         'historical_similarity_case_ids':historical_ids,'workflow_lifecycle_status':workflow_lifecycle.get('status'),
         'workflow_current_phase':workflow_lifecycle.get('current_phase'),'turn_handoff_status':turn_handoff.get('status'),
         'evidence_completeness':evidence_completeness,
@@ -416,6 +419,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         f'**Recorded recovery/watchdog attempts:** {recovery_count}.\n\n'
         f'**Workflow lifecycle index:** {workflow_lifecycle.get("status")} at phase {workflow_lifecycle.get("current_phase")}; next={sanitize(workflow_lifecycle.get("next_expected_transition"))}.\n\n'
         f'**End Turn handoff index:** {turn_handoff.get("status")}; next_owner={sanitize(turn_handoff.get("next_owner_account_id"))}.\n\n'
+        f'**Latest pre-action causal outcome:** {sanitize(latest_pre_action_outcome) if latest_pre_action_outcome else "none included"}.\n\n'
         f'**Historical similarity hints (not root-cause proof):** {sanitize(historical_ids) if historical_ids else "none"}.\n\n'
         f'**Evidence completeness:** {evidence_completeness}; flight recorder overwrites={flight["recent_overwrites"]}; '
         f'journal drops={observer.dropped}; size omissions={flight["timeline_events_omitted_for_size"]}.\n\n'
@@ -508,7 +512,9 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'GPT_READ_FIRST.md':read_first,'run_manifest.json':_serialized(run_manifest),
         'analysis/boundary_graph.json':_serialized({'schema_version':1,'operation':None,'edges':[]}),
         'analysis/party_ready.json':_serialized({'schema_version':1,'status':'ANALYSIS_UNAVAILABLE','required_accounts':[],'account_graphs':[],'shared_graph':[],'matched_event_ids':[]}),
-        'analysis/action_lifecycles.json':_serialized({'schema_version':1,'actions':[],'authorization_blockers':[],'status':'ANALYSIS_UNAVAILABLE'}),
+        'analysis/action_lifecycles.json':_serialized({'schema_version':1,'actions':[],'pre_action_outcomes':[],
+            'total_pre_action_outcome_count':0,'pre_action_outcomes_omitted':0,
+            'authorization_blockers':[],'status':'ANALYSIS_UNAVAILABLE'}),
         'analysis/evidence_gaps.json':_serialized({'schema_version':1,'gaps':[{'section':'observability','status':'EXPORT_FAILED'}]}),
         'analysis/historical_matches.json':_serialized({'schema_version':1,'matches':[],'note':'Advanced historical similarity analysis unavailable.'}),
         'analysis/recovery_history.json':_serialized({'schema_version':1,'attempts':[],'count':0,'note':'Advanced recovery analysis unavailable.'}),
@@ -524,7 +530,8 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
             'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
             'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
             'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
-            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'recovery_attempt_count':0,
+            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_pre_action_outcome':None,
+            'recovery_attempt_count':0,
             'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
             'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}),
         'analysis/evidence_request.json':_serialized({'schema_version':1,'raw_network_evidence_required_for_protocol_reverse_engineering':False}),
@@ -1035,6 +1042,11 @@ def verify_incident(path:Path)->dict:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
                         elif cause_status=='MULTIPLE_PLAUSIBLE' and len(causes)<2:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
+                    if isinstance(lifecycles,dict):
+                        lifecycle_pre=lifecycles.get('pre_action_outcomes',[])
+                        expected_latest_pre=(lifecycle_pre[-1] if isinstance(lifecycle_pre,list) and lifecycle_pre else None)
+                        if gpt.get('latest_pre_action_outcome')!=expected_latest_pre:
+                            add('GPT_SUMMARY_PRE_ACTION_MISMATCH')
                     if isinstance(diag,dict) and status in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE'):
                         if gpt.get('first_divergence')!=diag.get('first_divergent_boundary') or gpt.get('suspected_owner')!=diag.get('suspected_owner'):
                             add('GPT_SUMMARY_FINDING_MISMATCH')
@@ -1062,8 +1074,9 @@ def verify_incident(path:Path)->dict:
                     add('ACTION_LIFECYCLES_SHAPE_INVALID')
                 else:
                     actions=lifecycles.get('actions',[])
+                    pre_action=lifecycles.get('pre_action_outcomes',[])
                     blockers=lifecycles.get('authorization_blockers',[])
-                    if not isinstance(actions,list) or not isinstance(blockers,list):
+                    if not isinstance(actions,list) or not isinstance(pre_action,list) or not isinstance(blockers,list):
                         add('ACTION_LIFECYCLES_SHAPE_INVALID')
                     else:
                         if not bool(m.get('advanced_analysis_failed')):
@@ -1099,6 +1112,18 @@ def verify_incident(path:Path)->dict:
                                         add('ACTION_LIFECYCLE_CONTEXT_REF_MISSING')
                             if row.get('nearby_semantic_context_is_causal_proof') is not False:
                                 add('ACTION_LIFECYCLE_CONTEXT_CAUSALITY_INVALID')
+                        for pre_row in pre_action:
+                            if not isinstance(pre_row,dict):
+                                add('PRE_ACTION_OUTCOME_INVALID');continue
+                            refs=pre_row.get('event_ids',[])
+                            if not isinstance(refs,list) or any(not isinstance(ref,str) or ref not in event_ids for ref in refs):
+                                add('PRE_ACTION_OUTCOME_EVIDENCE_REF_MISSING')
+                            decision_ref=pre_row.get('decision_event_id')
+                            if not isinstance(decision_ref,str) or decision_ref not in event_ids:
+                                add('PRE_ACTION_DECISION_REF_MISSING')
+                            downstream_ref=pre_row.get('downstream_event_id')
+                            if downstream_ref is not None and (not isinstance(downstream_ref,str) or downstream_ref not in event_ids):
+                                add('PRE_ACTION_DOWNSTREAM_REF_MISSING')
                         for blocker in blockers:
                             if not isinstance(blocker,dict):
                                 add('ACTION_AUTHORIZATION_BLOCKER_INVALID');continue
