@@ -210,12 +210,31 @@ class FightContext:
 
     @property
     def occupied_cells(self) -> frozenset[CellId] | None:
+        """Cells that may block movement, free-cell checks, or line of sight.
+
+        Unknown life-state remains conservatively occupying when its cell is known.
+        A non-dead actor with unknown cell makes the blocker snapshot incomplete.
+        """
         if any(actor.cell_id is None and actor.alive is not False for actor in self.actors):
             return None
         return frozenset(
             actor.cell_id
             for actor in self.actors
             if actor.cell_id is not None and actor.alive is not False
+        )
+
+    @property
+    def proven_occupied_cells(self) -> frozenset[CellId]:
+        """Cells positively proven occupied by an explicitly alive actor.
+
+        This projection is intentionally narrower than occupied_cells. Unknown
+        life-state may block conservatively but cannot authorize mechanics that
+        require positive proof of an occupied target cell.
+        """
+        return frozenset(
+            actor.cell_id
+            for actor in self.actors
+            if actor.cell_id is not None and actor.alive is True
         )
 
 
