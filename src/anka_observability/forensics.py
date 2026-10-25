@@ -712,14 +712,15 @@ class PartyReadyAnalyzer:
             while cursor<len(ordered) and ordered[cursor].producer_seq<=last_seq:cursor+=1
             owner_account=None
             for event_name,boundary,owner in self._SHARED_STEPS:
-                idx=None
+                idx=None;invalid_correlation=None
                 for i in range(cursor,len(ordered)):
                     e=ordered[i]
                     if e.event_name!=event_name or e.boundary!=boundary or e.owner_system!=owner:continue
                     if target_fight_epoch is not None and e.fight_epoch!=target_fight_epoch:continue
                     if event_name=='coordination.ready_barrier_satisfied':
                         required=e.payload.get('required_accounts')
-                        if not isinstance(required,(list,tuple)) or set(required)!=set(accounts):continue
+                        if not isinstance(required,(list,tuple)) or set(required)!=set(accounts):
+                            idx=i;invalid_correlation='required_accounts';break
                     if event_name=='decision.frame_created' and owner_account is not None and e.account_id!=owner_account:continue
                     idx=i;break
                 if idx is None:
@@ -727,7 +728,24 @@ class PartyReadyAnalyzer:
                     finding=self._finding(event_name,boundary,owner,account_id=None,events=ordered,cursor=cursor,control_state=control_state)
                     break
                 e=ordered[idx]
-                if event_name=='coordination.turn_owner_proved':owner_account=e.account_id
+                if invalid_correlation is not None:
+                    matched.append(e.event_id);cursor=idx+1
+                    shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,
+                                   'owner_system':owner,'status':'INVALID_CORRELATION','event_id':e.event_id,
+                                   'invalid_field':invalid_correlation})
+                    finding=self._finding(event_name+'.'+invalid_correlation,boundary,owner,
+                                          account_id=None,events=ordered,cursor=idx,control_state=control_state)
+                    break
+                if event_name=='coordination.turn_owner_proved':
+                    owner_account=e.account_id
+                    if owner_account not in accounts:
+                        matched.append(e.event_id);cursor=idx+1
+                        shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,
+                                       'owner_system':owner,'status':'INVALID_CORRELATION','event_id':e.event_id,
+                                       'owner_account_id':owner_account,'invalid_field':'owner_account_id'})
+                        finding=self._finding(event_name+'.owner_account_id',boundary,owner,
+                                              account_id=None,events=ordered,cursor=idx,control_state=control_state)
+                        break
                 matched.append(e.event_id);cursor=idx+1
                 shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,'owner_system':owner,'status':'OBSERVED','event_id':e.event_id,'owner_account_id':owner_account})
         return PartyReadyAnalysis(finding,tuple(graphs),tuple(shared),tuple(dict.fromkeys(matched)))
