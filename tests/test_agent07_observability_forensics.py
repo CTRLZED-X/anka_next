@@ -1722,6 +1722,71 @@ class TestAgent07ReadFirstDerivationIntegrity(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_nested_action_lifecycle_read_first_is_roundtrip_canonical(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-read-first-nested',
+                invocation_id='inv-agent07-read-first-nested',
+            )
+            try:
+                action_id='action-agent07-read-first-nested'
+                attempt_id='attempt-agent07-read-first-nested'
+                obs.record(
+                    'execution.admitted',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    action_id=action_id,
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                obs.record(
+                    'execution.outcome_terminal_unresolved',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    failure_code='LATE_UNRESOLVED',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                path=obs.export_incident(
+                    'READ_FIRST_NESTED_ROUNDTRIP',
+                    boundary='execution.outcome_settlement',
+                )
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
+                with ZipFile(path) as z:
+                    text=z.read('GPT_READ_FIRST.md').decode('utf8')
+                self.assertIn('CONTRADICTORY_EVIDENCE',text)
+                self.assertIn(action_id,text)
+            finally:
+                obs.finish('BLOCKED')
+
     def test_rehashed_emergency_read_first_cannot_add_false_root_cause(self):
         with tempfile.TemporaryDirectory() as td:
             obs = LocalDiagnostics(
