@@ -30,6 +30,11 @@ def combat_frame(*, target_proof: str = "KNOWN") -> DecisionFrame:
         snapshot_id="snap-agent05",
         canonical_cursor=10,
         workflow_goal="FIGHT_TURN",
+        client_instance_id="client-cra",
+        snapshot_semantic_sha256="a" * 64,
+        state_reducer_revision="m7-r1",
+        kernel_ruleset_id="kernel-r5",
+        game_data_revision="legacy-r5198",
         actor_id=41,
         turn_owner_id=41,
         actor_cell=200,
@@ -460,6 +465,30 @@ class TestAgent05NonCombatActorContextSafety(unittest.TestCase):
                 self.assertEqual(result.reason, reason)
                 self.assertIn("actor_identity", result.required_evidence)
                 self.assertIn("actor_cell", result.required_evidence)
+
+
+
+class TestAgent05FrameProvenanceSafety(unittest.TestCase):
+    def test_actionable_planning_faults_when_identity_provenance_is_missing(self):
+        from dataclasses import replace
+
+        fields = (
+            "client_instance_id",
+            "snapshot_semantic_sha256",
+            "state_reducer_revision",
+            "kernel_ruleset_id",
+            "game_data_revision",
+        )
+        for field in fields:
+            with self.subTest(field=field):
+                kernel = LegalKernel()
+                result = DeterministicPlanner(kernel).plan(
+                    replace(combat_frame(), **{field: ""})
+                )
+                self.assertEqual(result.disposition, "FAULT")
+                self.assertEqual(result.failure_code, "FRAME_PROVENANCE_MISSING")
+                self.assertIsNone(result.plan)
+                self.assertEqual(kernel.calls, [])
 
 
 if __name__ == "__main__":
