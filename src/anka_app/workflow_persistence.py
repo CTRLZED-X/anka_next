@@ -11,9 +11,11 @@ from dataclasses import asdict, dataclass, fields, replace
 from typing import Literal
 
 from anka_contracts.workflow import (
+    RECOVERY_RESUME_PHASES,
     WorkflowSignal,
     WorkflowSnapshot,
     correlate_recovery_outcome,
+    initial_workflow_progress_token,
     with_accepted_workflow_tick,
 )
 
@@ -148,6 +150,7 @@ def _legacy_created_is_pristine(snapshot: WorkflowSnapshot) -> bool:
         and not snapshot.started_fight_epochs
         and not snapshot.processed_signal_ids
         and snapshot.progress_generation==0
+        and snapshot.progress_token==initial_workflow_progress_token(snapshot.run_id)
         and snapshot.phase_started_tick==0
         and snapshot.watchdog_deadline_tick is None
         and snapshot.resume_phase is None
@@ -168,6 +171,8 @@ def dump_workflow_snapshot(snapshot: WorkflowSnapshot) -> dict:
         raise ValueError('WORKFLOW_SNAPSHOT_AUTHORITY_INCOMPLETE')
     if snapshot.phase=='RECOVERING' and snapshot.active_recovery_generation is None:
         raise ValueError('WORKFLOW_ACTIVE_RECOVERY_GENERATION_UNPROVEN')
+    if snapshot.phase=='RECOVERING' and snapshot.resume_phase not in RECOVERY_RESUME_PHASES:
+        raise ValueError('WORKFLOW_RECOVERY_TARGET_UNPROVEN')
     return {
         'schema_version':WORKFLOW_PERSISTENCE_SCHEMA_VERSION,
         'snapshot':_jsonable_contract(snapshot,_SNAPSHOT_TUPLES),
@@ -214,6 +219,10 @@ def load_workflow_snapshot(payload: object) -> WorkflowSnapshotMigration:
         if snapshot.phase=='RECOVERING' and snapshot.active_recovery_generation is None:
             return WorkflowSnapshotMigration(
                 'INCOMPATIBLE',snapshot,False,('CURRENT_RECOVERY_IDENTITY_UNPROVEN',),version
+            )
+        if snapshot.phase=='RECOVERING' and snapshot.resume_phase not in RECOVERY_RESUME_PHASES:
+            return WorkflowSnapshotMigration(
+                'INCOMPATIBLE',snapshot,False,('CURRENT_RECOVERY_TARGET_UNPROVEN',),version
             )
         resume_allowed=snapshot.phase not in _TERMINAL_PHASES and snapshot.pending_action_id is None
         reasons=('CURRENT_SCHEMA_AUTHORITY_COMPLETE',) if resume_allowed else ('CURRENT_SCHEMA_READ_ONLY_OR_RECONCILIATION_REQUIRED',)
@@ -322,6 +331,8 @@ def admit_workflow_resume(snapshot: WorkflowSnapshot, resume_tick: int) -> Workf
         return WorkflowAdmission('REJECTED','RESUME_TICK_BELOW_WATERMARK')
     if snapshot.phase=='RECOVERING' and snapshot.active_recovery_generation is None:
         return WorkflowAdmission('REJECTED','RECOVERY_ACTIVE_GENERATION_UNPROVEN')
+    if snapshot.phase=='RECOVERING' and snapshot.resume_phase not in RECOVERY_RESUME_PHASES:
+        return WorkflowAdmission('REJECTED','RECOVERY_TARGET_UNPROVEN')
     return WorkflowAdmission('ALLOWED','WORKFLOW_RESUME_IDENTITY_PROVEN')
 
 
