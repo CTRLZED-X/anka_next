@@ -1,6 +1,8 @@
 """Versioned mission/run transition contract."""
 from __future__ import annotations
 from dataclasses import dataclass, replace
+from hashlib import sha256
+import json
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +33,32 @@ from typing import Literal as _Literal
 
 WorkflowPhase = _Literal['CREATED','PREFLIGHT','WORLD','ENCOUNTER_SELECTED','FIGHT_ENTRY','PARTY_JOIN','PLACEMENT','READY','FIGHT_ACTIVE','FIGHT_END_RECONCILIATION','WORLD_REENTRY','RECOVERING','COMPLETED','STOPPED','BLOCKED']
 FightResult = _Literal['VICTORY','DEFEAT','UNKNOWN','ABORTED']
+
+# A watchdog can enter RECOVERING only from phases that own a semantic watchdog
+# deadline. CREATED has no active watchdog; RECOVERING/self and terminal phases
+# can never be valid success targets.
+RECOVERY_RESUME_PHASES = (
+    'PREFLIGHT','WORLD','ENCOUNTER_SELECTED','FIGHT_ENTRY','PARTY_JOIN','PLACEMENT',
+    'READY','FIGHT_ACTIVE','FIGHT_END_RECONCILIATION','WORLD_REENTRY',
+)
+
+
+def initial_workflow_progress_token(run_id: str) -> str:
+    """Return the deterministic token produced by MissionWorkflow.__init__."""
+    if type(run_id) is not str or not run_id.startswith('run-'):
+        raise ValueError('INVALID_WORKFLOW_IDENTITY')
+    payload={
+        'run':run_id,
+        'phase':'CREATED',
+        'fight':0,
+        'counters':(0,0,0,0,0),
+        'route':0,
+        'pending':None,
+        'counted':(),
+        'started':(),
+        'generation':0,
+    }
+    return sha256(json.dumps(payload,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 @dataclass(frozen=True, slots=True)
 class MissionConfigSpec:
@@ -211,6 +239,8 @@ class WorkflowSnapshot:
                 raise ValueError('INVALID_WORKFLOW_ACTIVE_RECOVERY_GENERATION')
             if self.phase!='RECOVERING' or self.recovery_generation!=self.active_recovery_generation:
                 raise ValueError('WORKFLOW_ACTIVE_RECOVERY_GENERATION_MISMATCH')
+        if self.phase=='RECOVERING' and self.resume_phase not in RECOVERY_RESUME_PHASES:
+            raise ValueError('INVALID_WORKFLOW_RECOVERY_RESUME_PHASE')
         if self.last_processed_tick is not None:
             # Durable accepted-time authority is independent from the semantic
             # phase/watchdog origin.  A safe resume may start a new phase clock
