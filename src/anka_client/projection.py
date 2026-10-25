@@ -26,9 +26,12 @@ def project_spell(ctx:ClientContextProof, calibration:CalibrationProfileEvidence
         return _invalid(ctx,'spell',str(spell_id),observed_monotonic_ns,'INVALID_SPELL_ID')
     if (calibration.generation!=ctx.vector.calibration_generation
             or (calibration.width,calibration.height)!=(ctx.vector.width,ctx.vector.height)
-            or not calibration.current_client_certified):
+            or calibration.current_client_certified is not True):
         return _invalid(ctx,'spell',str(spell_id),observed_monotonic_ns,'CALIBRATION_GENERATION_CHANGED')
-    if calibration.expected_dpi is not None and calibration.expected_dpi!=ctx.vector.dpi:
+    if (type(calibration.expected_dpi) is not int or calibration.expected_dpi<=0
+            or type(ctx.vector.dpi) is not int or ctx.vector.dpi<=0):
+        return _invalid(ctx,'spell',str(spell_id),observed_monotonic_ns,'CALIBRATION_DPI_UNPROVEN')
+    if calibration.expected_dpi!=ctx.vector.dpi:
         return _invalid(ctx,'spell',str(spell_id),observed_monotonic_ns,'CALIBRATION_DPI_CHANGED')
     if (loadout.generation!=ctx.vector.loadout_generation
             or loadout.window_generation_id!=ctx.vector.window_generation_id):
@@ -57,6 +60,8 @@ def project_spell(ctx:ClientContextProof, calibration:CalibrationProfileEvidence
 def project_cell(ctx:ClientContextProof, bridge:BridgeMapReport, cell_id:int,
                  observed_monotonic_ns:int)->ProjectionEvidence:
     if ctx.prerequisites_status!='PROVEN': return _invalid(ctx,'cell',str(cell_id),observed_monotonic_ns)
+    if type(ctx.vector.dpi) is not int or ctx.vector.dpi<=0:
+        return _invalid(ctx,'cell',str(cell_id),observed_monotonic_ns,'CALIBRATION_DPI_UNPROVEN')
     if type(cell_id) is not int or not 0<=cell_id<560:
         return _invalid(ctx,'cell',str(cell_id),observed_monotonic_ns,'INVALID_CELL_ID')
     if (bridge.status!='RESEARCH_PROJECTION_ONLY' or bridge.source_verified is not True
