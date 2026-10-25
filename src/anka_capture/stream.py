@@ -5,7 +5,7 @@ flow→client binding supplied by the composition root, but no Dofus message nam
 opcodes, fields, actors, fights or semantic events.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from typing import Mapping
 from threading import RLock
@@ -238,7 +238,28 @@ class TransportEnvelopeAssembler:
             if poll.dropped or poll.overflowed or poll.driver_drop_visibility=='AVAILABLE_DROPPED':
                 self._loss_epoch+=1;self._loss_fences+=1
             out=[]
-            for seg in poll.segments:out.extend(self._feed_unlocked(seg))
+            # Poll-local finality ledger: a conflict discovered after an earlier
+            # envelope was staged must revoke trusted continuity before anything
+            # from this CapturePoll can reach Protocol. Store exact connection
+            # identity rather than the final mutable flow flag so a later clean
+            # reconnect in this same poll cannot erase generation-1 evidence.
+            overlap_untrusted_connections:set[tuple[str,int]]=set()
+            for seg in poll.segments:
+                out.extend(self._feed_unlocked(seg))
+                flow=self._flows.get(seg.flow_id)
+                if flow is not None and flow.overlap_untrusted:
+                    overlap_untrusted_connections.add(
+                        (self._connection_id(seg.flow_id,flow.generation),flow.generation)
+                    )
+            if overlap_untrusted_connections:
+                trusted=('COMPLETE','CONTIGUOUS','RECONNECTED')
+                out=[
+                    replace(env,continuity='GAP_INSIDE')
+                    if (env.connection_id,env.connection_generation) in overlap_untrusted_connections
+                    and env.continuity in trusted
+                    else env
+                    for env in out
+                ]
             return tuple(out)
 
     def finish(self)->tuple[WireEnvelope,...]:
