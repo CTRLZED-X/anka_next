@@ -72,7 +72,10 @@ class PointerTransaction:
         try:
             moved=bool(self.api.set_cursor(x,y))
         except Exception:
-            return DriverSendReceipt(action_id,'NOT_SENT',0,'SET_CURSOR_EXCEPTION_BEFORE_CONFIRMED_MOVE')
+            # The native pointer API has already been invoked.  An exception cannot
+            # prove that the cursor did not move before control returned to Python,
+            # so this boundary is ambiguous and must never become retryable NOT_SENT.
+            return DriverSendReceipt(action_id,'MAY_HAVE_SENT',1,'SET_CURSOR_DELIVERY_AMBIGUOUS')
         if not moved:return DriverSendReceipt(action_id,'NOT_SENT',0,'SET_CURSOR_FAILED_BEFORE_CLICK')
         # Cursor motion is an external side effect.  If context changes now we do
         # not click, but remain conservative about retrying the whole physical action.
