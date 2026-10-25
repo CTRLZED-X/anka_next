@@ -522,5 +522,335 @@ class TestAgent05MapIdentitySafety(unittest.TestCase):
         self.assertIn("world_map", result.required_evidence)
 
 
+
+class TestAgent05OccupancyCertaintySeparation(unittest.TestCase):
+    @staticmethod
+    def _provenance():
+        from anka_game_kernel.domain.provenance import (
+            Provenance,
+            SourceKind,
+            VerificationStatus,
+        )
+
+        return Provenance(
+            source_kind=SourceKind.VERIFIED_MANUAL,
+            source_name="agent05-occupancy-regression",
+            source_version="1",
+            source_file=None,
+            source_record_id=None,
+            game_version=None,
+            verification_status=VerificationStatus.MANUALLY_VERIFIED,
+        )
+
+    @classmethod
+    def _map(cls, cells):
+        from anka_game_kernel.domain.ids import MapId
+        from anka_game_kernel.domain.maps import (
+            MapCellDefinition,
+            MapDefinition,
+            MapNeighbors,
+        )
+
+        definitions = tuple(
+            MapCellDefinition(
+                cell_id=cell,
+                floor=0,
+                walkable=True,
+                blocks_line_of_sight=False,
+                non_walkable_during_fight=False,
+                map_change_data=0,
+                move_zone=0,
+                speed=0,
+                linked_zone_roleplay=0,
+                farm_cell=False,
+                havenbag_cell=False,
+            )
+            for cell in cells
+        )
+        return MapDefinition(
+            map_id=MapId(190580738),
+            neighbors=MapNeighbors(None, None, None, None),
+            cells=definitions,
+            uses_new_movement_system=False,
+            provenance=cls._provenance(),
+        )
+
+    @staticmethod
+    def _fight(caster_cell, target_cell, *, target_alive, extra=()):
+        from anka_game_kernel.contexts.fight import FightContext
+        from anka_game_kernel.domain.actors import ActorState
+        from anka_game_kernel.domain.ids import ActorId, MapId
+
+        caster = ActorState(
+            actor_id=ActorId(41),
+            cell_id=caster_cell,
+            current_ap=10,
+            current_mp=6,
+            alive=True,
+            cooldowns_complete=True,
+        )
+        target = ActorState(
+            actor_id=ActorId(42),
+            cell_id=target_cell,
+            alive=target_alive,
+            cooldowns_complete=True,
+        )
+        return FightContext(
+            actors=(caster, target, *extra),
+            active_actor_id=caster.actor_id,
+            map_id=MapId(190580738),
+        )
+
+    @staticmethod
+    def _taken_result(context, map_definition, caster_cell, target_cell):
+        return TargetingService().evaluate_cell(
+            map_definition,
+            target_cell,
+            TargetCellSpec(need_taken_cell=True),
+            TargetCellContext(
+                caster_cell=caster_cell,
+                occupied_cells=context.occupied_cells,
+                proven_occupied_cells=context.proven_occupied_cells,
+            ),
+        )
+
+    def test_unknown_life_target_is_blocker_but_not_positive_taken_proof(self):
+        from anka_game_kernel.mechanics.targeting.model import TargetCellContext
+
+        query = __import__(
+            "anka_game_kernel.mechanics.fight_queries.service",
+            fromlist=["FightQueryService"],
+        ).FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=None)
+        map_definition = self._map((caster_cell, target_cell))
+
+        self.assertIn(target_cell, context.occupied_cells)
+        self.assertNotIn(target_cell, context.proven_occupied_cells)
+
+        result = TargetingService().evaluate_cell(
+            map_definition,
+            target_cell,
+            TargetCellSpec(need_taken_cell=True),
+            TargetCellContext(
+                caster_cell=caster_cell,
+                occupied_cells=context.occupied_cells,
+                proven_occupied_cells=context.proven_occupied_cells,
+            ),
+        )
+
+        self.assertIsNone(result.legal)
+        self.assertIn(
+            f"target_occupant_alive:{int(target_cell)}",
+            result.missing_inputs,
+        )
+
+    def test_proven_alive_target_can_satisfy_taken_requirement(self):
+        query = __import__(
+            "anka_game_kernel.mechanics.fight_queries.service",
+            fromlist=["FightQueryService"],
+        ).FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=True)
+
+        result = self._taken_result(
+            context,
+            self._map((caster_cell, target_cell)),
+            caster_cell,
+            target_cell,
+        )
+
+        self.assertTrue(result.legal)
+
+    def test_proven_dead_actor_does_not_prove_taken_cell(self):
+        from anka_game_kernel.results.targeting import TargetCellFailureReason
+
+        query = __import__(
+            "anka_game_kernel.mechanics.fight_queries.service",
+            fromlist=["FightQueryService"],
+        ).FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=False)
+
+        result = self._taken_result(
+            context,
+            self._map((caster_cell, target_cell)),
+            caster_cell,
+            target_cell,
+        )
+
+        self.assertFalse(result.legal)
+        self.assertEqual(result.failure, TargetCellFailureReason.CELL_NOT_TAKEN)
+        self.assertNotIn(target_cell, context.occupied_cells)
+        self.assertNotIn(target_cell, context.proven_occupied_cells)
+
+    def test_unknown_life_target_never_becomes_deterministically_free(self):
+        from anka_game_kernel.mechanics.targeting.model import TargetCellContext
+
+        query = __import__(
+            "anka_game_kernel.mechanics.fight_queries.service",
+            fromlist=["FightQueryService"],
+        ).FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=None)
+        map_definition = self._map((caster_cell, target_cell))
+
+        result = TargetingService().evaluate_cell(
+            map_definition,
+            target_cell,
+            TargetCellSpec(need_free_cell=True),
+            TargetCellContext(
+                caster_cell=caster_cell,
+                occupied_cells=context.occupied_cells,
+                proven_occupied_cells=context.proven_occupied_cells,
+            ),
+        )
+
+        self.assertFalse(result.legal)
+
+    def test_unknown_life_actor_still_blocks_movement(self):
+        from anka_game_kernel.mechanics.fight_queries.service import FightQueryService
+
+        query = FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=None)
+        map_definition = self._map((caster_cell, target_cell))
+
+        result = query.shortest_path(
+            map_definition,
+            context,
+            context.active_actor_id,
+            target_cell,
+        )
+
+        self.assertFalse(result.reachable)
+
+    def test_unknown_life_actor_still_blocks_line_of_sight(self):
+        from anka_game_kernel.contexts.fight import FightContext
+        from anka_game_kernel.domain.actors import ActorState
+        from anka_game_kernel.domain.ids import ActorId, MapId
+        from anka_game_kernel.mechanics.fight_queries.service import FightQueryService
+        from anka_game_kernel.mechanics.los.service import LineOfSightService
+
+        origin = CellId(100)
+        los = LineOfSightService()
+        target = next(
+            CellId(i)
+            for i in range(560)
+            if i != int(origin) and len(los._dofus2_trace(origin, CellId(i))) >= 2
+        )
+        trace = los._dofus2_trace(origin, target)
+        blocker = trace[0]
+        caster = ActorState(actor_id=ActorId(41), cell_id=origin, alive=True)
+        unknown = ActorState(actor_id=ActorId(42), cell_id=blocker, alive=None)
+        context = FightContext(
+            actors=(caster, unknown),
+            active_actor_id=caster.actor_id,
+            map_id=MapId(190580738),
+        )
+        map_definition = self._map((origin, *trace))
+
+        result = FightQueryService().line_of_sight(
+            map_definition,
+            context,
+            origin,
+            target,
+        )
+
+        self.assertFalse(result.visible)
+        self.assertEqual(result.occupied_blocker, blocker)
+
+    def test_real_fight_query_cast_does_not_launder_unknown_life_into_legal(self):
+        from anka_game_kernel.domain.ids import ActorId, SpellId, SpellLevelId
+        from anka_game_kernel.domain.spells import SpellGradeDefinition
+        from anka_game_kernel.mechanics.casting.model import CastAvailabilityContext
+        from anka_game_kernel.mechanics.fight_queries.service import FightQueryService
+
+        query = FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        context = self._fight(caster_cell, target_cell, target_alive=None)
+        map_definition = self._map((caster_cell, target_cell))
+        grade = SpellGradeDefinition(
+            level_id=SpellLevelId(900001),
+            spell_id=SpellId(900001),
+            grade=1,
+            ap_cost=1,
+            min_range=1,
+            max_range=20,
+            max_cast_per_turn=0,
+            max_cast_per_target=0,
+            min_cast_interval=0,
+            initial_cooldown=0,
+            min_player_level=1,
+            state_criterion=None,
+            cast_in_line=False,
+            cast_in_diagonal=False,
+            requires_line_of_sight=False,
+            need_free_cell=False,
+            need_taken_cell=True,
+            range_modifiable=False,
+            can_summon=False,
+            provenance=self._provenance(),
+        )
+        availability = CastAvailabilityContext(
+            current_ap=10,
+            casts_this_turn=0,
+            cooldown_remaining=0,
+            global_casts_this_turn=0,
+            target_id=int(ActorId(42)),
+            casts_on_target_this_turn=0,
+            active_state_ids=frozenset(),
+        )
+
+        result = query.evaluate_grade_cast_from_cell(
+            map_definition,
+            context,
+            ActorId(41),
+            grade,
+            target_cell,
+            availability=availability,
+        )
+
+        self.assertIsNone(result.legal)
+        self.assertIn(
+            f"target_occupant_alive:{int(target_cell)}",
+            result.missing_inputs,
+        )
+
+    def test_incomplete_global_occupancy_stays_incomplete_without_proven_target(self):
+        from anka_game_kernel.contexts.fight import FightContext
+        from anka_game_kernel.domain.actors import ActorState
+        from anka_game_kernel.domain.ids import ActorId, MapId
+        from anka_game_kernel.mechanics.fight_queries.service import FightQueryService
+
+        query = FightQueryService()
+        caster_cell = CellId(100)
+        target_cell = query.adjacent_cells(caster_cell)[0]
+        caster = ActorState(actor_id=ActorId(41), cell_id=caster_cell, alive=True)
+        unknown_location = ActorState(actor_id=ActorId(42), cell_id=None, alive=True)
+        context = FightContext(
+            actors=(caster, unknown_location),
+            active_actor_id=caster.actor_id,
+            map_id=MapId(190580738),
+        )
+
+        result = self._taken_result(
+            context,
+            self._map((caster_cell, target_cell)),
+            caster_cell,
+            target_cell,
+        )
+
+        self.assertIsNone(context.occupied_cells)
+        self.assertIsNone(result.legal)
+        self.assertIn("occupied_cells", result.missing_inputs)
+
+
 if __name__ == "__main__":
     unittest.main()
