@@ -52,6 +52,8 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     if current_client_certified and historical:
         raise ValueError('HISTORICAL_CALIBRATION_CANNOT_SELF_CERTIFY_CURRENT_CLIENT')
     if current_client_certified:
+        if type(expected_dpi) is not int or expected_dpi <= 0:
+            raise ValueError('CURRENT_CALIBRATION_DPI_REQUIRED')
         if source_path is None:
             raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
         if (type(accepted_profile_sha256) is not str or len(accepted_profile_sha256)!=64
