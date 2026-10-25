@@ -602,6 +602,38 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
             self.assertFalse((obs.folder / 'unclean_recovery.json').exists())
 
 
+    def test_crash_recovery_reads_only_bounded_tail_of_oversized_sparse_journal(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-bound', invocation_id='inv-agent07-recovery-bound')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+
+            event_path = obs.folder / 'events.jsonl'
+            original_rows = [line for line in event_path.read_bytes().splitlines() if line]
+            self.assertEqual(len(original_rows), 1)
+            with event_path.open('wb') as handle:
+                handle.seek(4 * 1024 * 1024)
+                handle.write(b'\n')
+                handle.write(original_rows[0] + b'\n')
+
+            path = recover_unclean_run(obs.folder)
+            self.assertIsNotNone(path)
+            result = verify_incident(path)
+            self.assertEqual(result['status'], 'PASS', result['errors'])
+            with ZipFile(path) as z:
+                recovered_rows = [
+                    json.loads(line)
+                    for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                    if line
+                ]
+                run_manifest = json.loads(z.read('run_manifest.json'))
+            self.assertEqual(len(recovered_rows), 1)
+            self.assertEqual(recovered_rows[0]['event_name'], 'workflow.heartbeat')
+            self.assertIn('RECOVERY_JOURNAL_TRUNCATED_TO_BOUND', run_manifest['observer_errors'])
+            self.assertEqual(run_manifest['evidence_completeness'], 'PARTIAL')
+
+
     def test_crash_recovery_skips_journal_event_live_recorder_would_reject(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
