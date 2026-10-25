@@ -162,7 +162,7 @@ class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
                     files = {entry: z.read(entry) for entry in z.namelist()}
                 manifest = json.loads(files['manifest.json'])
                 manifest['access_token'] = 'agent07-manifest-secret'
-                files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\\n').encode('utf8')
+                files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
                 with ZipFile(path, 'w', ZIP_DEFLATED) as z:
                     for entry, data in files.items():
                         z.writestr(entry, data)
