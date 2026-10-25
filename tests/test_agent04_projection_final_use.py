@@ -108,6 +108,33 @@ class Agent04ProjectionFinalUseTests(unittest.TestCase):
         self.assertFalse(result.valid)
         self.assertIn('INVALID_SPELL_ID', result.invalidators)
 
+    def test_context_rejects_foreign_character_binding_even_on_same_window(self):
+        w = window()
+        foreign = AccountBinding(
+            'Sosoking', 'IDENTITY_MATCHED', 'TEST_EVIDENCE',
+            generation_id(w), w.hwnd, w.pid, 'CRA', 'LIVE_PROTOCOL', False,
+        )
+        ctx = build_client_context(
+            character_name='Curseni', binding=foreign, window=w,
+            calibration=calibration(), bridge=bridge(), loadout=loadout(w),
+            observed_monotonic_ns=NOW, expected_map_id=777,
+        )
+        self.assertEqual(ctx.prerequisites_status, 'BLOCKED')
+        self.assertIn('BINDING_CHARACTER_MISMATCH', ctx.invalidators)
+
+    def test_context_rejects_untrusted_binding_evidence_source(self):
+        w = window()
+        untrusted = AccountBinding(
+            'Curseni', 'IDENTITY_MATCHED', 'TEST_EVIDENCE',
+            generation_id(w), w.hwnd, w.pid, 'CRA', 'TEST_FIXTURE', False,
+        )
+        ctx = build_client_context(
+            character_name='Curseni', binding=untrusted, window=w,
+            calibration=calibration(), bridge=bridge(), loadout=loadout(w),
+            observed_monotonic_ns=NOW, expected_map_id=777,
+        )
+        self.assertIn('BINDING_EVIDENCE_SOURCE_UNTRUSTED', ctx.invalidators)
+
     def test_context_turns_malformed_bridge_generation_into_incomplete_proof(self):
         w = window()
         malformed = BridgeMapReport(
