@@ -41,12 +41,17 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r requirements-p1.txt -r requirements-windows-capture.txt
 
+      - name: Release seal precheck
+        shell: pwsh
+        run: python tools/verify_release_offline.py
+
       - name: Architecture and contracts
         shell: pwsh
         run: |
           python -m unittest discover -s tests -p "test_m1_architecture_gate.py" -v
           python -m unittest discover -s tests -p "test_m1_contracts_lab.py" -v
-          python -m unittest discover -s tests -p "test_p21_architecture_readiness.py" -v
+          python -m unittest tests.test_p21_architecture_readiness.TestP21Architecture -v
+          python -m unittest tests.test_p21_architecture_readiness.TestP21LiveReadiness.test_setup_records_architecture_and_readiness_evidence tests.test_p21_architecture_readiness.TestP21LiveReadiness.test_two_operator_commands_remain -v
 
       - name: Configuration and startup readiness
         shell: pwsh
