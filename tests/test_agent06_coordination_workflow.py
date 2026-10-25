@@ -44,6 +44,8 @@ def signal(
     *,
     fight_epoch: int | None = None,
     fight_result: str | None = None,
+    encounter_id: str | None = None,
+    encounter_map_id: int | None = None,
 ):
     return WorkflowSignal(
         f"wfsig-agent06-{number}",
@@ -52,6 +54,8 @@ def signal(
         (f"evidence-agent06-{number}",),
         fight_epoch=fight_epoch,
         fight_result=fight_result,
+        encounter_id=encounter_id,
+        encounter_map_id=encounter_map_id,
     )
 
 
@@ -237,6 +241,137 @@ class Agent06WorkflowRecoveryTests(unittest.TestCase):
             if result.snapshot.phase == target:
                 return
         self.fail(f"target phase was not reached: {target}")
+
+    def test_expected_world_and_fight_entry_proofs_can_race_watchdog(self):
+        workflow = MissionWorkflow(
+            "run-agent06-world-recovery",
+            mission(watchdog=1, recovery=4),
+        )
+        started = workflow.apply(signal(80, "START", 0))
+        self.assertEqual(started.snapshot.phase, "PREFLIGHT")
+
+        recovering = workflow.apply(
+            signal(81, "WATCHDOG", started.snapshot.watchdog_deadline_tick + 1)
+        )
+        preflight = workflow.apply(
+            signal(
+                82,
+                "PREFLIGHT_OK",
+                recovering.snapshot.phase_started_tick + 1,
+            )
+        )
+        self.assertEqual(preflight.snapshot.phase, "WORLD")
+        self.assertEqual(
+            preflight.reason,
+            "PREFLIGHT_OK_SUPERSEDES_RECOVERY",
+        )
+
+        recovering = workflow.apply(
+            signal(83, "WATCHDOG", preflight.snapshot.watchdog_deadline_tick + 1)
+        )
+        route = workflow.apply(
+            signal(
+                84,
+                "ROUTE_STEP_PROVEN",
+                recovering.snapshot.phase_started_tick + 1,
+            )
+        )
+        self.assertEqual(route.snapshot.phase, "WORLD")
+        self.assertEqual(route.snapshot.route_index, 1)
+
+        recovering = workflow.apply(
+            signal(85, "WATCHDOG", route.snapshot.watchdog_deadline_tick + 1)
+        )
+        encounter = workflow.apply(
+            signal(
+                86,
+                "ENCOUNTER_SELECTED",
+                recovering.snapshot.phase_started_tick + 1,
+                encounter_id="encounter-agent06",
+                encounter_map_id=190580738,
+            )
+        )
+        self.assertEqual(encounter.snapshot.phase, "ENCOUNTER_SELECTED")
+        self.assertEqual(
+            encounter.snapshot.selected_encounter_id,
+            "encounter-agent06",
+        )
+
+        recovering = workflow.apply(
+            signal(
+                87,
+                "WATCHDOG",
+                encounter.snapshot.watchdog_deadline_tick + 1,
+            )
+        )
+        entry = workflow.apply(
+            signal(
+                88,
+                "FIGHT_ENTRY_PROVEN",
+                recovering.snapshot.phase_started_tick + 1,
+                fight_epoch=1,
+            )
+        )
+        self.assertEqual(entry.snapshot.phase, "FIGHT_ENTRY")
+        self.assertEqual(entry.snapshot.fight_epoch, 1)
+        self.assertEqual(entry.snapshot.started_fight_epochs, (1,))
+
+    def test_outcome_and_world_reentry_proofs_can_race_watchdog(self):
+        workflow = MissionWorkflow(
+            "run-agent06-postfight-recovery",
+            mission(watchdog=1, recovery=3),
+        )
+        self._advance_to(workflow, "FIGHT_ACTIVE")
+
+        ended = workflow.apply(
+            signal(90, "FIGHT_ENDED", 8, fight_epoch=1)
+        )
+        self.assertEqual(ended.snapshot.phase, "FIGHT_END_RECONCILIATION")
+
+        recovering = workflow.apply(
+            signal(91, "WATCHDOG", ended.snapshot.watchdog_deadline_tick + 1)
+        )
+        outcome = workflow.apply(
+            signal(
+                92,
+                "FIGHT_OUTCOME",
+                recovering.snapshot.phase_started_tick + 1,
+                fight_epoch=1,
+                fight_result="VICTORY",
+            )
+        )
+        self.assertEqual(outcome.snapshot.phase, "WORLD_REENTRY")
+        self.assertEqual(outcome.reason, "FIGHT_OUTCOME_SUPERSEDES_RECOVERY")
+        self.assertEqual(
+            (outcome.snapshot.attempts, outcome.snapshot.wins),
+            (1, 1),
+        )
+        self.assertEqual(outcome.snapshot.counted_fight_epochs, (1,))
+        self.assertIsNone(outcome.snapshot.resume_phase)
+
+        recovering = workflow.apply(
+            signal(
+                93,
+                "WATCHDOG",
+                outcome.snapshot.watchdog_deadline_tick + 1,
+            )
+        )
+        reentry = workflow.apply(
+            signal(
+                94,
+                "WORLD_REENTRY_PROVEN",
+                recovering.snapshot.phase_started_tick + 1,
+                fight_epoch=1,
+            )
+        )
+        self.assertEqual(reentry.snapshot.phase, "WORLD")
+        self.assertEqual(
+            reentry.reason,
+            "WORLD_REENTRY_SUPERSEDES_RECOVERY",
+        )
+        self.assertEqual(reentry.snapshot.attempts, 1)
+        self.assertEqual(reentry.snapshot.wins, 1)
+        self.assertIsNone(reentry.snapshot.resume_phase)
 
     def test_fight_end_supersedes_recovery_from_every_legal_fight_phase(self):
         for phase in (
