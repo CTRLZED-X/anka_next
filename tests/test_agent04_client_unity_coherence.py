@@ -374,6 +374,11 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertIn('_mapGeneration = generationEpoch;', source)
         self.assertIn('_coordinateGeneration = generationEpoch;', source)
 
+    def test_native_resolve_fails_closed_on_subtick_projection_drift(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('Projection changed after the cached coordinate table was validated.', source)
+        self.assertIn('Projection changed during coordinate resolution.', source)
+
     def test_native_transient_projection_loss_forces_retry(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         tick_loss = '''_coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
