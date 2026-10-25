@@ -9,6 +9,7 @@ import http.client
 import json
 from typing import Any
 from anka_contracts.client import WindowObservation
+from anka_client.discovery import client_instance_id
 from anka_contracts.bridge import (BridgeEvidenceReader, BridgeIdentityReport,
                                    BridgeMapReport, CellProjection)
 
@@ -124,6 +125,8 @@ class ReadOnlyBridgeInspector:
                 raise ValueError('BRIDGE_VERSION_UNEXPECTED')
             if health.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
                 raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
+            if health.get('clientInstanceId') != client_instance_id(window):
+                raise ValueError('BRIDGE_CLIENT_INSTANCE_MISMATCH')
             m = health.get('loadedMapId')
             mg = health.get('mapGeneration')
             cg = health.get('coordinateGeneration')
@@ -224,6 +227,8 @@ class ReadOnlyBridgeInspector:
             raise ValueError('BRIDGE_VERSION_UNEXPECTED')
         if h.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
             raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
+        if h.get('clientInstanceId') != client_instance_id(w):
+            raise ValueError('BRIDGE_CLIENT_INSTANCE_MISMATCH')
         # The Unity bridge may have different client/window metrics after a UI
         # resize. Never map old coordinates onto a new window.
         if _int(h,'sourceClientWidth',minimum=1)!=w.client_width or _int(h,'sourceClientHeight',minimum=1)!=w.client_height:
