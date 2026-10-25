@@ -807,6 +807,29 @@ def verify_incident(path:Path)->dict:
             elif not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
                 add('MANIFEST_RUN_ID_INVALID')
             if manifest_run_id is not None and run_id is not None and manifest_run_id!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
+            if (m.get('schema_version')==2 and not bool(m.get('advanced_analysis_failed'))
+                    and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict)
+                    and isinstance(run_manifest,dict)):
+                derived_sections=evidence_matrix(
+                    rows,
+                    dropped=int(bool(recorder_loss)),
+                    observer_errors=run_manifest.get('observer_errors',[]) or (),
+                )
+                actual_sections=matrix['sections']
+                for section,expected_status in derived_sections.items():
+                    actual_status=actual_sections.get(section)
+                    # Export may conservatively mark these caller-context sections
+                    # PARTIAL when the incident boundary names the subsystem even
+                    # if no concrete producer row survived. Never permit PRESENT
+                    # without event evidence, but preserve that conservative mode.
+                    if (section in ('bootstrap','configuration','identity')
+                            and expected_status=='MISSING' and actual_status in ('MISSING','PARTIAL')):
+                        continue
+                    if section=='observability' and bool(m.get('primary_export_failed')):
+                        if actual_status!='EXPORT_FAILED':add('EVIDENCE_MATRIX_DERIVATION_MISMATCH')
+                        continue
+                    if actual_status!=expected_status:add('EVIDENCE_MATRIX_DERIVATION_MISMATCH')
+
             if isinstance(run_manifest,dict):
                 if run_manifest.get('physical_input_state')!=_aggregate_physical_input_state(rows):
                     add('RUN_MANIFEST_PHYSICAL_STATE_MISMATCH')
@@ -1117,6 +1140,11 @@ def verify_incident(path:Path)->dict:
                                         add('GPT_SUMMARY_LOSS_CONFIDENCE_MISMATCH')
                                     if gpt_confidence=='HIGH':
                                         add('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED')
+                    if status!='ADVANCED_ANALYSIS_UNAVAILABLE' and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict):
+                        expected_gap_summary=[f'{key}={value}' for key,value in matrix['sections'].items()
+                                              if value not in ('PRESENT','NOT_APPLICABLE')]
+                        if gpt.get('diagnostic_coverage_gaps')!=expected_gap_summary:
+                            add('GPT_SUMMARY_COVERAGE_GAPS_MISMATCH')
                     if status!='ADVANCED_ANALYSIS_UNAVAILABLE':
                         cause_status=gpt.get('cause_status')
                         causes=gpt.get('candidate_causes')
