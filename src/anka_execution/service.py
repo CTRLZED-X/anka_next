@@ -8,7 +8,7 @@ from anka_contracts.execution import ExecutionAdmission,ExecutionClientAttestati
 from anka_execution.arbiter import HostInputArbiter,InputLeaseBusy
 from anka_execution.definitive_ledger import DefinitiveExecutionLedger,DefinitiveExecutionLedgerRejected
 from anka_execution.drivers.fake_input import InputDriverFailure
-from anka_execution.outcomes import correlate,validates_minimum_outcome_policy
+from anka_execution.outcomes import validates_minimum_outcome_policy
 
 class ExecutionServiceRejected(RuntimeError):pass
 
@@ -244,27 +244,23 @@ class DefinitiveExecutionService:
                              attempt_id=attempt,severity='CRITICAL',failure_code=self._last_safety_fault,
                              physical_input_state=self._physical_state('MAY_HAVE_SENT') if attempt is not None else 'NOT_SENT')
     def reconcile(self,action_id:str,evidence:ExecutionOutcomeEvidence)->ActionOutcome:
-        # Outcome obligations are cumulative.  Serialize read -> correlate -> apply
-        # so two independent proofs cannot both decide from the same stale remainder
-        # and overwrite each other's progress.
+        # Same-instance serialization is retained as a cheap local guard, but the
+        # correctness boundary is the shared SQLite ledger: settle_outcome performs
+        # durable read -> correlate -> append/update under one BEGIN IMMEDIATE.
         with self._settlement_lock:
-            command=self.ledger.get_command(action_id);current=self.ledger.get(action_id)
-            if current.status in self.ledger.TERMINAL:
-                return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids,False,current.unresolved_obligations,'TERMINAL_ACTION_ALREADY_RESOLVED')
-            verdict=correlate(command,evidence,current_status=current.status,unresolved_obligations=current.unresolved_obligations)
-            if verdict.status=='IGNORE':
-                # Ignored evidence must never make the outward status look less certain
-                # than the durable action ledger.  Preserve why it was ignored so a
-                # postmortem can distinguish stale/wrong-scope evidence from absence.
+            command=self.ledger.get_command(action_id)
+            a,settlement_reason,mutated=self.ledger.settle_outcome(action_id,evidence)
+            if not mutated:
+                if settlement_reason=='TERMINAL_ACTION_ALREADY_RESOLVED':
+                    return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,settlement_reason)
                 self._record('execution.outcome_ignored',command,boundary='execution.outcome_correlation',
-                             attempt_id=current.attempt_id,severity='WARNING',failure_code=verdict.reason,
-                             payload={'evidence_id':evidence.evidence_id,'current_status':current.status,
+                             attempt_id=a.attempt_id,severity='WARNING',failure_code=settlement_reason,
+                             payload={'evidence_id':evidence.evidence_id,'current_status':a.status,
                                       'evidence_result':evidence.result,'evidence_cursor':evidence.canonical_cursor,
                                       'evidence_authoritative':evidence.authoritative,
                                       'evidence_proofs':list(evidence.proofs),
                                       'evidence_correlated_action_id':evidence.correlated_action_id})
-                return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,current.unresolved_obligations,verdict.reason)
-            a=self.ledger.apply_outcome(action_id,verdict.status,evidence,verdict.reason,verdict.unresolved)
+                return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,a.unresolved_obligations,settlement_reason)
             self._record('execution.outcome_settled',command,boundary='execution.outcome_settlement',attempt_id=a.attempt_id,severity='SETTLEMENT',payload={'status':a.status,'reason':a.reason,'evidence_id':evidence.evidence_id})
             return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,a.reason)
     def terminalize_unresolved(self,action_id:str,reason='OUTCOME_COULD_NOT_BE_RESOLVED_SAFELY')->ActionOutcome:
