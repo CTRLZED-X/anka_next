@@ -79,7 +79,24 @@ class DeterministicPlanner:
         self._record('decision.frame_created',frame,boundary='decision.frame',canonical_cursor=frame.canonical_cursor,
                      payload={'frame_id':frame.frame_id,'workflow_goal':frame.workflow_goal,'snapshot_id':frame.snapshot_id,'snapshot_sha256':frame.snapshot_semantic_sha256,'proof_statuses':list(frame.proof_statuses)})
         goal=frame.workflow_goal.upper()
-        if goal in ('FIGHT_TURN','COMBAT_TURN'):result=self._fight(frame)
+        actionable_goals={
+            'FIGHT_TURN','COMBAT_TURN','PLACEMENT','FIGHT_PLACEMENT',
+            'WORLD_MOVE','PATROL_STEP','FIGHT_ENTRY','START_FIGHT',
+            'JOIN_FIGHT','PARTY_JOIN','READY',
+        }
+        missing_identity=tuple(
+            name for name,value in (
+                ('client_instance_id',frame.client_instance_id),
+                ('snapshot_semantic_sha256',frame.snapshot_semantic_sha256),
+                ('state_reducer_revision',frame.state_reducer_revision),
+                ('kernel_ruleset_id',frame.kernel_ruleset_id),
+                ('game_data_revision',frame.game_data_revision),
+            )
+            if not value
+        )
+        if goal in actionable_goals and missing_identity:
+            result=PlannerResult('FAULT',reason='DECISION_FRAME_PROVENANCE_MISSING',failure_code='FRAME_PROVENANCE_MISSING')
+        elif goal in ('FIGHT_TURN','COMBAT_TURN'):result=self._fight(frame)
         elif goal in ('PLACEMENT','FIGHT_PLACEMENT'):result=self._placement(frame)
         elif goal in ('WORLD_MOVE','PATROL_STEP'):result=self._world(frame)
         elif goal in ('FIGHT_ENTRY','START_FIGHT'):result=self._fight_entry(frame)
