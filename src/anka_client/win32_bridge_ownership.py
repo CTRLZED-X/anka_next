@@ -102,18 +102,25 @@ def loopback_listener_owner_pid(port: int) -> int | None:
     ))
     if first not in (0, _ERROR_INSUFFICIENT_BUFFER):
         raise OSError('TCP_LISTENER_TABLE_SIZE_FAILED')
-    if size.value < 4 or size.value > _MAX_TCP_TABLE_BYTES:
-        raise OSError('TCP_LISTENER_TABLE_SIZE_INVALID')
 
-    buffer = ctypes.create_string_buffer(size.value)
-    second = int(get_table(
-        buffer, ctypes.byref(size), False, _AF_INET,
-        _TCP_TABLE_OWNER_PID_LISTENER, 0,
-    ))
-    if second != 0:
-        raise OSError('TCP_LISTENER_TABLE_READ_FAILED')
+    raw = None
+    for _attempt in range(3):
+        if size.value < _TCP_ROW_OFFSET or size.value > _MAX_TCP_TABLE_BYTES:
+            raise OSError('TCP_LISTENER_TABLE_SIZE_INVALID')
+        buffer = ctypes.create_string_buffer(size.value)
+        result = int(get_table(
+            buffer, ctypes.byref(size), False, _AF_INET,
+            _TCP_TABLE_OWNER_PID_LISTENER, 0,
+        ))
+        if result == 0:
+            raw = buffer.raw[:size.value]
+            break
+        if result != _ERROR_INSUFFICIENT_BUFFER:
+            raise OSError('TCP_LISTENER_TABLE_READ_FAILED')
+    if raw is None:
+        raise OSError('TCP_LISTENER_TABLE_UNSTABLE')
 
-    owners = _loopback_listener_owners(buffer.raw[:size.value], port)
+    owners = _loopback_listener_owners(raw, port)
     if len(owners) > 1:
         raise OSError('TCP_LISTENER_OWNER_AMBIGUOUS')
     return next(iter(owners)) if owners else None
