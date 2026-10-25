@@ -62,6 +62,10 @@ class WorkflowSignalMigration:
             raise ValueError('INVALID_WORKFLOW_MIGRATION_CLASSIFICATION')
         if type(self.authoritative) is not bool or not self.reasons:
             raise ValueError('INVALID_WORKFLOW_SIGNAL_MIGRATION')
+        if self.source_schema_version is not None and (
+            type(self.source_schema_version) is not int or self.source_schema_version<1
+        ):
+            raise ValueError('INVALID_WORKFLOW_SOURCE_SCHEMA')
         if self.authoritative and (self.classification!='SAFE' or self.signal is None):
             raise ValueError('WORKFLOW_SIGNAL_AUTHORITY_WITHOUT_SAFE_MIGRATION')
 
@@ -327,7 +331,12 @@ def prepare_recovery_outcome_signal(
         return WorkflowRecoverySignalPreparation(
             WorkflowAdmission('REJECTED',str(exc)),None
         )
-    correlation=correlate_recovery_outcome(snapshot,signal)
+    try:
+        correlation=correlate_recovery_outcome(snapshot,signal)
+    except ValueError as exc:
+        return WorkflowRecoverySignalPreparation(
+            WorkflowAdmission('REJECTED',str(exc)),None
+        )
     if correlation.disposition=='IDEMPOTENT':
         return WorkflowRecoverySignalPreparation(
             WorkflowAdmission('IDEMPOTENT',correlation.reason),None
