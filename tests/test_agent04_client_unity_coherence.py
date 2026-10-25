@@ -188,6 +188,70 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertEqual((result.status, result.reason),
                          ('BLOCKED', 'BRIDGE_WINDOW_HANDLE_MISMATCH'))
 
+    def test_coordinate_payload_rejects_false_projectable_aggregate(self):
+        coords = {
+            'status': 'MAP_COORDINATES_READY',
+            'mapId': 42042,
+            'mapGeneration': 7,
+            'coordinateGeneration': 9,
+            'sourceVerified': True,
+            'sourceClientWidth': 1280,
+            'sourceClientHeight': 649,
+            'totalMapCells': 560,
+            'projectableCellCount': 560,
+            'generatedCoordinateCount': 560,
+            'projectionSignature': 'projection-9',
+            'windowFingerprint': '33:10:20:1280:649',
+            'cameraFingerprint': 'camera-1',
+            'cellGeometryFingerprint': 'cells-1',
+            'cells': [
+                {
+                    'cellId': i, 'clientX': i % 1280, 'clientY': i // 2,
+                    'insideCameraViewport': True, 'sourceVerified': True,
+                    'projectable': i != 0,
+                }
+                for i in range(560)
+            ],
+        }
+        reader = SequenceReader(health(), coords, health())
+        result = ReadOnlyBridgeInspector(reader).inspect_coordinates(
+            window(), PORT, map_id=42042
+        )
+        self.assertEqual((result.status, result.reason),
+                         ('BLOCKED', 'COORDINATE_PROJECTABLE_COUNT_MISMATCH'))
+
+    def test_coordinate_payload_rejects_unverified_cell_under_verified_summary(self):
+        coords = {
+            'status': 'MAP_COORDINATES_READY',
+            'mapId': 42042,
+            'mapGeneration': 7,
+            'coordinateGeneration': 9,
+            'sourceVerified': True,
+            'sourceClientWidth': 1280,
+            'sourceClientHeight': 649,
+            'totalMapCells': 560,
+            'projectableCellCount': 560,
+            'generatedCoordinateCount': 560,
+            'projectionSignature': 'projection-9',
+            'windowFingerprint': '33:10:20:1280:649',
+            'cameraFingerprint': 'camera-1',
+            'cellGeometryFingerprint': 'cells-1',
+            'cells': [
+                {
+                    'cellId': i, 'clientX': i % 1280, 'clientY': i // 2,
+                    'insideCameraViewport': True,
+                    'sourceVerified': i != 0, 'projectable': True,
+                }
+                for i in range(560)
+            ],
+        }
+        reader = SequenceReader(health(), coords, health())
+        result = ReadOnlyBridgeInspector(reader).inspect_coordinates(
+            window(), PORT, map_id=42042
+        )
+        self.assertEqual((result.status, result.reason),
+                         ('BLOCKED', 'COORDINATE_CELL_SOURCE_UNVERIFIED'))
+
     def test_map_generation_change_between_health_reads_blocks(self):
         first = health()
         second = health()
