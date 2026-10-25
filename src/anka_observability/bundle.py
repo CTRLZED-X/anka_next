@@ -1160,6 +1160,8 @@ def verify_incident(path:Path)->dict:
                         if isinstance(row,dict) and isinstance(row.get('event_id'),str):refs.append(row['event_id'])
                     block=lifecycle.get('blocking_event')
                     if isinstance(block,dict) and isinstance(block.get('event_id'),str):refs.append(block['event_id'])
+                    rejected=lifecycle.get('rejected_signal')
+                    if isinstance(rejected,dict) and isinstance(rejected.get('event_id'),str):refs.append(rejected['event_id'])
                     if any(not isinstance(ref,str) or ref not in event_ids for ref in refs):add('WORKFLOW_LIFECYCLE_EVIDENCE_REF_MISSING')
                     if not bool(m.get('advanced_analysis_failed')):
                         try:
