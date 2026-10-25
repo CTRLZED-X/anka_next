@@ -216,10 +216,18 @@ class TargetingService:
                 explanation="A target cell cannot be required to be both free and taken.",
             )
 
+        cells_by_id = {cell.cell_id: cell for cell in map_definition.cells}
+        cell_definition = cells_by_id.get(target_cell)
+        if cell_definition is None:
+            return TargetCellResult.incomplete(
+                missing_input=f"map_cell:{target_cell}",
+                explanation="Target-cell evaluation requires the target cell's static map definition.",
+            )
+
         if not spec.need_free_cell and not spec.need_taken_cell:
             return TargetCellResult.deterministic(
                 legal=True,
-                explanation="No target-cell occupancy constraint applies.",
+                explanation="The target cell exists and no target-cell occupancy constraint applies.",
             )
 
         if spec.need_taken_cell:
@@ -244,13 +252,6 @@ class TargetingService:
                 explanation="Taken-cell requirement failed because the target is not the caster and is unoccupied.",
             )
 
-        cells_by_id = {cell.cell_id: cell for cell in map_definition.cells}
-        cell_definition = cells_by_id.get(target_cell)
-        if cell_definition is None:
-            return TargetCellResult.incomplete(
-                missing_input=f"map_cell:{target_cell}",
-                explanation="Free-cell evaluation requires the target cell's static map definition.",
-            )
         if not cell_definition.walkable:
             return TargetCellResult.deterministic(
                 legal=False,
