@@ -1002,7 +1002,7 @@ def verify_incident(path:Path)->dict:
                     if isinstance(root_diag,dict):
                         analysis_legacy=dict(diag);analysis_legacy.pop('physical_input_state',None)
                         if root_diag!=analysis_legacy:add('DIAGNOSIS_ALIAS_MISMATCH')
-            graph={}
+            graph={};recomputed_trace_finding=None;graph_analysis_mode=None
             if 'analysis/boundary_graph.json' in names:
                 try:graph=json.loads(z.read('analysis/boundary_graph.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):graph={};add('BOUNDARY_GRAPH_JSON_INVALID')
@@ -1015,6 +1015,37 @@ def verify_incident(path:Path)->dict:
                         ref=edge.get('event_id')
                         if ref is not None and (not isinstance(ref,str) or ref not in event_ids):
                             add('BOUNDARY_GRAPH_EVIDENCE_REF_MISSING')
+                    graph_analysis_mode=graph.get('analysis_mode')
+                    if modern_bundle and not bool(m.get('advanced_analysis_failed')):
+                        if graph_analysis_mode not in ('NONE','GENERIC_TRACE','PARTY_READY'):
+                            add('BOUNDARY_GRAPH_ANALYSIS_MODE_INVALID')
+                        if graph_analysis_mode=='GENERIC_TRACE':
+                            trace_meta=graph.get('trace_spec')
+                            if not isinstance(trace_meta,dict):
+                                add('BOUNDARY_GRAPH_TRACE_SPEC_MISSING')
+                            else:
+                                try:
+                                    raw_expectations=trace_meta.get('expectations')
+                                    raw_keys=trace_meta.get('correlation_keys',[])
+                                    if not isinstance(raw_expectations,list) or not isinstance(raw_keys,list):
+                                        raise ValueError('trace-shape')
+                                    expectations=tuple(BoundaryExpectation(
+                                        row['event_name'],row['boundary'],row['owner_system'],row['evidence_section'])
+                                        for row in raw_expectations if isinstance(row,dict)
+                                    )
+                                    if len(expectations)!=len(raw_expectations):raise ValueError('trace-expectation-shape')
+                                    spec=OperationTraceSpec(str(trace_meta.get('operation') or ''),expectations,tuple(raw_keys))
+                                    if graph.get('operation')!=spec.operation:raise ValueError('trace-operation-mismatch')
+                                    expected_trace=FirstDivergenceAnalyzer().analyze(
+                                        spec,rows,fallback_failure_code='EVIDENCE_GAP',
+                                        control_state=(run_manifest.get('control_state','UNKNOWN') if isinstance(run_manifest,dict) else 'UNKNOWN'),
+                                    )
+                                    recomputed_trace_finding=expected_trace.finding
+                                    if _semantic_artifact(graph.get('edges',[]))!=_semantic_artifact(list(expected_trace.boundary_graph)):
+                                        add('BOUNDARY_GRAPH_DERIVATION_MISMATCH')
+                                except (KeyError,TypeError,ValueError):
+                                    add('BOUNDARY_GRAPH_TRACE_SPEC_INVALID')
+            recomputed_party_finding=None;expected_party_for_graph=None
             if 'analysis/party_ready.json' in names:
                 try:party=json.loads(z.read('analysis/party_ready.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):party={};add('PARTY_READY_JSON_INVALID')
@@ -1033,11 +1064,64 @@ def verify_incident(path:Path)->dict:
                         if len(ready_accounts)>=2:
                             ready_result=PartyReadyAnalyzer().analyze(rows,ready_accounts,
                                 control_state=(run_manifest.get('control_state','UNKNOWN') if isinstance(run_manifest,dict) else 'UNKNOWN'))
+                            recomputed_party_finding=ready_result.finding
                             expected_party={'schema_version':1,'status':'DIVERGED' if ready_result.finding else 'COMPLETE',
                                 'required_accounts':list(ready_accounts),'account_graphs':list(ready_result.account_graphs),
                                 'shared_graph':list(ready_result.shared_graph),'matched_event_ids':list(ready_result.matched_event_ids),
                                 'finding':ready_result.finding.to_dict() if ready_result.finding else None}
+                            expected_party_for_graph=[edge for account_graph in ready_result.account_graphs for edge in account_graph['edges']]+list(ready_result.shared_graph)
                         if _semantic_artifact(party)!=_semantic_artifact(expected_party):add('PARTY_READY_DERIVATION_MISMATCH')
+                        if graph_analysis_mode=='PARTY_READY':
+                            if expected_party_for_graph is None:
+                                add('BOUNDARY_GRAPH_PARTY_READY_UNAVAILABLE')
+                            elif _semantic_artifact(graph.get('edges',[]))!=_semantic_artifact(expected_party_for_graph):
+                                add('BOUNDARY_GRAPH_DERIVATION_MISMATCH')
+            if (modern_bundle and not bool(m.get('advanced_analysis_failed')) and isinstance(diag,dict)):
+                finding_source=diag.get('finding_source')
+                if finding_source not in ('NONE','GENERIC_TRACE','PARTY_READY'):
+                    add('DIAGNOSIS_FINDING_SOURCE_INVALID')
+                expected_finding=(recomputed_trace_finding if finding_source=='GENERIC_TRACE'
+                                  else recomputed_party_finding if finding_source=='PARTY_READY' else None)
+                if finding_source in ('GENERIC_TRACE','PARTY_READY'):
+                    if expected_finding is None:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                    else:
+                        expected_retained=expected_finding.confidence
+                        expected_confidence=_loss_adjusted_confidence(expected_retained,bool(recorder_loss))
+                        expected_causes=list(expected_finding.candidate_causes)
+                        expected_cause_status=('MULTIPLE_PLAUSIBLE' if len(expected_causes)>1 else
+                                               'SINGLE_SUPPORTED' if len(expected_causes)==1 else 'UNDETERMINED')
+                        expected_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
+                        checks=(
+                            ('first_divergent_boundary',expected_finding.first_divergent_boundary),
+                            ('suspected_owner',expected_finding.suspected_owner),
+                            ('retained_evidence_confidence',expected_retained),
+                            ('confidence',expected_confidence),
+                            ('supporting_evidence_ids',list(expected_finding.supporting_evidence_ids)),
+                            ('contradicting_evidence_ids',list(expected_finding.contradicting_evidence_ids)),
+                            ('missing_evidence',list(expected_finding.missing_evidence)),
+                            ('candidate_causes',expected_causes),
+                            ('cause_status',expected_cause_status),
+                            ('control_state',expected_finding.control_state),
+                            ('recommended_next_test',expected_finding.recommended_next_test),
+                            ('first_divergence_scope',expected_scope),('cause_scope',expected_scope),
+                            ('candidate_causes_may_be_incomplete',bool(recorder_loss)),
+                        )
+                        for field,expected_value in checks:
+                            actual=diag.get(field)
+                            if isinstance(actual,tuple):actual=list(actual)
+                            if actual!=expected_value:add('DIAGNOSIS_DERIVATION_MISMATCH:'+field)
+                        if (expected_finding.failure_code!='EVIDENCE_GAP'
+                                and diag.get('failure_code')!=expected_finding.failure_code):
+                            add('DIAGNOSIS_DERIVATION_MISMATCH:failure_code')
+                elif finding_source=='NONE' and 'first_divergent_boundary' in diag:
+                    add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                if isinstance(run_manifest,dict):
+                    if diag.get('observer_dropped_events')!=run_manifest.get('observer_dropped_events'):
+                        add('DIAGNOSIS_DROPPED_EVENTS_MISMATCH')
+                    if diag.get('observer_errors')!=run_manifest.get('observer_errors'):
+                        add('DIAGNOSIS_OBSERVER_ERRORS_MISMATCH')
+
             if 'analysis/recovery_history.json' in names:
                 try:recovery=json.loads(z.read('analysis/recovery_history.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):recovery={};add('RECOVERY_HISTORY_JSON_INVALID')
@@ -1183,6 +1267,8 @@ def verify_incident(path:Path)->dict:
                         elif cause_status=='MULTIPLE_PLAUSIBLE' and len(causes)<2:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
                     if isinstance(diag,dict) and status in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE'):
+                        if gpt.get('finding_source')!=diag.get('finding_source'):
+                            add('GPT_SUMMARY_FINDING_SOURCE_MISMATCH')
                         if gpt.get('first_divergence')!=diag.get('first_divergent_boundary') or gpt.get('suspected_owner')!=diag.get('suspected_owner'):
                             add('GPT_SUMMARY_FINDING_MISMATCH')
                         if gpt.get('confidence')!=diag.get('confidence'):
