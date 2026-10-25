@@ -594,9 +594,16 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
 
 def _write_zip(path:Path, artifacts:dict[str,bytes], manifest:dict) -> None:
     path.parent.mkdir(parents=True,exist_ok=True)
-    with ZipFile(path,'w',compression=ZIP_DEFLATED) as z:
-        for name,data in artifacts.items():z.writestr(name,data)
-        z.writestr('manifest.json',_serialized(manifest))
+    # Incident names are UUID-derived and therefore must be new. Refuse an
+    # attacker-controlled output link/directory instead of following it outside
+    # the intended diagnostic location. Exclusive creation also prevents a target
+    # symlink or stale collision from being silently overwritten.
+    if path.parent.is_symlink() or path.is_symlink():
+        raise RuntimeError('UNSAFE_INCIDENT_EXPORT_SYMLINK')
+    with path.open('xb') as out:
+        with ZipFile(out,'w',compression=ZIP_DEFLATED) as z:
+            for name,data in artifacts.items():z.writestr(name,data)
+            z.writestr('manifest.json',_serialized(manifest))
 
 
 def _manifest(observer,id_:str,artifacts:dict[str,bytes],sections:dict,*,primary_failed:bool,advanced_failed:bool)->dict:
