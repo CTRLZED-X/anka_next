@@ -1027,6 +1027,282 @@ class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
 
 
 
+    @staticmethod
+    def _handoff_event(seq, name, *, action_id=None, attempt_id=None,
+                       account_id='acct-cra', fight_epoch=20, turn_epoch=7,
+                       physical_input_state=None, evidence_class='DERIVED',
+                       severity='INFO', failure_code=None, payload=None):
+        owner_system={
+            'workflow':'anka_workflow',
+            'execution':'anka_execution',
+            'coordination':'anka_coordination',
+        }[name.split('.',1)[0]]
+        boundary={
+            'workflow.action_requested':'workflow.action_authorization',
+            'execution.admitted':'execution.pre_input_authorization',
+            'execution.send_started':'execution.external_boundary',
+            'execution.input_sent':'execution.external_boundary',
+            'execution.input_not_sent':'execution.external_boundary',
+            'execution.input_may_have_sent':'execution.external_boundary',
+            'execution.exception_after_send_started':'execution.external_boundary',
+            'execution.rejected':'execution.pre_input_authorization',
+            'execution.outcome_settled':'execution.outcome_settlement',
+            'execution.outcome_terminal_unresolved':'execution.outcome_settlement',
+            'coordination.turn_owner_proved':'coordination.first_turn',
+        }[name]
+        event_payload=dict(payload or {})
+        if name=='workflow.action_requested':
+            event_payload.setdefault('scope','TURN')
+            event_payload.setdefault('kind','END_TURN')
+            event_payload.setdefault('plan_id','plan-agent07-endturn-order')
+        return DiagnosticEvent(
+            1,
+            f"evt-agent07-handoff-{seq}-{name.replace('.','-')}",
+            name,
+            severity,
+            f'2026-10-25T12:00:{seq % 60:02d}Z',
+            seq,
+            seq,
+            'inv-agent07-handoff-order',
+            'run-agent07-handoff-order',
+            account_id=account_id,
+            fight_epoch=fight_epoch,
+            turn_epoch=turn_epoch,
+            action_id=action_id,
+            attempt_id=attempt_id,
+            owner_system=owner_system,
+            physical_input_state=physical_input_state,
+            failure_code=failure_code,
+            boundary=boundary,
+            evidence_class=evidence_class,
+            payload=event_payload,
+        )
+
+    @classmethod
+    def _ordered_handoff(cls, *, owner_rows=(), send_name='execution.input_sent',
+                         include_admitted=True, include_started=True,
+                         include_settled=True):
+        action_id='action-agent07-endturn-order'
+        attempt_id='attempt-agent07-endturn-order'
+        rows=[
+            cls._handoff_event(10,'workflow.action_requested',action_id=action_id),
+        ]
+        if include_admitted:
+            rows.append(cls._handoff_event(
+                20,'execution.admitted',action_id=action_id,
+                physical_input_state='NOT_SENT'))
+        if include_started:
+            rows.append(cls._handoff_event(
+                30,'execution.send_started',action_id=action_id,attempt_id=attempt_id,
+                physical_input_state='SEND_STARTED',severity='SAFETY'))
+        if send_name is not None:
+            physical={
+                'execution.input_sent':'SENT',
+                'execution.input_not_sent':'NOT_SENT',
+                'execution.input_may_have_sent':'MAY_HAVE_SENT',
+                'execution.exception_after_send_started':'MAY_HAVE_SENT',
+            }[send_name]
+            rows.append(cls._handoff_event(
+                40,send_name,action_id=action_id,attempt_id=attempt_id,
+                physical_input_state=physical,
+                severity='SAFETY' if physical=='MAY_HAVE_SENT' else 'INFO',
+                failure_code='SEND_UNCERTAIN' if physical=='MAY_HAVE_SENT' else None))
+        if include_settled:
+            rows.append(cls._handoff_event(
+                60,'execution.outcome_settled',action_id=action_id,attempt_id=attempt_id,
+                severity='SETTLEMENT',payload={'status':'SETTLED_SUCCESS'}))
+        for row in owner_rows:
+            seq,account,fight,turn=row
+            rows.append(cls._handoff_event(
+                seq,'coordination.turn_owner_proved',account_id=account,
+                fight_epoch=fight,turn_epoch=turn,evidence_class='AUTHORITY_COMMITTED'))
+        return turn_handoff_report(rows)
+
+    def test_owner_proof_before_request_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((5,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_owner_proof_between_request_and_admission_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((15,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_owner_proof_between_admission_and_send_started_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((25,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_owner_proof_between_send_started_and_input_sent_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((35,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_first_strictly_post_input_sent_owner_is_eligible(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertEqual(report['next_owner_account_id'],'acct-enu')
+        self.assertEqual(report['next_turn_epoch'],8)
+
+    def test_pre_send_same_owner_does_not_block_post_send_other_owner(self):
+        report=self._ordered_handoff(owner_rows=(
+            (35,'acct-cra',20,8),
+            (50,'acct-enu',20,8),
+        ))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertEqual(report['next_owner_account_id'],'acct-enu')
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_first_valid_post_send_same_owner_preserves_same_owner_status(self):
+        report=self._ordered_handoff(owner_rows=(
+            (50,'acct-cra',20,8),
+            (55,'acct-enu',20,9),
+        ))
+        self.assertEqual(report['status'],'SETTLED_SAME_OWNER_REPROVED')
+        self.assertEqual(report['next_owner_account_id'],'acct-cra')
+        self.assertEqual(report['next_turn_epoch'],8)
+
+    def test_wrong_fight_owner_proof_is_not_valid_handoff(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',21,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_non_newer_turn_owner_proof_is_not_valid_handoff(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',20,7),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_input_not_sent_with_later_owner_never_completes(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name='execution.input_not_sent',
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'NOT_SENT')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_may_have_sent_with_later_owner_remains_unresolved(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name='execution.input_may_have_sent',
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'MAY_HAVE_SENT_UNRESOLVED')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(report['physical_input_state'],'MAY_HAVE_SENT')
+
+    def test_send_started_only_with_later_owner_has_no_proven_handoff(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name=None,
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'SEND_STARTED_NO_AUTHORITATIVE_SEND')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_input_sent_settlement_and_valid_later_owner_is_complete(self):
+        report=self._ordered_handoff(owner_rows=((70,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertIsNotNone(report['send_event_id'])
+        self.assertIsNotNone(report['settlement_event_id'])
+        self.assertIsNotNone(report['next_owner_event_id'])
+
+    def test_multiple_end_turn_attempts_cannot_borrow_pre_send_owner_from_older_attempt(self):
+        old='action-agent07-endturn-old'
+        new='action-agent07-endturn-new'
+        rows=[
+            self._handoff_event(1,'workflow.action_requested',action_id=old),
+            self._handoff_event(2,'execution.admitted',action_id=old,physical_input_state='NOT_SENT'),
+            self._handoff_event(3,'execution.send_started',action_id=old,attempt_id='attempt-old',physical_input_state='SEND_STARTED',severity='SAFETY'),
+            self._handoff_event(4,'execution.input_sent',action_id=old,attempt_id='attempt-old',physical_input_state='SENT'),
+            self._handoff_event(10,'workflow.action_requested',action_id=new),
+            self._handoff_event(11,'execution.admitted',action_id=new,physical_input_state='NOT_SENT'),
+            self._handoff_event(12,'execution.send_started',action_id=new,attempt_id='attempt-new',physical_input_state='SEND_STARTED',severity='SAFETY'),
+            # This proof is causally after the old send but before the selected
+            # latest attempt's authoritative send and must not be borrowed.
+            self._handoff_event(15,'coordination.turn_owner_proved',account_id='acct-enu',fight_epoch=20,turn_epoch=8,evidence_class='AUTHORITY_COMMITTED'),
+            self._handoff_event(20,'execution.input_sent',action_id=new,attempt_id='attempt-new',physical_input_state='SENT'),
+            self._handoff_event(30,'execution.outcome_settled',action_id=new,attempt_id='attempt-new',severity='SETTLEMENT',payload={'status':'SETTLED_SUCCESS'}),
+        ]
+        report=turn_handoff_report(rows)
+        self.assertEqual(report['action_id'],new)
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_rehashed_bundle_cannot_promote_pre_send_owner_to_causal_handoff(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs=LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-rehash',
+                invocation_id='inv-agent07-endturn-rehash',
+            )
+            try:
+                action_id='action-agent07-endturn-rehash'
+                obs.record(
+                    'workflow.action_requested',owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-rehash'})
+                obs.record(
+                    'execution.admitted',owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,physical_input_state='NOT_SENT')
+                owner_status=obs.record(
+                    'coordination.turn_owner_proved',owner_system='anka_coordination',
+                    boundary='coordination.first_turn',evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',fight_epoch=22,turn_epoch=6)
+                self.assertIn(owner_status,('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'execution.send_started',owner_system='anka_execution',
+                    boundary='execution.external_boundary',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',severity='SAFETY',
+                    physical_input_state='SEND_STARTED')
+                obs.record(
+                    'execution.input_sent',owner_system='anka_execution',
+                    boundary='execution.external_boundary',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',physical_input_state='SENT')
+                obs.record(
+                    'execution.outcome_settled',owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',severity='SETTLEMENT',
+                    payload={'status':'SETTLED_SUCCESS'})
+                path=obs.export_incident('END_TURN_CAUSAL_ORDER_TEST',boundary='coordination.first_turn')
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
+                with ZipFile(path) as z:
+                    handoff=json.loads(z.read('analysis/turn_handoff.json'))
+                    timeline=[json.loads(line) for line in z.read('timeline.jsonl').decode('utf8').splitlines() if line]
+                pre_owner=next(row for row in timeline if row['event_name']=='coordination.turn_owner_proved')
+                self.assertEqual(handoff['status'],'SETTLED_NEXT_OWNER_MISSING')
+                self.assertIsNone(handoff['next_owner_event_id'])
+                self.assertIn(pre_owner['event_id'],handoff['noncausal_owner_event_ids'])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/turn_handoff.json': lambda payload: payload.update({
+                            'status':'COMPLETE',
+                            'next_owner_event_id':pre_owner['event_id'],
+                            'next_owner_account_id':'acct-enu',
+                            'next_turn_epoch':6,
+                        }),
+                    },
+                )
+                tampered=verify_incident(path)
+                self.assertEqual(tampered['status'],'FAIL')
+                self.assertIn('TURN_HANDOFF_DERIVATION_MISMATCH',tampered['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
 class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
     def test_rejected_before_send_then_sent_is_explicit_contradiction(self):
         with tempfile.TemporaryDirectory() as td:
