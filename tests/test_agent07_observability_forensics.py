@@ -203,6 +203,96 @@ class TestAgent07PreActionCausalIndex(unittest.TestCase):
                 obs.finish('BLOCKED')
 
 
+class TestAgent07ExecutionStageProjection(unittest.TestCase):
+    def test_client_admission_rejection_is_explicit_not_sent_stage(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-client-reject', invocation_id='inv-agent07-client-reject')
+            try:
+                action_id='action-agent07-client-reject'
+                trace_id='trace-agent07-client-reject'
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    payload={
+                        'frame_id':'frame-agent07-client-reject',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-client-reject',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST','plan_id':'plan-agent07-client-reject'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST'},
+                )
+                obs.record(
+                    'workflow.action_dispatch_result',
+                    severity='INFO',
+                    owner_system='anka_workflow',
+                    boundary='workflow.execution_dispatch',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'outcome_status':'REJECTED_NOT_SENT',
+                        'outcome_reason':'CLIENT_ATTESTATION_UNAVAILABLE',
+                    },
+                )
+                path = obs.export_incident('CLIENT_ACTION_REJECTED', boundary='execution.pre_input_authorization')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                    facts = json.loads(z.read('analysis/proven_facts.json'))
+                    gpt = json.loads(z.read('analysis/gpt_summary.json'))
+                row = next(item for item in lifecycles['actions'] if item['action_id']==action_id)
+                self.assertEqual(row['state'], 'NOT_SENT')
+                self.assertEqual(row['not_sent_stage'], 'ADMISSION')
+                self.assertEqual(row['not_sent_event_name'], 'execution.rejected')
+                self.assertEqual(row['not_sent_boundary'], 'execution.pre_input_authorization')
+                self.assertEqual(row['not_sent_failure_code'], 'CLIENT_ATTESTATION_UNAVAILABLE')
+                self.assertEqual(gpt['latest_action_lifecycle'], row)
+                self.assertEqual(facts['unresolved_actions'], [])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_action_lifecycle', None)},
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH', tampered['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
 class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
     @staticmethod
     def _rewrite_json_artifact(path: Path, name: str, mutate) -> None:
