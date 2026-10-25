@@ -20,7 +20,10 @@ from anka_observability.forensics import (
     workflow_lifecycle_report, turn_handoff_report,
 )
 from anka_observability.redaction import sanitize,sanitize_export,has_diagnostic_truncation,has_unredacted_sensitive_data
-from anka_observability.api import is_priority_event
+from anka_observability.api import (
+    is_priority_event,
+    DIAGNOSTIC_EVENT_ID_RE, DIAGNOSTIC_INVOCATION_ID_RE, DIAGNOSTIC_RUN_ID_RE,
+)
 
 BUNDLE_SCHEMA=2
 EVIDENCE_STATUS=('PRESENT','PRESENT_STALE','PARTIAL','MISSING','NOT_APPLICABLE','EXPORT_FAILED')
@@ -723,6 +726,10 @@ def verify_incident(path:Path)->dict:
                 except (json.JSONDecodeError,UnicodeDecodeError):run_manifest={};add('RUN_MANIFEST_JSON_INVALID')
                 if isinstance(run_manifest,dict):
                     run_id=run_manifest.get('run_id');invocation_id=run_manifest.get('invocation_id')
+                    if not isinstance(run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(run_id) is None:
+                        add('RUN_MANIFEST_RUN_ID_INVALID')
+                    if not isinstance(invocation_id,str) or DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(invocation_id) is None:
+                        add('RUN_MANIFEST_INVOCATION_ID_INVALID')
                     flight=run_manifest.get('flight_recorder',{})
                     if isinstance(flight,dict):
                         recorder_loss=any(int(flight.get(k,0) or 0)>0 for k in ('recent_overwrites','priority_overwrites','pinned_context_omissions','sanitization_truncations','timeline_events_omitted_for_size','journal_dropped_events','journal_queue_drops','priority_journal_queue_drops','snapshot_export_omissions')) or not bool(flight.get('persistent_storage_available',True)) or bool(flight.get('source_tail_uncertain',False))
@@ -730,9 +737,11 @@ def verify_incident(path:Path)->dict:
             for obj in rows:
                 try:event=DiagnosticEvent.from_dict(obj)
                 except (TypeError,ValueError):add('TIMELINE_EVENT_INVALID');continue
-                if not event.event_id.startswith('evt-'):add('TIMELINE_EVENT_ID_INVALID')
-                if not event.invocation_id.startswith('inv-'):add('TIMELINE_INVOCATION_ID_INVALID')
-                if event.run_id is None or not event.run_id.startswith('run-'):add('TIMELINE_RUN_ID_INVALID')
+                if DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None:add('TIMELINE_EVENT_ID_INVALID')
+                if event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None:
+                    add('TIMELINE_PARENT_EVENT_ID_INVALID')
+                if DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None:add('TIMELINE_INVOCATION_ID_INVALID')
+                if event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None:add('TIMELINE_RUN_ID_INVALID')
                 try:
                     stamp=datetime.fromisoformat(event.occurred_utc.replace('Z','+00:00'))
                     if stamp.tzinfo is None:raise ValueError('naive')
@@ -747,6 +756,9 @@ def verify_incident(path:Path)->dict:
                 seqs.add(seq_key)
                 if run_id is not None and event.run_id!=run_id:add('TIMELINE_RUN_ID_MISMATCH')
                 if invocation_id is not None and event.invocation_id!=invocation_id:add('TIMELINE_INVOCATION_ID_MISMATCH')
+            manifest_run_id=m.get('run_id')
+            if not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
+                add('MANIFEST_RUN_ID_INVALID')
             if m.get('run_id') is not None and run_id is not None and m.get('run_id')!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
             if isinstance(run_manifest,dict):
                 if run_manifest.get('physical_input_state')!=_aggregate_physical_input_state(rows):
