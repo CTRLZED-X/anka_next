@@ -319,6 +319,119 @@ class TestAgent07PreActionCausalIndex(unittest.TestCase):
                 obs.finish('BLOCKED')
 
 
+class TestAgent07CausalSkeletonSaturation(unittest.TestCase):
+    def test_current_pre_action_leadup_survives_old_ordinary_skeleton_flood(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-skeleton-current',
+                invocation_id='inv-agent07-skeleton-current',
+                max_recent=1800,
+                max_priority=1800,
+                max_pinned=1,
+                pin_window=1,
+            )
+            try:
+                # Historical unresolved risk should remain protected even while
+                # ordinary healthy causal edges are saturated.
+                obs.record(
+                    'execution.input_may_have_sent',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id='action-agent07-old-risk',
+                    attempt_id='attempt-agent07-old-risk',
+                    failure_code='OLD_ACK_UNKNOWN',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                for i in range(1500):
+                    obs.record(
+                        'execution.admitted',
+                        severity='SETTLEMENT',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id='acct-cra',
+                        action_id=f'action-agent07-old-{i:04d}',
+                        attempt_id=f'attempt-agent07-old-{i:04d}',
+                        physical_input_state='NOT_SENT',
+                    )
+
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    payload={
+                        'frame_id':'frame-agent07-current',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-current',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    action_id='action-agent07-current',
+                    trace_id='trace-agent07-current',
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'plan_id':'plan-agent07-current',
+                    },
+                )
+                obs.record(
+                    'execution.outcome_missing',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    action_id='action-agent07-current',
+                    trace_id='trace-agent07-current',
+                    failure_code='CURRENT_OUTCOME_MISSING',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+
+                path = obs.export_incident('CURRENT_OUTCOME_MISSING', boundary='execution.outcome')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    rows = [
+                        json.loads(line)
+                        for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                        if line
+                    ]
+                    run_manifest = json.loads(z.read('run_manifest.json'))
+
+                names = {row.get('event_name') for row in rows}
+                ids = {row.get('action_id') for row in rows}
+                plan_ids = {
+                    row.get('payload', {}).get('plan_id')
+                    for row in rows
+                    if isinstance(row.get('payload'), dict)
+                }
+                self.assertIn('decision.plan_result', names)
+                self.assertIn('plan-agent07-current', plan_ids)
+                self.assertIn('action-agent07-current', ids)
+                self.assertIn('action-agent07-old-risk', ids)
+                self.assertGreater(
+                    run_manifest['flight_recorder']['causal_skeleton_events_omitted_for_size'],
+                    0,
+                )
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
 class TestAgent07ExecutionStageProjection(unittest.TestCase):
     def test_client_admission_rejection_is_explicit_not_sent_stage(self):
         with tempfile.TemporaryDirectory() as td:
