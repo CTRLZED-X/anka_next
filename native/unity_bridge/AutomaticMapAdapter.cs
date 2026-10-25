@@ -46,9 +46,22 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
     public AutomaticMapAdapter(ManualLogSource log)
     {
         _log = log;
+        var generationEpoch = NewGenerationEpoch();
+        _mapGeneration = generationEpoch;
+        _coordinateGeneration = generationEpoch;
         _rootDirectory = Path.Combine(Paths.ConfigPath, "DofusCoordinateBridge");
         _evidenceDirectory = Path.Combine(_rootDirectory, "evidence");
         Directory.CreateDirectory(_evidenceDirectory);
+    }
+
+    private static long NewGenerationEpoch()
+    {
+        Span<byte> bytes = stackalloc byte[8];
+        RandomNumberGenerator.Fill(bytes);
+        var raw = BitConverter.ToUInt64(bytes);
+        // Keep the sign bit and one additional high bit clear, leaving an
+        // enormous monotonic increment range for this bridge instance.
+        return (long)(raw & 0x3fffffffffffffffUL) + 1;
     }
 
     public string Name => "dofus_authoritative_cell_map";
