@@ -254,5 +254,34 @@ class TestAgent05PolicySafety(unittest.TestCase):
         self.assertEqual(kernel.calls, [])
 
 
+
+class TestAgent05NearestActorSafety(unittest.TestCase):
+    def test_unknown_alive_matching_actor_cannot_be_nearest_enemy(self):
+        from anka_game_kernel.domain.ids import ActorId
+        from anka_game_kernel.mechanics.fight_queries.service import FightQueryService
+
+        source = SimpleNamespace(
+            actor_id=ActorId(41),
+            alive=True,
+            team_id=1,
+            cell_id=CellId(100),
+        )
+        candidate = SimpleNamespace(
+            actor_id=ActorId(42),
+            alive=None,
+            team_id=2,
+            cell_id=CellId(101),
+        )
+        context = SimpleNamespace(
+            actors=(source, candidate),
+            actor=lambda actor_id: source if actor_id == source.actor_id else candidate,
+        )
+
+        result = FightQueryService().nearest_enemy(context, source.actor_id)
+
+        self.assertIsNone(result.actor_id)
+        self.assertIn("actor:42.alive", result.missing_inputs)
+
+
 if __name__ == "__main__":
     unittest.main()
