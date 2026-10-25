@@ -20,6 +20,10 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     reasons=[]
     gid=generation_id(window)
     if binding.state!='IDENTITY_MATCHED': reasons.append('IDENTITY_NOT_PROVEN')
+    if binding.name.strip().casefold()!=character_name.strip().casefold():
+        reasons.append('BINDING_CHARACTER_MISMATCH')
+    if binding.evidence_source not in ('LIVE_PROTOCOL','UNITY_BRIDGE'):
+        reasons.append('BINDING_EVIDENCE_SOURCE_UNTRUSTED')
     if binding.generation_id!=gid or binding.hwnd!=window.hwnd or binding.pid!=window.pid:
         reasons.append('WINDOW_GENERATION_MISMATCH')
     breed=(binding.breed or '').upper() or None
@@ -91,7 +95,9 @@ def identity_from_binding(*, account_id: str, binding: AccountBinding, window: W
                           bridge_generation: int | None=None):
     """Build the stable ClientIdentity DTO from independently matched evidence."""
     from anka_contracts.client import ClientIdentity
-    if binding.state!='IDENTITY_MATCHED' or binding.generation_id!=generation_id(window):
+    if (binding.state!='IDENTITY_MATCHED' or binding.generation_id!=generation_id(window)
+            or binding.hwnd!=window.hwnd or binding.pid!=window.pid
+            or binding.evidence_source not in ('LIVE_PROTOCOL','UNITY_BRIDGE')):
         raise ValueError('CLIENT_IDENTITY_NOT_PROVEN')
     breed=(binding.breed or '').upper(); class_id=BREED_CLASS_IDS.get(breed)
     if class_id is None: raise ValueError('CLIENT_CLASS_NOT_PROVEN')
