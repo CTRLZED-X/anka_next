@@ -167,6 +167,10 @@ class TransportEnvelopeAssembler:
         out=[]
         while state.pending:
             seg=state.pending[0];seq=self._payload_seq(seg);end=seq+len(seg.payload)
+            if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
+                state.pending.pop(0);state.unresolved_gaps+=1
+                out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'))
+                continue
             if end<=state.expected:
                 state.pending.pop(0);state.duplicates+=1;continue
             if seq>state.expected:break
@@ -194,6 +198,14 @@ class TransportEnvelopeAssembler:
             for direction,state in sorted(flow.dirs.items()):
                 while state.pending:
                     seg=state.pending.pop(0);seq=self._payload_seq(seg);end=seq+len(seg.payload)
+                    if flow.reset_seen:
+                        state.unresolved_gaps+=1
+                        out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'RESET'))
+                        continue
+                    if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
+                        state.unresolved_gaps+=1
+                        out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'))
+                        continue
                     if state.expected is None:state.expected=seq
                     if end<=state.expected:state.duplicates+=1;continue
                     trim=max(0,state.expected-seq) if seq<state.expected else 0
