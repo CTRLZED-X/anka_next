@@ -33,9 +33,19 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     if window.foreground is not True: reasons.append('WINDOW_FOREGROUND_UNKNOWN' if window.foreground is None else 'WINDOW_NOT_FOREGROUND')
     if window.occluded is not False: reasons.append('WINDOW_OCCLUSION_UNKNOWN' if window.occluded is None else 'WINDOW_OCCLUDED')
     if (window.client_width,window.client_height)!=(calibration.width,calibration.height): reasons.append('CALIBRATION_WINDOW_SIZE_MISMATCH')
-    if calibration.expected_dpi is not None and window.dpi!=calibration.expected_dpi: reasons.append('CALIBRATION_DPI_MISMATCH')
-    if window.dpi is None: reasons.append('WINDOW_DPI_UNKNOWN')
-    if not calibration.current_client_certified: reasons.append('CALIBRATION_NOT_CURRENT_CERTIFIED')
+    calibration_dpi=calibration.expected_dpi
+    if calibration.current_client_certified is True:
+        if type(calibration_dpi) is not int or calibration_dpi<=0:
+            reasons.append('CALIBRATION_DPI_UNPROVEN')
+        elif window.dpi!=calibration_dpi:
+            reasons.append('CALIBRATION_DPI_MISMATCH')
+    elif calibration_dpi is not None:
+        if type(calibration_dpi) is not int or calibration_dpi<=0:
+            reasons.append('CALIBRATION_DPI_UNPROVEN')
+        elif window.dpi!=calibration_dpi:
+            reasons.append('CALIBRATION_DPI_MISMATCH')
+    if type(window.dpi) is not int or window.dpi<=0: reasons.append('WINDOW_DPI_UNKNOWN')
+    if calibration.current_client_certified is not True: reasons.append('CALIBRATION_NOT_CURRENT_CERTIFIED')
     map_id=map_gen=coord_gen=None
     if bridge is None:
         reasons.append('BRIDGE_PROJECTION_MISSING')
@@ -71,7 +81,8 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
         window.foreground,window.occluded,map_id,map_gen,coord_gen,calibration.generation,loadout_gen)
     status='PROVEN' if not reasons else ('BLOCKED' if any(x.endswith('MISMATCH') or x in {
         'IDENTITY_NOT_PROVEN','BINDING_EVIDENCE_SOURCE_UNTRUSTED','CLASS_NOT_PROVEN',
-        'WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND','WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
+        'CALIBRATION_DPI_UNPROVEN','WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND',
+        'WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
     return ClientContextProof(character_name,breed,class_id,vector,status,reasons,False)
 
 
