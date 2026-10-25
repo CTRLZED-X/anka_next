@@ -12,7 +12,8 @@ from unittest import mock
 from anka_client.bridge_discovery import probe_bridge_range
 from anka_client.calibration import load_calibration_profile
 from anka_client.unity_bridge import (
-    BridgeTransportRejected, LocalLoopbackBridgeReader, ReadOnlyBridgeInspector
+    EXPECTED_BRIDGE_VERSION, BridgeTransportRejected,
+    LocalLoopbackBridgeReader, ReadOnlyBridgeInspector
 )
 from anka_client.win32_bridge_ownership import _loopback_listener_owners
 from anka_contracts.client import WindowObservation
@@ -326,6 +327,10 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
                 return;'''
         self.assertIn(tick_loss, source)
         self.assertIn(rebuild_loss, source)
+
+    def test_python_and_native_bridge_version_identity_match(self):
+        source = (ROOT / 'native/unity_bridge/Plugin.cs').read_text(encoding='utf8')
+        self.assertIn(f'PluginVersion = "{EXPECTED_BRIDGE_VERSION}"', source)
 
     def test_native_projection_signature_tracks_hwnd_replacement(self):
         source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
