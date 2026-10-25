@@ -198,8 +198,8 @@ class DefinitiveExecutionLedger:
             per_action.setdefault(aid,[]).append((seq,event,obj))
             prev=record_hash;expected_seq+=1
 
-        action_ids={row[0] for row in actions}
-        if action_ids!=set(per_action):
+        action_ids=[row[0] for row in actions]
+        if set(action_ids)!=set(per_action):
             raise DefinitiveExecutionLedgerError('EXECUTION_ACTION_EVENT_SET_MISMATCH')
 
         for row in actions:
@@ -272,4 +272,4 @@ class DefinitiveExecutionLedger:
                     stored_obligations!=projected_obligations or reason!=projected_reason):
                 raise DefinitiveExecutionLedgerError('EXECUTION_MUTABLE_PROJECTION_CORRUPTED')
 
-        return tuple(self.get(aid) for aid in sorted(action_ids))
+        return tuple(self.get(aid) for aid in action_ids)
