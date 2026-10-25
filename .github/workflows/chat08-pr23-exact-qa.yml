@@ -1,0 +1,48 @@
+name: chat08-pr23-exact-qa
+
+on:
+  push:
+    branches: [agent/08-adversarial-qa]
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/src
+  TARGET_SHA: 268961320c35200658e3b55ec3e4d5515f3a3718
+
+jobs:
+  exact-head-client-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact PR23 head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.TARGET_SHA }}
+      - name: Assert exact source identity
+        run: |
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_SHA=$TARGET_SHA"
+          echo "ACTUAL_SHA=$actual"
+          test "$actual" = "$TARGET_SHA"
+      - name: Set up Python 3.13
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-p1.txt
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-p1.txt
+      - name: Compile Client Python
+        run: python -m compileall -q src/anka_client
+      - name: Agent04 exact-head suites
+        run: |
+          python -m pytest -q             tests/test_agent04_dpi_authority.py             tests/test_agent04_client_unity_coherence.py             tests/test_agent04_identity_recovery.py             tests/test_agent04_projection_final_use.py
+      - name: Client foundation live-readiness architecture
+        run: |
+          python -m pytest -q             tests/test_m3_client_foundation.py             tests/test_m12_003_live_readiness_hardening.py             tests/test_m1_architecture_gate.py
+      - name: Historical P44 and M12_002
+        continue-on-error: true
+        run: |
+          python -m pytest -q             tests/test_p44_unity_bridge_readonly.py             tests/test_m12_002_systemic_hardening.py
