@@ -266,6 +266,9 @@ class FightQueryService:
             matches = actor.team_id == source.team_id
             if matches != same_team:
                 continue
+            if actor.alive is None:
+                unresolved.append(f"actor:{actor.actor_id}.alive")
+                continue
             if actor.cell_id is None:
                 unresolved.append(f"actor:{actor.actor_id}.cell_id")
                 continue
