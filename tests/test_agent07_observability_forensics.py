@@ -838,6 +838,7 @@ class TestAgent07IncidentExportPathSafety(unittest.TestCase):
                     'EXPORT_PATH_SYMLINK_TEST',
                     boundary='observability.bundle',
                 )
+                self.addCleanup(path.unlink, missing_ok=True)
                 self.assertFalse(str(path).startswith(str(outside)))
                 self.assertEqual(list(outside.iterdir()), [])
                 result = verify_incident(path)
