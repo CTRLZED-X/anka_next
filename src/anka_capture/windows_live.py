@@ -85,18 +85,10 @@ class WindowsLiveCapture:
             # a usable Windows capture provider is available).
             self._sniffer_factory=AsyncSniffer
 
-    def ingest_fields(self, *, src:str,dst:str,sport:int,dport:int,seq:int,
-                      flags:int,payload:bytes, observed_utc:str|None=None, observed_monotonic_ns:int|None=None):
-        """Ingress contract used by Scapy callback and deterministic tests.
-
-        A callback that entered before quiesce may finish; callbacks that enter
-        after the stop fence are rejected.  This is intentionally separate from
-        queue locking so shutdown can wait for the sniffer without deadlocking.
-        """
-        with self._state_lock:
-            if self._stopped or not self._started:return False
-            self._frame_no+=1
-            frame_no=self._frame_no
+    def _ingest_reserved_fields(self, *, frame_no:int, src:str,dst:str,sport:int,dport:int,seq:int,
+                                flags:int,payload:bytes, observed_utc:str|None=None,
+                                observed_monotonic_ns:int|None=None):
+        """Validate and enqueue one frame whose lifecycle admission is already fixed."""
         try:
             if not (isinstance(src,str) and isinstance(dst,str) and
                     type(sport) is int and type(dport) is int and 0<=sport<=65535 and 0<=dport<=65535):
@@ -134,6 +126,22 @@ class WindowsLiveCapture:
             self.queue.push(None)  # count as observable loss, not silent skip
             return False
 
+    def ingest_fields(self, *, src:str,dst:str,sport:int,dport:int,seq:int,
+                      flags:int,payload:bytes, observed_utc:str|None=None, observed_monotonic_ns:int|None=None):
+        """Direct ingress contract used by deterministic tests and adapters.
+
+        Direct callers must cross the lifecycle fence at the moment the frame
+        number is reserved. Scapy callbacks use the private reserved path after
+        their callback-entry lease has already crossed the same fence.
+        """
+        with self._state_lock:
+            if self._stopped or not self._started:return False
+            self._frame_no+=1
+            frame_no=self._frame_no
+        return self._ingest_reserved_fields(frame_no=frame_no,src=src,dst=dst,sport=sport,dport=dport,
+            seq=seq,flags=flags,payload=payload,observed_utc=observed_utc,
+            observed_monotonic_ns=observed_monotonic_ns)
+
     def ingest_packet(self, packet)->None:
         """Scapy callback. Keep imports local; no dependency in offline runs.
 
@@ -160,8 +168,15 @@ class WindowsLiveCapture:
                     self._evidence_recorder.mark_incomplete()
                 return
             ip=packet[IP] if has_v4 else packet[IPv6];tcp=packet[TCP]
-            accepted=self.ingest_fields(src=str(ip.src),dst=str(ip.dst),sport=int(tcp.sport),dport=int(tcp.dport),
-                               seq=int(tcp.seq),flags=int(tcp.flags),payload=bytes(tcp.payload))
+            # This callback already crossed the lifecycle fence above. Reserve
+            # its frame ordinal without re-checking _stopped: quiesce may have
+            # begun meanwhile, but it must wait for this admitted callback.
+            with self._state_lock:
+                self._frame_no+=1
+                frame_no=self._frame_no
+            accepted=self._ingest_reserved_fields(frame_no=frame_no,src=str(ip.src),dst=str(ip.dst),
+                               sport=int(tcp.sport),dport=int(tcp.dport),seq=int(tcp.seq),
+                               flags=int(tcp.flags),payload=bytes(tcp.payload))
             if self._evidence_recorder is not None:
                 if not accepted:
                     self._evidence_recorder.mark_incomplete()
