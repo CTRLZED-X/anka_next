@@ -420,7 +420,12 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
             'finding':party_ready.finding.to_dict() if party_ready.finding else None}
         if (trace_spec is not None and trace_spec.operation.upper().startswith('READY')) or 'READY' in code or 'ready' in boundary.lower():
             if party_ready.finding is not None:
-                finding=party_ready.finding;finding_source='PARTY_READY'
+                # When the party analyzer becomes the primary diagnosis, its
+                # graph must become the primary graph too. Otherwise a generic
+                # trace can borrow another account's edge and ship a different
+                # first gap than the selected per-account READY finding.
+                finding=party_ready.finding;finding_source='PARTY_READY';boundary_graph_mode='PARTY_READY'
+                boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
             elif trace_spec is not None and trace_spec.operation.upper().startswith('READY'):
                 finding=None;finding_source='NONE';boundary_graph_mode='PARTY_READY'
                 boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
@@ -1108,6 +1113,8 @@ def verify_incident(path:Path)->dict:
                 finding_source=diag.get('finding_source')
                 if finding_source not in ('NONE','GENERIC_TRACE','PARTY_READY'):
                     add('DIAGNOSIS_FINDING_SOURCE_INVALID')
+                if finding_source in ('GENERIC_TRACE','PARTY_READY') and graph_analysis_mode!=finding_source:
+                    add('DIAGNOSIS_BOUNDARY_GRAPH_SOURCE_MISMATCH')
                 expected_finding=(recomputed_trace_finding if finding_source=='GENERIC_TRACE'
                                   else recomputed_party_finding if finding_source=='PARTY_READY' else None)
                 if finding_source in ('GENERIC_TRACE','PARTY_READY'):
