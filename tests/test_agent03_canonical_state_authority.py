@@ -192,6 +192,36 @@ class Agent03AuthorityTests(unittest.TestCase):
             self.assertEqual((actor.ap.status,actor.ap.value,actor.ap.turn_epoch),('KNOWN',12,2))
             self.assertEqual(actor.mp.status,'STALE')
 
+    def test_untagged_between_turn_absolute_is_not_borrowed_into_next_turn(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2,
+                candidate('turn-1','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                3,
+                candidate('turn-end-1','TURN_ENDED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                4,
+                candidate('late-untagged-ap','ACTOR_RESOURCE_ABSOLUTE',
+                          {'actor_id':41,'resource':'AP','value':13},
+                          fight_epoch=1),
+            ))
+            between=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((between.ap.status,between.ap.value,between.ap.turn_epoch),('KNOWN',13,1))
+            writer.commit_candidate_batch(batch(
+                5,
+                candidate('turn-2','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=2),
+            ))
+            after=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((after.ap.status,after.ap.value,after.ap.turn_epoch),('STALE',13,2))
+            self.assertEqual(after.ap.invalidation_reason,'TURN_STARTED_WITHOUT_CURRENT_ABSOLUTE_EVIDENCE')
+
     def test_new_fight_resets_complete_looking_actor_state(self):
         with self.writer() as writer:
             writer.commit_candidate_batch(fight_bootstrap())
