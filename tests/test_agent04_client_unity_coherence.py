@@ -180,7 +180,7 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertIn('OBSERVATION_SCOPE_MISMATCH', source)
         self.assertIn('STALE_OBSERVATION_REVISION', source)
         self.assertIn('OBSERVATION_REVISION_CONFLICT', source)
-        self.assertIn('observation.CanonicalRevision < _lastObservation.CanonicalRevision', source)
+        self.assertIn('observation.CanonicalRevision.Value < _lastObservation.CanonicalRevision.Value', source)
 
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
