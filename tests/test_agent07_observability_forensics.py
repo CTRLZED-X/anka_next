@@ -694,6 +694,111 @@ class TestAgent07ReadyBatchCorrelation(unittest.TestCase):
 
 
 
+    def test_party_ready_finding_owns_primary_boundary_graph(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-primary-graph',
+                invocation_id='inv-agent07-ready-primary-graph',
+            )
+            try:
+                fight_epoch=12
+                # CRA has a complete per-account READY path. ENU reaches the
+                # physical send boundary but has no Protocol READY observation.
+                # A generic uncorrelated READY trace can borrow CRA's Protocol
+                # row and move its apparent gap to the later shared barrier.
+                for account, complete in (('acct-cra',True),('acct-enu',False)):
+                    action_id='action-agent07-primary-'+account
+                    batch='batch-agent07-primary-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    if complete:
+                        obs.record(
+                            'protocol.ready_observed',
+                            owner_system='anka_protocol',
+                            boundary='protocol.ready_observation',
+                            account_id=account,
+                            fight_epoch=fight_epoch,
+                            payload={'batch_span_id':batch},
+                        )
+                        obs.record(
+                            'canonical.ready_committed',
+                            owner_system='anka_canonical',
+                            boundary='canonical.ready_commit',
+                            account_id=account,
+                            fight_epoch=fight_epoch,
+                            payload={'batch_span_id':batch},
+                        )
+
+                path = obs.export_incident(
+                    'READY_PARTY_GRAPH_SOURCE_TEST',
+                    boundary='protocol.ready_observation',
+                    trace_spec=READY_TRACE,
+                    control_state='BLOCKED',
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    diagnosis = json.loads(z.read('analysis/diagnosis.json'))
+                    graph = json.loads(z.read('analysis/boundary_graph.json'))
+                    party = json.loads(z.read('analysis/party_ready.json'))
+
+                self.assertEqual(diagnosis['finding_source'], 'PARTY_READY')
+                self.assertEqual(
+                    diagnosis['first_divergent_boundary'],
+                    'protocol.ready_observation',
+                )
+                self.assertEqual(graph['analysis_mode'], 'PARTY_READY')
+                expected_edges = [
+                    edge
+                    for account_graph in party['account_graphs']
+                    for edge in account_graph['edges']
+                ] + party['shared_graph']
+                self.assertEqual(graph['edges'], expected_edges)
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/boundary_graph.json': lambda payload: payload.__setitem__(
+                            'analysis_mode',
+                            'GENERIC_TRACE',
+                        ),
+                    },
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn(
+                    'DIAGNOSIS_BOUNDARY_GRAPH_SOURCE_MISMATCH',
+                    tampered['errors'],
+                )
+            finally:
+                obs.finish('BLOCKED')
+
+
+
 class TestAgent07WorkflowLifecycleClassification(unittest.TestCase):
     def test_rejected_signal_does_not_turn_completed_cycle_into_blocked(self):
         with tempfile.TemporaryDirectory() as td:
