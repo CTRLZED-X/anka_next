@@ -70,6 +70,7 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             _lastError = windowError;
             _coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
             _coordinateByCell.Clear();
+            _lastProjectionSignature = null;
             return;
         }
         var signature = ProjectionSignature(window);
@@ -492,6 +493,8 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 _source.ProjectionVerified ? "COORDINATE_NOT_READY" : "CELL_POSITION_SOURCE_UNVERIFIED",
                 _lastError);
             _coordinateByCell.Clear();
+            if (_source.ProjectionVerified && _camera != null)
+                _lastProjectionSignature = null;
         }
         if (changed || !string.Equals(_coordinates.Status, "MAP_COORDINATES_READY", StringComparison.Ordinal))
             evidenceFile = WriteEvidence(matches);
@@ -676,6 +679,7 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 _lastError = $"Dofus did not return a projectable authoritative position for cell {cellId}.";
                 _coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
                 _coordinateByCell.Clear();
+                _lastProjectionSignature = null;
                 return;
             }
             var inside = point.InsideCameraViewport;
