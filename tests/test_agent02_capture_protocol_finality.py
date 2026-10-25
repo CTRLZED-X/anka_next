@@ -189,5 +189,139 @@ class TestAgent02TransportFinality(unittest.TestCase):
         self.assertEqual(a.health().status, "UNCERTAIN")
 
 
+class TestAgent02OverlapTruth(unittest.TestCase):
+    def test_exact_same_range_same_bytes_is_proven_duplicate(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"abcd", n=2))
+        self.assertEqual(a.feed(seg(101, b"abcd", n=3)), ())
+        h = a.health()
+        self.assertEqual(h.status, "CLEAN")
+        self.assertGreaterEqual(h.duplicate_segments, 1)
+        self.assertEqual(h.unresolved_gaps, 0)
+
+    def test_exact_same_range_different_bytes_is_transport_conflict(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2))
+        self.assertEqual(a.feed(seg(101, b"B", n=3)), ())
+        h = a.health()
+        self.assertEqual(h.status, "UNCERTAIN")
+        self.assertGreaterEqual(h.unresolved_gaps, 1)
+        after = a.feed(seg(102, b"C", n=4))[0]
+        self.assertEqual(after.continuity, "GAP_INSIDE")
+
+    def test_partial_overlap_matching_bytes_emits_only_new_suffix(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"abcd", n=2))
+        out = a.feed(seg(103, b"cdef", n=3))
+        self.assertEqual([x.payload for x in out], [b"ef"])
+        self.assertEqual(out[0].continuity, "COMPLETE")
+        self.assertEqual(a.health().status, "CLEAN")
+
+    def test_partial_overlap_conflict_fences_new_suffix(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"abcd", n=2))
+        out = a.feed(seg(103, b"Xdef", n=3))
+        self.assertEqual([x.payload for x in out], [b"ef"])
+        self.assertEqual(out[0].continuity, "GAP_INSIDE")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+    def test_shorter_exact_retransmission_requires_and_passes_byte_proof(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"abcd", n=2))
+        self.assertEqual(a.feed(seg(102, b"bc", n=3)), ())
+        h = a.health()
+        self.assertEqual(h.status, "CLEAN")
+        self.assertGreaterEqual(h.duplicate_segments, 1)
+
+    def test_longer_retransmission_verifies_overlap_before_extension(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"ab", n=2))
+        out = a.feed(seg(101, b"abcd", n=3))
+        self.assertEqual([x.payload for x in out], [b"cd"])
+        self.assertEqual(out[0].continuity, "COMPLETE")
+        self.assertEqual(a.health().status, "CLEAN")
+
+    def test_pending_reordered_overlap_uses_same_conflict_rule(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        self.assertEqual(a.feed(seg(104, b"ZX", n=2)), ())
+        out = a.feed(seg(101, b"abcd", n=3))
+        self.assertEqual([x.payload for x in out], [b"abcd", b"X"])
+        self.assertEqual(out[1].continuity, "GAP_INSIDE")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+    def test_finish_pending_overlap_uses_same_conflict_rule(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        self.assertEqual(a.feed(seg(110, b"abcd", n=2)), ())
+        self.assertEqual(a.feed(seg(112, b"cX", n=3)), ())
+        out = a.finish()
+        self.assertEqual([x.payload for x in out], [b"abcd"])
+        self.assertEqual(out[0].continuity, "GAP_BEFORE")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+        self.assertGreaterEqual(a.health().unresolved_gaps, 1)
+
+    def test_fin_boundary_retransmission_conflict_remains_uncertain(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"ab", n=2, flags=0x19))
+        self.assertEqual(a.feed(seg(101, b"aX", n=3)), ())
+        self.assertEqual(a.health().status, "UNCERTAIN")
+        post_fin = a.feed(seg(103, b"Z", n=4))[0]
+        self.assertEqual(post_fin.continuity, "GAP_INSIDE")
+
+    def test_new_generation_does_not_reuse_old_generation_byte_proof(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2))
+        a.feed(seg(102, n=3, flags=0x04))
+        a.feed(seg(500, n=4, flags=0x02))
+        fresh = a.feed(seg(501, b"B", n=5))[0]
+        self.assertEqual(fresh.connection_generation, 2)
+        self.assertEqual(fresh.continuity, "RECONNECTED")
+
+        # A stale old-generation byte range is not allowed to match against the
+        # retired proof window. It is unverifiable in generation 2 and fails closed.
+        self.assertEqual(a.feed(seg(101, b"A", n=6)), ())
+        self.assertEqual(a.health().status, "UNCERTAIN")
+        fenced = a.feed(seg(502, b"C", n=7))[0]
+        self.assertEqual(fenced.connection_generation, 2)
+        self.assertEqual(fenced.continuity, "GAP_INSIDE")
+
+    def test_overlap_older_than_bounded_proof_window_is_unverifiable(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        payload = b"A" * 4097
+        a.feed(seg(101, payload, n=2))
+        self.assertEqual(a.feed(seg(101, b"A", n=3)), ())
+        h = a.health()
+        self.assertEqual(h.status, "UNCERTAIN")
+        self.assertEqual(h.duplicate_segments, 0)
+        fenced = a.feed(seg(4198, b"B", n=4))[0]
+        self.assertEqual(fenced.continuity, "GAP_INSIDE")
+
+    def test_sequence_wrap_remains_conservatively_uncertain(self):
+        a = assembler()
+        a.feed(seg(0xFFFFFFFE, n=1, flags=0x02))
+        self.assertEqual(a.feed(seg(0xFFFFFFFF, b"AB", n=2)), ())
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+    def test_metadata_auditor_also_rejects_conflicting_same_range_bytes(self):
+        health = TransportAuditor().audit((
+            seg(100, n=1, flags=0x02),
+            seg(101, b"A", n=2),
+            seg(101, b"B", n=3),
+        ))
+        self.assertEqual(health.status, "TRANSPORT_UNCERTAIN")
+        self.assertGreaterEqual(health.unresolved_gap_directions, 1)
+        self.assertEqual(health.duplicates, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
