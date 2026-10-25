@@ -18,8 +18,9 @@ def _canonical_target(target):
 
 def action_key(frame:DecisionFrame,kind:str,target:tuple[tuple[str,str],...])->str:
     obj={'run_id':frame.run_id,'account_id':frame.account_id,'fight_epoch':frame.fight_epoch,'turn_epoch':frame.turn_epoch,
-         'snapshot_id':frame.snapshot_id,'snapshot_hash':frame.snapshot_semantic_sha256,'policy':frame.policy_profile,
-         'kind':kind,'target':list(_canonical_target(target))}
+         'snapshot_id':frame.snapshot_id,'snapshot_hash':frame.snapshot_semantic_sha256,
+         'kernel_ruleset_id':frame.kernel_ruleset_id,'game_data_revision':frame.game_data_revision,
+         'policy':frame.policy_profile,'kind':kind,'target':list(_canonical_target(target))}
     return sha256(json.dumps(obj,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 def _plan(frame,kind,target,proofs):
