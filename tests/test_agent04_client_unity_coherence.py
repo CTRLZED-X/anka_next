@@ -453,14 +453,26 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
             profile.write_text(json.dumps(payload), encoding='utf8')
             with self.assertRaisesRegex(ValueError, 'CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED'):
                 load_calibration_profile(profile, current_client_certified=True, expected_dpi=96)
+            with self.assertRaisesRegex(ValueError, 'CURRENT_CALIBRATION_ACCEPTANCE_HASH_REQUIRED'):
+                load_calibration_profile(
+                    profile, source_path=source, current_client_certified=True, expected_dpi=96
+                )
+            profile_hash = hashlib.sha256(profile.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, 'CURRENT_CALIBRATION_ACCEPTANCE_HASH_MISMATCH'):
+                load_calibration_profile(
+                    profile, source_path=source, current_client_certified=True, expected_dpi=96,
+                    accepted_profile_sha256='f' * 64,
+                )
             historical_generation = load_calibration_profile(
                 profile, source_path=source, current_client_certified=False, expected_dpi=96
             ).generation
             current_generation = load_calibration_profile(
-                profile, source_path=source, current_client_certified=True, expected_dpi=96
+                profile, source_path=source, current_client_certified=True, expected_dpi=96,
+                accepted_profile_sha256=profile_hash,
             ).generation
             different_dpi_generation = load_calibration_profile(
-                profile, source_path=source, current_client_certified=True, expected_dpi=120
+                profile, source_path=source, current_client_certified=True, expected_dpi=120,
+                accepted_profile_sha256=profile_hash,
             ).generation
             self.assertEqual(len({historical_generation,current_generation,different_dpi_generation}),3)
 
