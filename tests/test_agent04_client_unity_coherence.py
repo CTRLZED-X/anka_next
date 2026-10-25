@@ -374,6 +374,11 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertIn('_mapGeneration = generationEpoch;', source)
         self.assertIn('_coordinateGeneration = generationEpoch;', source)
 
+    def test_native_fight_entry_is_bound_to_current_projection_generation(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('Projection generation is not current for the follower window.', source)
+        self.assertIn('Projection changed during fight-entry resolution.', source)
+
     def test_native_resolve_fails_closed_on_subtick_projection_drift(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         self.assertIn('Projection changed after the cached coordinate table was validated.', source)
