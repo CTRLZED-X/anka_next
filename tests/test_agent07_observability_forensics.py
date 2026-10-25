@@ -574,6 +574,34 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_crash_recovery_rejects_broken_symlink_marker_without_writing_target(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(
+                root,
+                run_id='run-agent07-recovery-marker-link',
+                invocation_id='inv-agent07-recovery-marker-link',
+            )
+            obs.record(
+                'workflow.heartbeat',
+                owner_system='anka_workflow',
+                boundary='workflow.watchdog',
+            )
+            self.assertTrue(obs.flush_journals())
+
+            marker = obs.folder / 'unclean_recovery.json'
+            outside = root / 'outside-recovery-marker.json'
+            try:
+                marker.symlink_to(outside)
+            except (OSError, NotImplementedError):
+                self.skipTest('symlink unavailable')
+
+            self.assertTrue(marker.is_symlink())
+            self.assertFalse(outside.exists())
+            self.assertIsNone(recover_unclean_run(obs.folder))
+            self.assertFalse(outside.exists())
+
+
     def test_crash_recovery_rejects_mixed_invocation_journal_when_state_identity_missing(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
