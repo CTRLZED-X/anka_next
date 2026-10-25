@@ -45,7 +45,7 @@ def _projection_ready_for_window(health: dict, window: WindowObservation) -> boo
 def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
                        port_start: int = 8765, port_count: int = 32,
                        reader_factory: Callable[[], object] | None = None,
-                       listener_owner_resolver: Callable[[int], int | None] | None = None) -> dict:
+                       listener_owner_resolver: Callable[[int], tuple[int,int] | None] | None = None) -> dict:
     if not (1 <= port_start <= 65535) or not (1 <= port_count <= 64) or port_start + port_count - 1 > 65535:
         raise ValueError('INVALID_BRIDGE_PORT_RANGE')
     windows_by_process={}
@@ -55,8 +55,8 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
     generations=set(windows_by_process)
     factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=.20))
     if listener_owner_resolver is None and os.name == 'nt':
-        from anka_client.win32_bridge_ownership import loopback_listener_owner_pid
-        listener_owner_resolver=loopback_listener_owner_pid
+        from anka_client.win32_bridge_ownership import loopback_listener_owner_generation
+        listener_owner_resolver=loopback_listener_owner_generation
     owner_proof_active=listener_owner_resolver is not None
 
     def one(port: int):
@@ -75,14 +75,14 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             pid=health.get('processId'); created=health.get('processStartTime'); declared=health.get('bridgePort')
             if type(pid) is not int or type(created) is not int or type(declared) is not int or declared != port:
                 return ('MALFORMED',None,False)
+            generation=(pid,created)
             if listener_owner_resolver is not None:
                 try:
                     owner_after=listener_owner_resolver(port)
                 except Exception:
                     return ('OWNER_UNVERIFIED',None,False)
-                if owner_before != pid or owner_after != pid:
+                if owner_before != generation or owner_after != generation:
                     return ('OWNER_MISMATCH',None,False)
-            generation=(pid,created)
             matched=generation if generation in generations else None
             if matched is None:
                 return ('VALID',None,False)
