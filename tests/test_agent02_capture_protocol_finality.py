@@ -294,6 +294,21 @@ class TestAgent02OverlapTruth(unittest.TestCase):
         self.assertEqual(fenced.connection_generation, 2)
         self.assertEqual(fenced.continuity, "GAP_INSIDE")
 
+    def test_conflict_fences_opposite_direction_in_same_connection_generation(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02, direction="server_to_client"))
+        a.feed(seg(500, n=2, flags=0x02, direction="client_to_server"))
+        a.feed(seg(101, b"S", n=3, direction="server_to_client"))
+        a.feed(seg(501, b"C", n=4, direction="client_to_server"))
+
+        self.assertEqual(
+            a.feed(seg(101, b"X", n=5, direction="server_to_client")),
+            (),
+        )
+        opposite = a.feed(seg(502, b"D", n=6, direction="client_to_server"))[0]
+        self.assertEqual(opposite.continuity, "GAP_INSIDE")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
     def test_overlap_older_than_bounded_proof_window_is_unverifiable(self):
         a = assembler()
         a.feed(seg(100, n=1, flags=0x02))
