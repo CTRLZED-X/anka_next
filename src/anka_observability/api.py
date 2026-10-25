@@ -393,9 +393,7 @@ class LocalDiagnostics:
             previous_seq=self._seq
             self._seq=event.producer_seq
             status=self._emit_unlocked(event)
-            retained=(any(row.get('event_id')==event.event_id for row in self.recent)
-                      or any(row.get('event_id')==event.event_id for row in self.priority)
-                      or any(row.get('event_id')==event.event_id for row in self.pinned))
+            retained=bool(self.recent and self.recent[-1].get('event_id')==event.event_id)
             if not retained:self._seq=previous_seq
             return status
 
