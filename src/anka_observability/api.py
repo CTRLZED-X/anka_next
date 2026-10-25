@@ -29,7 +29,8 @@ def is_priority_event(event:DiagnosticEvent)->bool:
     if event.severity in frozenset({'ERROR','CRITICAL','SAFETY','SETTLEMENT'}):return True
     if event.evidence_class in frozenset({'AUTHORITY_COMMITTED','CONFLICTING','MISSING'}):return True
     if event.failure_code or event.physical_input_state:return True
-    if event.event_name=='decision.plan_result':return True
+    if event.event_name=='decision.plan_result':
+        return event.payload.get('disposition') in ('WAIT','NO_ACTION','FAULT')
     return any(token in event.event_name for token in (
         '.requested','.admitted','.input_sent','.ready_observed','.committed',
         '.settled','.barrier_satisfied','.turn_owner_proved','.frame_created',
