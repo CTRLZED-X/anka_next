@@ -87,7 +87,7 @@ class DefinitiveExecutionLedger:
         return self.get(action_id)
     def cancel_pre_send(self,action_id,reason):return self._transition(action_id,{'PREPARED'},'REJECTED_NOT_SENT','CANCELLED_BEFORE_SEND',reason,send_state='NOT_SENT',obligations=())
     def mark_send_started(self,action_id,attempt_id):return self._transition(action_id,{'PREPARED'},'SEND_STARTED','SEND_STARTED','EXTERNAL_BOUNDARY_ENTERED',attempt_id=attempt_id,send_state='SEND_STARTED')
-    def _transition_with_resolved_passthrough(self,action_id,allowed,new_status,event,reason,*,resolved=frozenset(),resolved_event=None,attempt_id=None,send_state=None,evidence_add=(),obligations=None):
+    def _transition_with_resolved_passthrough(self,action_id,allowed,new_status,event,reason,*,resolved=frozenset(),resolved_event=None,preserve=frozenset(),preserve_event=None,attempt_id=None,send_state=None,evidence_add=(),obligations=None):
         """Atomically decide whether to transition or preserve a raced-ahead outcome.
 
         Driver return and Canonical outcome reconciliation run on different call
@@ -99,11 +99,25 @@ class DefinitiveExecutionLedger:
         with self._db() as con:
             con.execute('BEGIN IMMEDIATE')
             try:
-                row=con.execute('SELECT status,attempt_id,send_state,evidence_json,obligations_json FROM actions WHERE action_id=?',(action_id,)).fetchone()
+                row=con.execute('SELECT status,attempt_id,send_state,evidence_json,obligations_json,reason FROM actions WHERE action_id=?',(action_id,)).fetchone()
                 if row is None:raise DefinitiveExecutionLedgerRejected('UNKNOWN_ACTION')
                 if row[0] in resolved:
                     if resolved_event is not None:
                         self._append(con,action_id,resolved_event,{'status_before':row[0],'status_after':row[0],'reason':reason,'attempt_id':row[1],'send_state':row[2]})
+                    con.commit()
+                    return self.get(action_id)
+                if row[0] in preserve:
+                    ev=list(json.loads(row[3]));ev.extend(x for x in evidence_add if x not in ev)
+                    obs=list(json.loads(row[4]))
+                    aid=row[1] if attempt_id is None else attempt_id
+                    ss=row[2] if send_state is None else send_state
+                    event_id=self._append(con,action_id,preserve_event or event,{
+                        'status_before':row[0],'status_after':row[0],'reason':row[5],
+                        'transport_reason':reason,'attempt_id':aid,'send_state':ss,
+                        'evidence_ids':ev,'obligations':obs})
+                    if event_id not in ev:ev.append(event_id)
+                    con.execute('UPDATE actions SET attempt_id=?,send_state=?,evidence_json=? WHERE action_id=?',
+                                (aid,ss,_json(ev),action_id))
                     con.commit()
                     return self.get(action_id)
                 if row[0] not in allowed:raise DefinitiveExecutionLedgerRejected(f'ILLEGAL_EXECUTION_TRANSITION:{row[0]}:{event}')
@@ -126,8 +140,12 @@ class DefinitiveExecutionLedger:
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED'},'PENDING','DRIVER_ACCEPTED_SEND',reason,
             resolved=self.TERMINAL|{'CONFIRMED_UNSETTLED'},resolved_event='DRIVER_RETURNED_AFTER_OUTCOME',send_state='SENT')
     def mark_uncertain(self,action_id,reason):
-        return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','CONFIRMED_UNSETTLED','UNCERTAIN'},'UNCERTAIN','SEND_UNCERTAIN',reason,
-            resolved=self.TERMINAL,send_state='MAY_HAVE_SENT')
+        # A late ambiguous driver result cannot erase authoritative partial outcome
+        # proof already accumulated. Preserve CONFIRMED_UNSETTLED while recording
+        # the more conservative transport state.
+        return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN'},'UNCERTAIN','SEND_UNCERTAIN',reason,
+            resolved=self.TERMINAL,preserve={'CONFIRMED_UNSETTLED'},
+            preserve_event='SEND_UNCERTAIN_AFTER_CONFIRMED_OUTCOME',send_state='MAY_HAVE_SENT')
     def apply_outcome(self,action_id,status,evidence:ExecutionOutcomeEvidence,reason,obligations):
         if status not in ('PENDING','CONFIRMED_UNSETTLED','SETTLED_SUCCESS','PROVEN_FAILURE','UNCERTAIN'):raise DefinitiveExecutionLedgerRejected('INVALID_OUTCOME_STATUS')
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN','CONFIRMED_UNSETTLED'},status,'AUTHORITATIVE_OUTCOME',reason,
