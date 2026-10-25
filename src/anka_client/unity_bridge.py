@@ -80,6 +80,25 @@ def _bool(obj: dict, key: str) -> bool:
     return v
 
 
+def _window_fingerprint(obj: dict, window: WindowObservation) -> str:
+    """Bind bridge projection evidence to the exact HWND, not only its process."""
+    value = obj.get('windowFingerprint')
+    if type(value) is not str or not value:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_MISSING')
+    parts = value.split(':')
+    if len(parts) != 5:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_INVALID')
+    try:
+        hwnd, _left, _top, width, height = (int(item, 10) for item in parts)
+    except (TypeError, ValueError) as exc:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_INVALID') from exc
+    if hwnd != window.hwnd:
+        raise ValueError('BRIDGE_WINDOW_HANDLE_MISMATCH')
+    if (width, height) != (window.client_width, window.client_height):
+        raise ValueError('BRIDGE_WINDOW_SIZE_MISMATCH')
+    return value
+
+
 class ReadOnlyBridgeInspector:
     def __init__(self, reader: BridgeEvidenceReader):
         self.reader = reader
@@ -198,10 +217,14 @@ class ReadOnlyBridgeInspector:
             raise ValueError('BRIDGE_WINDOW_SIZE_MISMATCH')
         # The bridge can refresh a camera projection without changing the map.
         # Its signatures are part of the coherence fence across three reads.
+        # WindowFingerprint is also independently checked against the target HWND;
+        # process identity alone is insufficient when one process has >1 window.
         signatures = []
-        for name in ('projectionSignature','windowFingerprint','cameraFingerprint','cellGeometryFingerprint'):
+        for name in ('projectionSignature','cameraFingerprint','cellGeometryFingerprint'):
             value = h.get(name)
             if type(value) is not str or not value:
                 raise ValueError('BRIDGE_PROJECTION_SIGNATURE_MISSING')
             signatures.append(value)
-        return (pid,creation,bridge_port,map_id,map_gen,coord_gen,*signatures)
+        window_fingerprint = _window_fingerprint(h, w)
+        return (pid,creation,bridge_port,map_id,map_gen,coord_gen,
+                signatures[0],window_fingerprint,signatures[1],signatures[2])
