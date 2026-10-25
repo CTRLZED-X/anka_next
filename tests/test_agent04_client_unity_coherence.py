@@ -8,7 +8,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from anka_app.cli import ROOT
 from anka_client.bridge_discovery import probe_bridge_range
 from anka_client.calibration import load_calibration_profile
 from anka_client.unity_bridge import ReadOnlyBridgeInspector
@@ -19,6 +18,7 @@ from anka_contracts.client import WindowObservation
 PORT = 8765
 PID = 2020
 CREATED = 123456000
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def window(hwnd: int = 33, *, size: tuple[int, int] = (1280, 649)) -> WindowObservation:
