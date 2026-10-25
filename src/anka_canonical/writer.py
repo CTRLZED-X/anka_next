@@ -215,6 +215,17 @@ class CanonicalWriter:
         if len({c.candidate_id for c in batch.candidates})!=len(batch.candidates):
             raise CanonicalOrderingError('CANONICAL_CANDIDATE_ID_DUPLICATE')
 
+    def _validate_candidate_evidence(self,batch:CandidateCanonicalBatch)->None:
+        # Canonical is the authority boundary. A candidate may be promoted only
+        # from direct Protocol observation evidence; pre-labeled authority,
+        # heuristics, missing/stale/conflicting evidence or another subsystem's
+        # claim must never be laundered into CANONICAL_COMMITTED state.
+        for candidate in batch.candidates:
+            if any(pointer.classification!='OBSERVED_EXTERNAL' or
+                   pointer.source_system!='anka_protocol'
+                   for pointer in candidate.evidence):
+                raise CanonicalAdmissionRejected('CANONICAL_CANDIDATE_EVIDENCE_UNTRUSTED')
+
     @_serialized
     def replay(self,account_id:str)->LiveStateSnapshot|None:
         """Rebuild one account snapshot from durable committed history only."""
@@ -235,6 +246,7 @@ class CanonicalWriter:
         if failure_injection not in valid_faults:raise ValueError('CANONICAL_FAULT_STAGE_INVALID')
         allowed,reason=self.admission_policy.assess(batch)
         if not allowed:raise CanonicalAdmissionRejected(reason)
+        self._validate_candidate_evidence(batch)
         if len(batch.candidates)>MAX_BATCH_EVENTS:raise CanonicalIntegrityError('CANONICAL_BATCH_TOO_LARGE')
         if batch.candidates:
             scope={(x.account_id,x.client_instance_id) for x in batch.candidates}
