@@ -11,6 +11,7 @@ from hashlib import sha256
 import json,sqlite3
 from anka_contracts.action import ActionCommand
 from anka_contracts.execution import ExecutionLedgerAction,ExecutionOutcomeEvidence
+from anka_execution.outcomes import correlate
 
 class DefinitiveExecutionLedgerError(RuntimeError):pass
 class DefinitiveExecutionLedgerRejected(ValueError):pass
@@ -146,6 +147,55 @@ class DefinitiveExecutionLedger:
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN'},'UNCERTAIN','SEND_UNCERTAIN',reason,
             resolved=self.TERMINAL,preserve={'CONFIRMED_UNSETTLED'},
             preserve_event='SEND_UNCERTAIN_AFTER_CONFIRMED_OUTCOME',send_state='MAY_HAVE_SENT')
+    def settle_outcome(self,action_id,evidence:ExecutionOutcomeEvidence):
+        """Atomically correlate and settle one authoritative outcome observation.
+
+        Correlation executes while holding SQLite ``BEGIN IMMEDIATE`` so every
+        service/process sharing this ledger observes one serial durable settlement
+        order.  A second reconciler therefore cannot calculate from a stale
+        obligation/evidence projection and overwrite proof accumulated by another.
+        Ignored, duplicate, and terminal observations do not append a misleading
+        authoritative-outcome event.
+        """
+        with self._db() as con:
+            con.execute('BEGIN IMMEDIATE')
+            try:
+                row=con.execute(
+                    'SELECT command_json,status,attempt_id,send_state,evidence_json,obligations_json,reason '
+                    'FROM actions WHERE action_id=?',(action_id,)
+                ).fetchone()
+                if row is None:raise DefinitiveExecutionLedgerRejected('UNKNOWN_ACTION')
+                command_json,current_status,attempt_id,send_state,evidence_json,obligations_json,current_reason=row
+                current_evidence=list(json.loads(evidence_json));current_obligations=list(json.loads(obligations_json))
+                if current_status in self.TERMINAL:
+                    con.commit();return self.get(action_id),'TERMINAL_ACTION_ALREADY_RESOLVED',False
+                if evidence.evidence_id in current_evidence:
+                    con.commit();return self.get(action_id),'DUPLICATE_OUTCOME_EVIDENCE_ALREADY_APPLIED',False
+                try:command=command_from_dict(json.loads(command_json))
+                except Exception as exc:
+                    raise DefinitiveExecutionLedgerError('EXECUTION_COMMAND_PROJECTION_CORRUPTED') from exc
+                verdict=correlate(command,evidence,current_status=current_status,
+                                  unresolved_obligations=tuple(current_obligations))
+                if verdict.status=='IGNORE':
+                    con.commit();return self.get(action_id),verdict.reason,False
+                if current_status not in ('SEND_STARTED','PENDING','UNCERTAIN','CONFIRMED_UNSETTLED'):
+                    raise DefinitiveExecutionLedgerRejected(
+                        f'ILLEGAL_EXECUTION_TRANSITION:{current_status}:AUTHORITATIVE_OUTCOME')
+                ev=list(current_evidence);ev.append(evidence.evidence_id)
+                obs=list(verdict.unresolved)
+                event_id=self._append(con,action_id,'AUTHORITATIVE_OUTCOME',{
+                    'status_before':current_status,'status_after':verdict.status,
+                    'reason':verdict.reason,'attempt_id':attempt_id,'send_state':send_state,
+                    'evidence_ids':ev,'obligations':obs})
+                if event_id not in ev:ev.append(event_id)
+                con.execute(
+                    'UPDATE actions SET status=?,evidence_json=?,obligations_json=?,reason=? WHERE action_id=?',
+                    (verdict.status,_json(ev),_json(obs),verdict.reason,action_id))
+                con.commit()
+            except Exception:
+                con.rollback();raise
+        return self.get(action_id),verdict.reason,True
+
     def apply_outcome(self,action_id,status,evidence:ExecutionOutcomeEvidence,reason,obligations):
         if status not in ('PENDING','CONFIRMED_UNSETTLED','SETTLED_SUCCESS','PROVEN_FAILURE','UNCERTAIN'):raise DefinitiveExecutionLedgerRejected('INVALID_OUTCOME_STATUS')
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN','CONFIRMED_UNSETTLED'},status,'AUTHORITATIVE_OUTCOME',reason,
