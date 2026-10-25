@@ -13,8 +13,10 @@ from anka_contracts.client import CalibrationProfileEvidence
 def _point_tuple(items: dict, *, numeric_key: bool=False):
     result=[]
     for key,value in sorted(items.items(),key=lambda kv: int(kv[0]) if numeric_key else kv[0]):
+        if type(value.get('x')) is not int or type(value.get('y')) is not int:
+            raise ValueError('INVALID_CALIBRATION_POINT_TYPE')
         name=int(key) if numeric_key else str(key)
-        result.append((name,int(value['x']),int(value['y'])))
+        result.append((name,value['x'],value['y']))
     return tuple(result)
 
 
@@ -23,7 +25,8 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
                              expected_dpi: int | None=None) -> CalibrationProfileEvidence:
     raw=path.read_bytes(); digest=sha256(raw).hexdigest()
     data=json.loads(raw.decode('utf-8'))
-    if type(data) is not dict or data.get('schema_version') != 1:
+    if (type(data) is not dict or type(data.get('schema_version')) is not int
+            or data.get('schema_version') != 1):
         raise ValueError('UNSUPPORTED_CALIBRATION_SCHEMA')
     source_digest=str(data.get('source_sha256',''))
     if len(source_digest)!=64:
@@ -31,6 +34,9 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     if source_path is not None and sha256(source_path.read_bytes()).hexdigest()!=source_digest:
         raise ValueError('CALIBRATION_SOURCE_HASH_MISMATCH')
     size=data.get('client_size',{})
+    if (type(size) is not dict or type(size.get('width')) is not int
+            or type(size.get('height')) is not int):
+        raise ValueError('INVALID_CALIBRATION_GEOMETRY_TYPE')
     slots=data.get('spell_slots',{}); controls=data.get('controls',{}); directions=data.get('directions',{})
     for group in (slots,controls,directions):
         if type(group) is not dict: raise ValueError('INVALID_CALIBRATION_POINTS')
@@ -42,7 +48,7 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
         raise ValueError('HISTORICAL_CALIBRATION_CANNOT_SELF_CERTIFY_CURRENT_CLIENT')
     return CalibrationProfileEvidence(
         profile_id=f"cal-{digest[:20]}", profile_sha256=digest, source_sha256=source_digest,
-        generation=max(1,int(digest[:15],16)), width=int(size['width']), height=int(size['height']),
+        generation=max(1,int(digest[:15],16)), width=size['width'], height=size['height'],
         expected_dpi=expected_dpi, spell_slots=_point_tuple(slots,numeric_key=True),
         controls=_point_tuple(controls), directions=_point_tuple(directions),
         status=str(data.get('status','UNKNOWN')), current_client_certified=current_client_certified)
