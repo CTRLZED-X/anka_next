@@ -22,7 +22,8 @@ def _point_tuple(items: dict, *, numeric_key: bool=False):
 
 def load_calibration_profile(path: Path, *, source_path: Path | None=None,
                              current_client_certified: bool=False,
-                             expected_dpi: int | None=None) -> CalibrationProfileEvidence:
+                             expected_dpi: int | None=None,
+                             accepted_profile_sha256: str | None=None) -> CalibrationProfileEvidence:
     raw=path.read_bytes(); digest=sha256(raw).hexdigest()
     data=json.loads(raw.decode('utf-8'))
     if (type(data) is not dict or type(data.get('schema_version')) is not int
@@ -50,8 +51,14 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     historical=status=='HISTORICAL_COORDINATES_NOT_LIVE_CERTIFIED'
     if current_client_certified and historical:
         raise ValueError('HISTORICAL_CALIBRATION_CANNOT_SELF_CERTIFY_CURRENT_CLIENT')
-    if current_client_certified and source_path is None:
-        raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
+    if current_client_certified:
+        if source_path is None:
+            raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
+        if (type(accepted_profile_sha256) is not str or len(accepted_profile_sha256)!=64
+                or any(ch not in '0123456789abcdef' for ch in accepted_profile_sha256)):
+            raise ValueError('CURRENT_CALIBRATION_ACCEPTANCE_HASH_REQUIRED')
+        if accepted_profile_sha256!=digest:
+            raise ValueError('CURRENT_CALIBRATION_ACCEPTANCE_HASH_MISMATCH')
     # The evidence generation must change when authority-relevant external
     # calibration evidence changes even if the JSON profile bytes are identical.
     generation_material=(
