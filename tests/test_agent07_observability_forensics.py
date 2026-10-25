@@ -10,7 +10,7 @@ from anka_contracts.diagnostics import BoundaryExpectation, DiagnosticEvent, Ope
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import _render_read_first, verify_incident
 from anka_observability.recovery import recover_unclean_run
-from anka_observability.forensics import READY_TRACE, PartyReadyAnalyzer, action_lifecycle_report, turn_handoff_report
+from anka_observability.forensics import READY_TRACE, PartyReadyAnalyzer, action_lifecycle_report, turn_handoff_report, workflow_lifecycle_report
 from anka_observability.redaction import has_unredacted_sensitive_data
 
 
@@ -575,6 +575,68 @@ class TestAgent07ReadyBatchCorrelation(unittest.TestCase):
                 )
                 self.assertEqual(protocol_edge['status'], 'INVALID_CORRELATION')
                 self.assertIsNone(protocol_edge['batch_span_id'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07WorkflowLifecycleClassification(unittest.TestCase):
+    def test_rejected_signal_does_not_turn_completed_cycle_into_blocked(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-workflow-reject',
+                invocation_id='inv-agent07-workflow-reject',
+            )
+            try:
+                transitions=(
+                    ('WORLD','ENCOUNTER_SELECTED'),
+                    ('ENCOUNTER_SELECTED','FIGHT_ENTRY'),
+                    ('FIGHT_ENTRY','PARTY_JOIN'),
+                    ('PARTY_JOIN','PLACEMENT'),
+                    ('PLACEMENT','READY'),
+                    ('READY','FIGHT_ACTIVE'),
+                    ('FIGHT_ACTIVE','FIGHT_END_RECONCILIATION'),
+                    ('FIGHT_END_RECONCILIATION','WORLD_REENTRY'),
+                    ('WORLD_REENTRY','COMPLETED'),
+                )
+                for index,(old,new) in enumerate(transitions):
+                    obs.record(
+                        'workflow.phase_changed',
+                        owner_system='anka_workflow',
+                        boundary='workflow.transition',
+                        fight_epoch=1,
+                        payload={
+                            'from_phase':old,
+                            'to_phase':new,
+                            'reason':'AGENT07_TEST_PROGRESS',
+                        },
+                    )
+                    if index==1:
+                        obs.record(
+                            'workflow.signal_rejected',
+                            severity='WARNING',
+                            owner_system='anka_workflow',
+                            boundary='workflow.signal_validation',
+                            failure_code='STALE_SIGNAL',
+                            fight_epoch=1,
+                            payload={'reason':'STALE_SIGNAL'},
+                        )
+
+                report=workflow_lifecycle_report(obs.recent)
+                self.assertEqual(report['status'],'COMPLETE_CYCLE')
+                self.assertEqual(report['current_phase'],'COMPLETED')
+                self.assertIsNone(report['blocking_event'])
+                self.assertIsNotNone(report['rejected_signal'])
+                self.assertEqual(report['rejected_signal']['failure_code'],'STALE_SIGNAL')
+
+                path=obs.export_incident(
+                    'WORKFLOW_REJECTED_SIGNAL_TEST',
+                    boundary='workflow.transition',
+                )
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
             finally:
                 obs.finish('BLOCKED')
 
