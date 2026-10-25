@@ -60,7 +60,10 @@ class LocalLoopbackBridgeReader:
             if type(obj) is not dict:
                 raise BridgeTransportRejected('BRIDGE_NON_OBJECT_JSON')
             return obj
-        except (OSError, TimeoutError, UnicodeError, json.JSONDecodeError, http.client.HTTPException) as exc:
+        except BridgeTransportRejected:
+            raise
+        except (OSError, TimeoutError, UnicodeError, ValueError, RecursionError,
+                json.JSONDecodeError, http.client.HTTPException) as exc:
             raise BridgeTransportRejected('BRIDGE_COMMUNICATION_FAILED:'+type(exc).__name__) from exc
         finally:
             conn.close()
