@@ -231,25 +231,34 @@ class TargetingService:
             )
 
         if spec.need_taken_cell:
-            if target_cell == context.caster_cell:
+            if (
+                context.proven_occupied_cells is not None
+                and target_cell in context.proven_occupied_cells
+            ):
                 return TargetCellResult.deterministic(
                     legal=True,
-                    explanation="Taken-cell requirement accepts the caster cell.",
+                    explanation="Target cell is positively proven occupied by an alive actor.",
                 )
             if context.occupied_cells is None:
                 return TargetCellResult.incomplete(
                     missing_input="occupied_cells",
-                    explanation="Taken-cell evaluation requires the runtime occupancy snapshot.",
+                    explanation=(
+                        "Taken-cell evaluation cannot disprove occupancy because the conservative "
+                        "runtime occupancy snapshot is incomplete."
+                    ),
                 )
             if target_cell in context.occupied_cells:
-                return TargetCellResult.deterministic(
-                    legal=True,
-                    explanation="Target cell is occupied.",
+                return TargetCellResult.incomplete(
+                    missing_input=f"target_occupant_alive:{int(target_cell)}",
+                    explanation=(
+                        "The target cell may be occupied, but the occupant life/presence is not "
+                        "proven strongly enough to authorize a taken-cell requirement."
+                    ),
                 )
             return TargetCellResult.deterministic(
                 legal=False,
                 failure=TargetCellFailureReason.CELL_NOT_TAKEN,
-                explanation="Taken-cell requirement failed because the target is not the caster and is unoccupied.",
+                explanation="Taken-cell requirement failed because no non-dead occupant is present.",
             )
 
         if not cell_definition.walkable:
