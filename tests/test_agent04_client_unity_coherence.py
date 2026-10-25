@@ -16,6 +16,7 @@ from anka_client.unity_bridge import (
     LocalLoopbackBridgeReader, ReadOnlyBridgeInspector
 )
 from anka_client.win32_bridge_ownership import _loopback_listener_owners
+from anka_client.win32_inventory import NativeWindowsInventory
 from anka_contracts.client import WindowObservation
 
 
@@ -86,6 +87,56 @@ class OwnerSequence:
 
 
 class Agent04ClientUnityCoherenceTests(unittest.TestCase):
+    def test_win32_snapshot_rejects_same_pid_different_window_thread(self):
+        import ctypes
+        from ctypes import wintypes as wt
+
+        inv = NativeWindowsInventory.__new__(NativeWindowsInventory)
+        inv.c = ctypes
+        inv.wt = wt
+        inv.get_dpi = lambda _hwnd: 96
+        inv._product_version = lambda _path: '3.7.10.10'
+
+        class User:
+            def __init__(self):
+                self.calls = 0
+            def GetWindowThreadProcessId(self, _hwnd, out_pid):
+                self.calls += 1
+                out_pid._obj.value = PID
+                return 111 if self.calls == 1 else 222
+            def GetClientRect(self, _hwnd, rect):
+                rect._obj.left = 0
+                rect._obj.top = 0
+                rect._obj.right = 1280
+                rect._obj.bottom = 649
+                return 1
+            def IsIconic(self, _hwnd):
+                return 0
+            def GetForegroundWindow(self):
+                return 33
+
+        class Kernel:
+            def __init__(self):
+                self.closed = 0
+            def OpenProcess(self, *_args):
+                return 123
+            def QueryFullProcessImageNameW(self, _handle, _flags, buf, _length):
+                buf.value = 'C:/Dofus.exe'
+                return 1
+            def GetProcessTimes(self, _handle, created, _exit, _kernel, _user):
+                created._obj.dwHighDateTime = 0
+                created._obj.dwLowDateTime = CREATED
+                return 1
+            def CloseHandle(self, _handle):
+                self.closed += 1
+                return 1
+
+        inv.user = User()
+        inv.kernel = Kernel()
+        with self.assertRaisesRegex(OSError, 'WINDOW_PROCESS_CHANGED_DURING_INSPECTION'):
+            inv._inspect(33, 'Dofus')
+        self.assertEqual(inv.kernel.closed, 1)
+
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
         report = probe_bridge_range(
