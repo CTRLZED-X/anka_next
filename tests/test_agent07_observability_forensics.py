@@ -190,11 +190,12 @@ class TestAgent07PreActionCausalIndex(unittest.TestCase):
                 self.assertEqual(lifecycles['pre_action_outcomes'][-1]['state'], 'AUTHORIZATION_BLOCKED')
                 self.assertEqual(lifecycles['pre_action_outcomes'][-1]['plan_id'], 'plan-agent07-auth')
                 self.assertIsNone(lifecycles['pre_action_outcomes'][-1]['action_id'])
-                self.assertEqual(gpt['latest_pre_action_outcome'], lifecycles['pre_action_outcomes'][-1])
+                self.assertEqual(gpt['latest_included_pre_action_outcome'], lifecycles['pre_action_outcomes'][-1])
+                self.assertEqual(gpt['pre_action_outcomes_omitted'], lifecycles['pre_action_outcomes_omitted'])
 
                 TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
                     path,
-                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_pre_action_outcome', None)},
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_included_pre_action_outcome', None)},
                 )
                 tampered = verify_incident(path)
                 self.assertEqual(tampered['status'], 'FAIL')
@@ -279,12 +280,13 @@ class TestAgent07ExecutionStageProjection(unittest.TestCase):
                 self.assertEqual(row['not_sent_event_name'], 'execution.rejected')
                 self.assertEqual(row['not_sent_boundary'], 'execution.pre_input_authorization')
                 self.assertEqual(row['not_sent_failure_code'], 'CLIENT_ATTESTATION_UNAVAILABLE')
-                self.assertEqual(gpt['latest_action_lifecycle'], row)
+                self.assertEqual(gpt['latest_included_action_lifecycle'], row)
+                self.assertEqual(gpt['action_lifecycles_omitted'], lifecycles['actions_omitted'])
                 self.assertEqual(facts['unresolved_actions'], [])
 
                 TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
                     path,
-                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_action_lifecycle', None)},
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_included_action_lifecycle', None)},
                 )
                 tampered = verify_incident(path)
                 self.assertEqual(tampered['status'], 'FAIL')
