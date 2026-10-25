@@ -54,7 +54,10 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             windows_by_process.setdefault((w.pid,w.process_created_100ns),[]).append(w)
     generations=set(windows_by_process)
     factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=.20))
-    if listener_owner_resolver is None and os.name == 'nt':
+    # An explicitly injected reader is a deterministic test/research dependency;
+    # do not silently mix it with live OS listener ownership. Production uses the
+    # default loopback reader and therefore gets automatic Windows owner proof.
+    if listener_owner_resolver is None and reader_factory is None and os.name == 'nt':
         from anka_client.win32_bridge_ownership import loopback_listener_owner_generation
         listener_owner_resolver=loopback_listener_owner_generation
     owner_proof_active=listener_owner_resolver is not None
