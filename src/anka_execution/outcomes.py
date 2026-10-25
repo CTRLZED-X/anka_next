@@ -66,8 +66,13 @@ def correlate(
         return OutcomeVerdict('IGNORE','OUTCOME_SCOPE_MISMATCH',outstanding)
     if evidence.canonical_cursor<=command.basis_canonical_cursor:return OutcomeVerdict('IGNORE','OUTCOME_NOT_CAUSALLY_NEWER',outstanding)
     if command.actor_id is not None and evidence.actor_id is not None and evidence.actor_id!=command.actor_id:return OutcomeVerdict('IGNORE','OUTCOME_ACTOR_MISMATCH',outstanding)
-    # Turn may advance for END_TURN / fight lifecycle consequences, but older-turn evidence never settles.
+    # Older-turn evidence never settles. CAST/MOVE are same-turn effects unless
+    # the authority explicitly correlates the observation to this exact action;
+    # otherwise a later turn can accidentally satisfy a repeated proof shape.
     if evidence.observed_turn_epoch<command.turn_epoch:return OutcomeVerdict('IGNORE','OUTCOME_TURN_REGRESSION',outstanding)
+    if (command.kind in ('CAST','MOVE') and evidence.observed_turn_epoch!=command.turn_epoch
+            and evidence.correlated_action_id!=command.action_id):
+        return OutcomeVerdict('IGNORE','OUTCOME_TURN_SCOPE_MISMATCH',outstanding)
 
     if evidence.result=='FAILURE':return OutcomeVerdict('PROVEN_FAILURE','AUTHORITATIVE_ACTION_FAILURE',())
     if evidence.result=='INCONCLUSIVE':return OutcomeVerdict(preserve,'OUTCOME_INCONCLUSIVE',outstanding)
