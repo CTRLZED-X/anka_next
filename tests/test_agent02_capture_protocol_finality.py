@@ -327,6 +327,20 @@ class TestAgent02OverlapTruth(unittest.TestCase):
         self.assertEqual(a.feed(seg(0xFFFFFFFF, b"AB", n=2)), ())
         self.assertEqual(a.health().status, "UNCERTAIN")
 
+    def test_identical_syn_sequence_does_not_bypass_syn_payload_byte_truth(self):
+        a = assembler()
+        first = a.feed(seg(100, b"A", n=1, flags=0x02))[0]
+        self.assertEqual(first.payload, b"A")
+        self.assertEqual(a.feed(seg(100, b"B", n=2, flags=0x02)), ())
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+        health = TransportAuditor().audit((
+            seg(100, b"A", n=1, flags=0x02),
+            seg(100, b"B", n=2, flags=0x02),
+        ))
+        self.assertEqual(health.status, "TRANSPORT_UNCERTAIN")
+        self.assertEqual(health.duplicates, 0)
+
     def test_metadata_auditor_also_rejects_conflicting_same_range_bytes(self):
         health = TransportAuditor().audit((
             seg(100, n=1, flags=0x02),
