@@ -8,6 +8,7 @@ from __future__ import annotations
 import unittest
 
 from anka_capture.stream import TransportEnvelopeAssembler
+from anka_capture.transport import TransportAuditor
 from anka_contracts.capture import CapturedTcpSegment
 
 
@@ -100,6 +101,68 @@ class TestAgent02TransportFinality(unittest.TestCase):
         self.assertEqual((old.connection_generation, new.connection_generation), (1, 2))
         self.assertNotEqual(old.connection_id, new.connection_id)
         self.assertEqual(new.continuity, "RECONNECTED")
+
+    def test_fin_then_exact_original_syn_is_duplicate_not_fresh_generation(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2, flags=0x18))
+        a.feed(seg(102, n=3, flags=0x01))
+
+        self.assertEqual(a.feed(seg(100, n=4, flags=0x02)), ())
+        self.assertEqual(a.health().reconnects, 0)
+        stale = a.feed(seg(102, b"B", n=5, flags=0x18))[0]
+        self.assertEqual(stale.connection_generation, 1)
+        self.assertEqual(stale.continuity, "GAP_INSIDE")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+    def test_rst_then_exact_original_syn_is_duplicate_not_fresh_generation(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2, flags=0x18))
+        a.feed(seg(102, n=3, flags=0x04))
+
+        self.assertEqual(a.feed(seg(100, n=4, flags=0x02)), ())
+        self.assertEqual(a.health().reconnects, 0)
+        stale = a.feed(seg(102, b"B", n=5, flags=0x18))[0]
+        self.assertEqual(stale.connection_generation, 1)
+        self.assertEqual(stale.continuity, "RESET")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
+    def test_terminal_different_syn_still_establishes_distinguishable_generation(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2, flags=0x18))
+        a.feed(seg(102, n=3, flags=0x01))
+
+        a.feed(seg(500, n=4, flags=0x02))
+        fresh = a.feed(seg(501, b"B", n=5, flags=0x18))[0]
+        self.assertEqual(fresh.connection_generation, 2)
+        self.assertEqual(fresh.continuity, "RECONNECTED")
+        self.assertEqual(a.health().reconnects, 1)
+
+    def test_identical_syn_terminal_rule_matches_metadata_auditor(self):
+        segments = (
+            seg(100, n=1, flags=0x02),
+            seg(101, b"A", n=2, flags=0x18),
+            seg(102, n=3, flags=0x01),
+            seg(100, n=4, flags=0x02),
+            seg(102, b"B", n=5, flags=0x18),
+        )
+        a = assembler()
+        emitted = []
+        for item in segments:
+            emitted.extend(a.feed(item))
+        detailed = a.health()
+        metadata = TransportAuditor().audit(segments)
+
+        self.assertEqual(detailed.reconnects, 0)
+        self.assertEqual(metadata.reconnects, 0)
+        self.assertGreaterEqual(detailed.duplicate_segments, 1)
+        self.assertGreaterEqual(metadata.duplicates, 1)
+        self.assertEqual(detailed.status, "UNCERTAIN")
+        self.assertEqual(metadata.status, "TRANSPORT_UNCERTAIN")
+        self.assertEqual(emitted[-1].connection_generation, 1)
+        self.assertNotIn(emitted[-1].continuity, ("COMPLETE", "RECONNECTED"))
 
     def test_reconnect_marker_never_overwrites_first_gap_fence(self):
         a = assembler()
