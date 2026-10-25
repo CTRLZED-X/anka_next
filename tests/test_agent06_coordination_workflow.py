@@ -213,7 +213,8 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
         coordinator.observe(
             observation(17, "acct-enu", turn_epoch=0, owner=None)
         )
-        coordinator.observe(
+        base_generation = coordinator.snapshot().permit_generation
+        other_fight = coordinator.observe(
             MemberPartyObservation(
                 "coordobs-agent06-opt-other-fight",
                 "acct-feca",
@@ -235,6 +236,11 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
                 False,
             )
         )
+        self.assertTrue(other_fight.semantic_progress)
+        self.assertGreater(
+            other_fight.snapshot.permit_generation,
+            base_generation,
+        )
 
         denied = coordinator.action_permit(
             "party-agent06-optional-join",
@@ -243,8 +249,9 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
         )
         self.assertFalse(denied.allowed)
         self.assertEqual(denied.reason, "MEMBER_FIGHT_MISMATCH")
+        mismatched_generation = denied.permit_generation
 
-        coordinator.observe(
+        same_fight = coordinator.observe(
             MemberPartyObservation(
                 "coordobs-agent06-opt-same-fight",
                 "acct-feca",
@@ -266,12 +273,57 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
                 False,
             )
         )
+        self.assertTrue(same_fight.semantic_progress)
+        self.assertGreater(
+            same_fight.snapshot.permit_generation,
+            mismatched_generation,
+        )
         allowed = coordinator.action_permit(
             "party-agent06-optional-join",
             "acct-feca",
             "JOIN",
         )
         self.assertTrue(allowed.allowed)
+        self.assertIn(
+            "evidence-agent06-opt-same-fight",
+            allowed.evidence_ids,
+        )
+        allowed_generation = allowed.permit_generation
+
+        joined = coordinator.observe(
+            MemberPartyObservation(
+                "coordobs-agent06-opt-joined",
+                "acct-feca",
+                "client-feca",
+                43,
+                20,
+                20,
+                1,
+                0,
+                "fight-agent06",
+                190580738,
+                "PLACEMENT",
+                None,
+                True,
+                False,
+                False,
+                "HEALTHY",
+                ("evidence-agent06-opt-joined",),
+                False,
+            )
+        )
+        self.assertTrue(joined.semantic_progress)
+        self.assertGreater(
+            joined.snapshot.permit_generation,
+            allowed_generation,
+        )
+        now_denied = coordinator.action_permit(
+            "party-agent06-optional-join",
+            "acct-feca",
+            "JOIN",
+        )
+        self.assertFalse(now_denied.allowed)
+        self.assertEqual(now_denied.reason, "ALREADY_JOINED")
 
     def test_stale_turn_epoch_cannot_regress_authority(self):
         coordinator = PartyCoordinatorService("party-agent06-stale", ROSTER)
