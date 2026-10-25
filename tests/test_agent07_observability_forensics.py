@@ -293,6 +293,71 @@ class TestAgent07ExecutionStageProjection(unittest.TestCase):
                 obs.finish('BLOCKED')
 
 
+class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
+    def test_rejected_before_send_then_sent_is_explicit_contradiction(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-reject-send-conflict', invocation_id='inv-agent07-reject-send-conflict')
+            try:
+                action_id='action-agent07-reject-send-conflict'
+                attempt_id='attempt-agent07-reject-send-conflict'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST','plan_id':'plan-agent07-reject-send-conflict'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                report = action_lifecycle_report(obs.recent)
+                row = next(item for item in report['actions'] if item['action_id']==action_id)
+                self.assertEqual(row['state'], 'CONTRADICTORY_EVIDENCE')
+                self.assertIn('PRE_SEND_TERMINAL_WITH_SEND', row['hard_conflicts'])
+                self.assertEqual(report['contradictory_action_count'], 1)
+            finally:
+                obs.finish('BLOCKED')
+
+
 class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
     @staticmethod
     def _rewrite_json_artifact(path: Path, name: str, mutate) -> None:
