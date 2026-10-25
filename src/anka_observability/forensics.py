@@ -236,11 +236,19 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
                            and e.payload.get('plan_id')==plan_id),None)
         admissions=[e for e in items if e.event_name=='execution.admitted']
         starts=[e for e in items if e.event_name=='execution.send_started']
+        pre_send_terminal_events=[e for e in items if e.event_name in (
+            'execution.rejected','execution.ledger_prepare_rejected','execution.input_lease_rejected',
+            'execution.final_guard_rejected','execution.exception_before_send')]
+        if not starts:
+            pre_send_terminal_events.extend(e for e in items if e.event_name=='execution.safety_fault'
+                                            and e.boundary=='execution.input_arbitration'
+                                            and e.physical_input_state!='MAY_HAVE_SENT')
         send_results=[e for e in items if e.event_name in ('execution.input_sent','execution.input_not_sent','execution.input_may_have_sent','execution.exception_after_send_started')]
         settlements=[e for e in items if e.event_name=='execution.outcome_settled']
         terminal_unresolveds=[e for e in items if e.event_name=='execution.outcome_terminal_unresolved']
         admitted=admissions[0] if admissions else None
         started=starts[0] if starts else None
+        pre_send_terminal=pre_send_terminal_events[-1] if pre_send_terminal_events else None
         sent=send_results[0] if send_results else None
         settled=settlements[-1] if settlements else None
         dispatch=next((e for e in reversed(items) if e.event_name=='workflow.action_dispatch_result'),None)
@@ -277,6 +285,7 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
         elif may_have_sent is not None:state='MAY_HAVE_SENT_UNRESOLVED'
         elif sent is not None and sent.event_name=='execution.input_not_sent':state='NOT_SENT'
         elif sent is not None:state='SENT_AWAITING_OUTCOME'
+        elif pre_send_terminal is not None:state='NOT_SENT'
         elif started is not None:state='SEND_STARTED_NO_FINAL_SEND_RECORD'
         elif admitted is not None:state='ADMITTED_NOT_SENT'
         else:state='REQUESTED_OR_PARTIAL'
@@ -300,6 +309,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             nearby.append({'event_id':e.event_id,'event_name':e.event_name,'owner_system':e.owner_system,
                            'boundary':e.boundary,'producer_seq':e.producer_seq,'evidence_class':e.evidence_class})
             if len(nearby)>=20:break
+        pre_send_stage={
+            'execution.rejected':'ADMISSION','execution.ledger_prepare_rejected':'DURABLE_PREPARE',
+            'execution.input_lease_rejected':'INPUT_ARBITRATION','execution.final_guard_rejected':'FINAL_GUARD',
+            'execution.exception_before_send':'EXCEPTION_BEFORE_SEND','execution.safety_fault':'INPUT_ARBITRATION',
+        }.get(pre_send_terminal.event_name) if pre_send_terminal is not None else None
         rows.append({
             'action_id':action_id,'account_id':account,'fight_epoch':fight_epoch,'turn_epoch':turn_epoch,
             'trace_id':trace_id,'plan_id':plan_id,'decision_event_id':decision.event_id if decision else None,
@@ -310,6 +324,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'settlement_status':settled.payload.get('status') if settled else None,
             'settlement_reason':settled.payload.get('reason') if settled else None,
             'settlement_evidence_id':settled.payload.get('evidence_id') if settled else None,
+            'not_sent_stage':pre_send_stage,
+            'not_sent_event_id':pre_send_terminal.event_id if pre_send_terminal is not None else None,
+            'not_sent_event_name':pre_send_terminal.event_name if pre_send_terminal is not None else None,
+            'not_sent_boundary':pre_send_terminal.boundary if pre_send_terminal is not None else None,
+            'not_sent_failure_code':pre_send_terminal.failure_code if pre_send_terminal is not None else None,
             'dispatch_outcome_status':dispatch.payload.get('outcome_status') if dispatch else None,
             'dispatch_outcome_reason':dispatch.payload.get('outcome_reason') if dispatch else None,
             'event_ids':[e.event_id for e in items],
