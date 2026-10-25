@@ -23,6 +23,21 @@
       "size": 3760
     },
     {
+      "path": "IMPLEMENTATION_STATUS.md",
+      "sha256": "6da8f9158971c0f33a051b961126d2424380f0439d516d09c50aea066669c07e",
+      "size": 29017
+    },
+    {
+      "path": "PROJECT_INFO.txt",
+      "sha256": "89dfbd6b9098c935e126bfbc4d5f7df8e60ca1e9d934dddfa414bf21e1425e16",
+      "size": 142
+    },
+    {
+      "path": "README.md",
+      "sha256": "56e56d16c2ebe29306a7128d520a009bb4d647d96f2d8a487cf07a0f1e76061d",
+      "size": 4816
+    },
+    {
       "path": "assets/calibration/shared_ui_1280x649.json",
       "sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
       "size": 3828
@@ -78,14 +93,14 @@
       "size": 44602
     },
     {
-      "path": "assets/game_data/Static/Companions.json",
-      "sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
-      "size": 4686
-    },
-    {
       "path": "assets/game_data/Static/CompanionSpells.json",
       "sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
       "size": 26605
+    },
+    {
+      "path": "assets/game_data/Static/Companions.json",
+      "sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "size": 4686
     },
     {
       "path": "assets/game_data/Static/Dungeons.json",
@@ -118,14 +133,14 @@
       "size": 15427
     },
     {
-      "path": "assets/game_data/Static/Monsters.json",
-      "sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
-      "size": 998292
-    },
-    {
       "path": "assets/game_data/Static/MonsterSuperRaces.json",
       "sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
       "size": 2292
+    },
+    {
+      "path": "assets/game_data/Static/Monsters.json",
+      "sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "size": 998292
     },
     {
       "path": "assets/game_data/Static/PointOfInterest.json",
@@ -143,11 +158,6 @@
       "size": 12176041
     },
     {
-      "path": "assets/game_data/Static/Spells.json",
-      "sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
-      "size": 1933321
-    },
-    {
       "path": "assets/game_data/Static/SpellStates.json",
       "sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
       "size": 391845
@@ -156,6 +166,11 @@
       "path": "assets/game_data/Static/SpellVariants.json",
       "sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
       "size": 17996
+    },
+    {
+      "path": "assets/game_data/Static/Spells.json",
+      "sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "size": 1933321
     },
     {
       "path": "assets/game_data/Static/SubAreas.json",
@@ -193,19 +208,9 @@
       "size": 343
     },
     {
-      "path": "docs/history/IMPLEMENTATION_STATUS_P66_PRE_MASTER_ROADMAP.md",
-      "sha256": "cbcacb7d4388cbdfdfb18d6cafa895d6cb33ffa41b7cb7ccab93d7f9cab00cc7",
-      "size": 72721
-    },
-    {
       "path": "docs/M0_BASELINE_AND_EVIDENCE_FREEZE.md",
       "sha256": "4c4d919b69569134e1dc91a1763d8e7b6ad8f4a4a7b5856179f1954f24e40d60",
       "size": 4396
-    },
-    {
-      "path": "docs/M1_CONTRACTS_ARCHITECTURE_LAB_BOOTSTRAP.md",
-      "sha256": "4f6f63aa6552479841c354158625097acd3ab375f5160904a4721a9f3e05ffa6",
-      "size": 3682
     },
     {
       "path": "docs/M10_WORKFLOW.md",
@@ -213,14 +218,14 @@
       "size": 2050
     },
     {
-      "path": "docs/M11_EXECUTION_SAFETY.md",
-      "sha256": "bcc76a5bffe7104eeebd57cf810d925b48279058e087486c000fd2ddecca65d2",
-      "size": 4406
-    },
-    {
       "path": "docs/M11_EXECUTION.md",
       "sha256": "f37e527a0c733181bbb1619dba69375356701e70fca9abe04bf02ff944d854be",
       "size": 3664
+    },
+    {
+      "path": "docs/M11_EXECUTION_SAFETY.md",
+      "sha256": "bcc76a5bffe7104eeebd57cf810d925b48279058e087486c000fd2ddecca65d2",
+      "size": 4406
     },
     {
       "path": "docs/M12_002_SYSTEMIC_WINDOWS_STARTUP_HARDENING.md",
@@ -251,6 +256,11 @@
       "path": "docs/M12_RELEASE_AND_COMPOSITION.md",
       "sha256": "2dd08a23629b1b143fc578106067e6021dd12e2f37817f59035b9d0515ed276d",
       "size": 1417
+    },
+    {
+      "path": "docs/M1_CONTRACTS_ARCHITECTURE_LAB_BOOTSTRAP.md",
+      "sha256": "4f6f63aa6552479841c354158625097acd3ab375f5160904a4721a9f3e05ffa6",
+      "size": 3682
     },
     {
       "path": "docs/M2_GAME_KERNEL_AND_DATA.md",
@@ -393,11 +403,6 @@
       "size": 5070
     },
     {
-      "path": "docs/P3_READ_ONLY_CLIENT_ACCEPTANCE.md",
-      "sha256": "7b582f37d8d15cbf8f5a0df1408d954b88a0999e5a14263e0c66acf9af8b8370",
-      "size": 4624
-    },
-    {
       "path": "docs/P30_DECLARATIVE_RESEARCH_PROTOCOL_ADAPTERS.md",
       "sha256": "90a3e7e4c3c4073a48cc10562986fb882caefc532e82c6c52f6541324195a688",
       "size": 6543
@@ -448,9 +453,9 @@
       "size": 3313
     },
     {
-      "path": "docs/P4_OFFLINE_CAPTURE_ACCEPTANCE.md",
-      "sha256": "58d9aca761b1a03f3a493a7c5e68a800cecd5ca6db3284ece9df8e68e47cd5c1",
-      "size": 4124
+      "path": "docs/P3_READ_ONLY_CLIENT_ACCEPTANCE.md",
+      "sha256": "7b582f37d8d15cbf8f5a0df1408d954b88a0999e5a14263e0c66acf9af8b8370",
+      "size": 4624
     },
     {
       "path": "docs/P40_CROSS_ACCOUNT_EVIDENCE_SOURCE_INDEPENDENCE.md",
@@ -503,9 +508,9 @@
       "size": 6913
     },
     {
-      "path": "docs/P5_READ_ONLY_WINDOWS_CAPTURE.md",
-      "sha256": "a34cc56658d4e565ba94d6642fe8f84c7da6b052e964427b9abbb7bed5e0fd4b",
-      "size": 4440
+      "path": "docs/P4_OFFLINE_CAPTURE_ACCEPTANCE.md",
+      "sha256": "58d9aca761b1a03f3a493a7c5e68a800cecd5ca6db3284ece9df8e68e47cd5c1",
+      "size": 4124
     },
     {
       "path": "docs/P50_PCAPNG_MULTIFLOW_DISCOVERY_AND_EXACT_SNAPSHOT_SELECTION.md",
@@ -558,9 +563,9 @@
       "size": 5086
     },
     {
-      "path": "docs/P6_PROTOCOL_UPGRADE_BOUNDARY.md",
-      "sha256": "05867142fc291882976b55c6cffc57050214ab0e21bfa398c38c67c9043a7cd7",
-      "size": 2596
+      "path": "docs/P5_READ_ONLY_WINDOWS_CAPTURE.md",
+      "sha256": "a34cc56658d4e565ba94d6642fe8f84c7da6b052e964427b9abbb7bed5e0fd4b",
+      "size": 4440
     },
     {
       "path": "docs/P60_PACKET_LOCAL_MESSAGE_PROVENANCE_INTEGRITY.md",
@@ -598,6 +603,11 @@
       "size": 3679
     },
     {
+      "path": "docs/P6_PROTOCOL_UPGRADE_BOUNDARY.md",
+      "sha256": "05867142fc291882976b55c6cffc57050214ab0e21bfa398c38c67c9043a7cd7",
+      "size": 2596
+    },
+    {
       "path": "docs/P7_SEMANTIC_CANONICAL_STAGING.md",
       "sha256": "620ab8c1d119e12a408e778e11b98ccebb60ca68c5dc95043a1b9e6a91560f40",
       "size": 4645
@@ -628,6 +638,11 @@
       "size": 81307
     },
     {
+      "path": "docs/history/IMPLEMENTATION_STATUS_P66_PRE_MASTER_ROADMAP.md",
+      "sha256": "cbcacb7d4388cbdfdfb18d6cafa895d6cb33ffa41b7cb7ccab93d7f9cab00cc7",
+      "size": 72721
+    },
+    {
       "path": "examples/README.md",
       "sha256": "cc09585a5d8e3ec99556e4089b0f3d7e6e90d4233b858042b5aab023b71a9842",
       "size": 114
@@ -646,11 +661,6 @@
       "path": "examples/SYNTHETIC_SETUP_DEPENDENCY_FAILED.zip",
       "sha256": "c96a6a63d88af566d5df5027ecaeb6c86679e1863cdeabefeee2089b3bc9903a",
       "size": 1680
-    },
-    {
-      "path": "IMPLEMENTATION_STATUS.md",
-      "sha256": "6da8f9158971c0f33a051b961126d2424380f0439d516d09c50aea066669c07e",
-      "size": 29017
     },
     {
       "path": "native/unity_bridge/AuthoritativeCellPositionSource.cs",
@@ -708,14 +718,14 @@
       "size": 1089
     },
     {
-      "path": "native/unity_bridge/README_UPSTREAM_PROVEN.md",
-      "sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e",
-      "size": 2943
-    },
-    {
       "path": "native/unity_bridge/README.md",
       "sha256": "e19067ed6e4e47f6dd44785756052394d11299c4c4b497174d54b6e2a260fd92",
       "size": 2246
+    },
+    {
+      "path": "native/unity_bridge/README_UPSTREAM_PROVEN.md",
+      "sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e",
+      "size": 2943
     },
     {
       "path": "native/unity_bridge/RuntimeSceneScanner.cs",
@@ -723,29 +733,19 @@
       "size": 79858
     },
     {
-      "path": "PROJECT_INFO.txt",
-      "sha256": "89dfbd6b9098c935e126bfbc4d5f7df8e60ca1e9d934dddfa414bf21e1425e16",
-      "size": 142
-    },
-    {
-      "path": "provenance/p4_capture_origin.json",
-      "sha256": "87376b0fbfdedcb401e0bd34322c4aeb464f37cab2bb874971fdeae83c8d2857",
-      "size": 735
-    },
-    {
       "path": "provenance/P44_native_bridge_source.json",
       "sha256": "ab5ed2691de0de9c649a5deab600727dae50baaf93efc71421e36198431bd5a7",
       "size": 3169
     },
     {
-      "path": "provenance/P6_protocol_source_manifest.json",
-      "sha256": "08e4a5af7e7ac87602518d4ee0e6c93a831fd17f510f07a8f787b71e257fbd90",
-      "size": 1328
-    },
-    {
       "path": "provenance/P66_COPIED_ASSET_MANIFEST.json",
       "sha256": "e98dd407e501db122f6eac9f59998cd5948bcc14bc9dd96a7c133561e56211a8",
       "size": 28650
+    },
+    {
+      "path": "provenance/P6_protocol_source_manifest.json",
+      "sha256": "08e4a5af7e7ac87602518d4ee0e6c93a831fd17f510f07a8f787b71e257fbd90",
+      "size": 1328
     },
     {
       "path": "provenance/P7_historical_semantic_origin.json",
@@ -758,6 +758,11 @@
       "size": 145344
     },
     {
+      "path": "provenance/p4_capture_origin.json",
+      "sha256": "87376b0fbfdedcb401e0bd34322c4aeb464f37cab2bb874971fdeae83c8d2857",
+      "size": 735
+    },
+    {
       "path": "pyproject.toml",
       "sha256": "78db108d47f04793405ded2a5b32d410b08d2dddd5863c989851d9eb257aab26",
       "size": 522
@@ -766,11 +771,6 @@
       "path": "qualification/historical_3_7_10_10_synthetic.json",
       "sha256": "f7d730db6ec987bedcb97d237d142a9c5afd30acce4f0394682b288a071978a8",
       "size": 8727
-    },
-    {
-      "path": "README.md",
-      "sha256": "56e56d16c2ebe29306a7128d520a009bb4d647d96f2d8a487cf07a0f1e76061d",
-      "size": 4816
     },
     {
       "path": "reference/baselines/archives/ANKA_NEXT_DEFINITIVE_MASTER_SPECIFICATION.zip",
@@ -791,6 +791,11 @@
       "path": "reference/calibration/shared_ui_calibration_1280x649.yaml",
       "sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
       "size": 2525
+    },
+    {
+      "path": "reference/m0/REUSE_MANIFEST_M0.json",
+      "sha256": "e6db0f58ecf188c78e9262ae0e45a551801759abfc3c6ec158f92c3391520a6b",
+      "size": 145344
     },
     {
       "path": "reference/m0/baseline_sources.json",
@@ -828,14 +833,14 @@
       "size": 7764
     },
     {
-      "path": "reference/m0/REUSE_MANIFEST_M0.json",
-      "sha256": "e6db0f58ecf188c78e9262ae0e45a551801759abfc3c6ec158f92c3391520a6b",
-      "size": 145344
-    },
-    {
       "path": "reference/m0/starting_p66_file_manifest.json",
       "sha256": "ce93ef0ccc806e6a5b9f235a0322e78e0177ce83765414b009a8c09f355823d8",
       "size": 106395
+    },
+    {
+      "path": "reference/m2/KERNEL_SCOPE.json",
+      "sha256": "6d259120e0caa807f061c9ec6c6ea1dc7a494efeefa6ab7fa3bb2525377a99b2",
+      "size": 5070
     },
     {
       "path": "reference/m2/game_data_provenance.json",
@@ -848,11 +853,6 @@
       "size": 53340
     },
     {
-      "path": "reference/m2/KERNEL_SCOPE.json",
-      "sha256": "6d259120e0caa807f061c9ec6c6ea1dc7a494efeefa6ab7fa3bb2525377a99b2",
-      "size": 5070
-    },
-    {
       "path": "reference/m2/legacy_kernel_oracle_manifest.json",
       "sha256": "e905c70e4dbb54cdbc7b03f2ec5fac6d26a3a1ae5993d8d72f3d420ef7cd4641",
       "size": 20762
@@ -863,14 +863,14 @@
       "size": 8306
     },
     {
-      "path": "reference/m5/historical_3_7_10_10_release_r2.json",
-      "sha256": "47f955c84a543613de39b6b8f4165798b589b1419f3bbff0648908d754ee686c",
-      "size": 1341
-    },
-    {
       "path": "reference/m5/historical_3_7_10_10_release.json",
       "sha256": "8df732c54323c4075b4190b7dcaada354dd92e18eed4ad6e009ed9b36d07e91b",
       "size": 832
+    },
+    {
+      "path": "reference/m5/historical_3_7_10_10_release_r2.json",
+      "sha256": "47f955c84a543613de39b6b8f4165798b589b1419f3bbff0648908d754ee686c",
+      "size": 1341
     },
     {
       "path": "reference/m5/releases/adapter-dofus-3.7.10.10-historical-m5-r1/src/anka_protocol/adapters/dofus_3_7_10_10/adapter.py",
@@ -886,6 +886,16 @@
       "path": "reference/m5/releases/adapter-dofus-3.7.10.10-historical-m5-r1/src/anka_protocol/wire.py",
       "sha256": "29489f7651829802dfd1a8ad6027f59d40febe1ffbd351f763770747151c3503",
       "size": 4822
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/README.md",
+      "sha256": "119852ace1354acc45ee7d32fd7c4880ef010d7389f13fef36f81fec3a37b6d2",
+      "size": 17507
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/SPECIFICATION_MANIFEST.json",
+      "sha256": "f30a9a205a0cca4b6079f8d48fd19ce359b2297b98ddb20ace953f596a352c3c",
+      "size": 5593
     },
     {
       "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/A_HISTORICAL_FAILURES.md",
@@ -1036,16 +1046,6 @@
       "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/11_OBSERVABILITY.md",
       "sha256": "90a6d523eff98a81518fab536a1bb80d81e0192089916d47facfc4cacbdc0979",
       "size": 2587
-    },
-    {
-      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/README.md",
-      "sha256": "119852ace1354acc45ee7d32fd7c4880ef010d7389f13fef36f81fec3a37b6d2",
-      "size": 17507
-    },
-    {
-      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/SPECIFICATION_MANIFEST.json",
-      "sha256": "f30a9a205a0cca4b6079f8d48fd19ce359b2297b98ddb20ace953f596a352c3c",
-      "size": 5593
     },
     {
       "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/templates/IMPLEMENTATION_STATUS_TEMPLATE.md",
@@ -1268,14 +1268,14 @@
       "size": 5532
     },
     {
-      "path": "src/anka_app/historical_pcapng_inventory_offline.py",
-      "sha256": "cc0a03ca59ff1297018d4dda694b27958c2e516850fbbcf4e463ca5df9189452",
-      "size": 2217
-    },
-    {
       "path": "src/anka_app/historical_pcapng_inventory.py",
       "sha256": "6c6c998c8331c31f23b37048b01ea60ec50f8ab8168abaeb3450e171662cee77",
       "size": 10168
+    },
+    {
+      "path": "src/anka_app/historical_pcapng_inventory_offline.py",
+      "sha256": "cc0a03ca59ff1297018d4dda694b27958c2e516850fbbcf4e463ca5df9189452",
+      "size": 2217
     },
     {
       "path": "src/anka_app/historical_pcapng_offline.py",
@@ -1433,6 +1433,11 @@
       "size": 35599
     },
     {
+      "path": "src/anka_canonical/README.md",
+      "sha256": "59e277aefca490192c8638a5e8fd5eb32eaf0671fc4790ed961fc87983b5982a",
+      "size": 1646
+    },
+    {
       "path": "src/anka_canonical/__init__.py",
       "sha256": "3ea544cbe5ef0febc7a0068a3fb643662ddbf1337df6e43c49f42428a1114992",
       "size": 62
@@ -1453,11 +1458,6 @@
       "size": 5339
     },
     {
-      "path": "src/anka_canonical/README.md",
-      "sha256": "59e277aefca490192c8638a5e8fd5eb32eaf0671fc4790ed961fc87983b5982a",
-      "size": 1646
-    },
-    {
       "path": "src/anka_canonical/research_timeline.py",
       "sha256": "4567f056c42b45c13270cc6c4c2ce25527551e78ce8e977c858acb1c963a67ec",
       "size": 4258
@@ -1476,6 +1476,11 @@
       "path": "src/anka_canonical/writer.py",
       "sha256": "9b1063d13d0c4c97655008a3f731f44056d044906b650263e5d389b4df8364bc",
       "size": 21442
+    },
+    {
+      "path": "src/anka_capture/README.md",
+      "sha256": "1ef12032e3bbd65ccec85059bf0eabec3bb09c3de2561a1c9d976342d2bfc563",
+      "size": 1861
     },
     {
       "path": "src/anka_capture/__init__.py",
@@ -1501,11 +1506,6 @@
       "path": "src/anka_capture/pcapng.py",
       "sha256": "27e4ab7a61383e653d80cd7cd6acb53b4c94e34289521b09fad58abca419e3e7",
       "size": 19757
-    },
-    {
-      "path": "src/anka_capture/README.md",
-      "sha256": "1ef12032e3bbd65ccec85059bf0eabec3bb09c3de2561a1c9d976342d2bfc563",
-      "size": 1861
     },
     {
       "path": "src/anka_capture/replay.py",
@@ -1541,6 +1541,11 @@
       "path": "src/anka_capture/windows_scope.py",
       "sha256": "a2c0b84e635a5771d9ba930421648172a844b166666016e9e0cb4664fe13dd60",
       "size": 7026
+    },
+    {
+      "path": "src/anka_client/README.md",
+      "sha256": "0e0a0c168e5f520dce5587ab1d6671a2318a4ed3327b413bb672501a64a2b62f",
+      "size": 1244
     },
     {
       "path": "src/anka_client/__init__.py",
@@ -1586,11 +1591,6 @@
       "path": "src/anka_client/projection.py",
       "sha256": "4e210c189c4f9d732840115ff39ba9d82a5ae6ac6021846e85605a19917a5631",
       "size": 3197
-    },
-    {
-      "path": "src/anka_client/README.md",
-      "sha256": "0e0a0c168e5f520dce5587ab1d6671a2318a4ed3327b413bb672501a64a2b62f",
-      "size": 1244
     },
     {
       "path": "src/anka_client/reference_assets.py",
@@ -1648,14 +1648,14 @@
       "size": 10582
     },
     {
-      "path": "src/anka_contracts/coordination_flow.py",
-      "sha256": "4f4284152711fda828683256c2e908e8afe188459ce3cddcd6d9782156b0edbc",
-      "size": 4063
-    },
-    {
       "path": "src/anka_contracts/coordination.py",
       "sha256": "6064cc0f9485dd74ec4ec60ea8899c62982740df72fdfcf23397e8d545f3fa0e",
       "size": 11311
+    },
+    {
+      "path": "src/anka_contracts/coordination_flow.py",
+      "sha256": "4f4284152711fda828683256c2e908e8afe188459ce3cddcd6d9782156b0edbc",
+      "size": 4063
     },
     {
       "path": "src/anka_contracts/decision.py",
@@ -1683,6 +1683,11 @@
       "size": 1839
     },
     {
+      "path": "src/anka_contracts/execution.py",
+      "sha256": "b0cecb44068788ae3b754e918954ddcafc07be1dcf818eed62b6c7105e37e50d",
+      "size": 9230
+    },
+    {
       "path": "src/anka_contracts/execution_flow.py",
       "sha256": "71493b0ed71cd066fba80e39be649a3488044dbed60d93de56fd4da13803725d",
       "size": 4070
@@ -1691,11 +1696,6 @@
       "path": "src/anka_contracts/execution_simulation.py",
       "sha256": "76445d1617e3c23861eebca22a256ae87362510253fe4f2d077dd11778ab4d61",
       "size": 3305
-    },
-    {
-      "path": "src/anka_contracts/execution.py",
-      "sha256": "b0cecb44068788ae3b754e918954ddcafc07be1dcf818eed62b6c7105e37e50d",
-      "size": 9230
     },
     {
       "path": "src/anka_contracts/fight_audit.py",
@@ -1888,14 +1888,19 @@
       "size": 3173
     },
     {
+      "path": "src/anka_contracts/workflow.py",
+      "sha256": "e2d0d7bac35db5890f68cf9ad0194f7874620b1eebab04c3568073a916170c15",
+      "size": 11208
+    },
+    {
       "path": "src/anka_contracts/workflow_flow.py",
       "sha256": "2527172bc8e2982851ad24f6b0a6af136aa5f88426fb58d69519d806b1102333",
       "size": 1560
     },
     {
-      "path": "src/anka_contracts/workflow.py",
-      "sha256": "e2d0d7bac35db5890f68cf9ad0194f7874620b1eebab04c3568073a916170c15",
-      "size": 11208
+      "path": "src/anka_coordination/README.md",
+      "sha256": "263b9853a7f3a94007d7f62f519489769252000cb5a5a717b01cf1a97831539f",
+      "size": 737
     },
     {
       "path": "src/anka_coordination/__init__.py",
@@ -1918,9 +1923,9 @@
       "size": 7188
     },
     {
-      "path": "src/anka_coordination/README.md",
-      "sha256": "263b9853a7f3a94007d7f62f519489769252000cb5a5a717b01cf1a97831539f",
-      "size": 737
+      "path": "src/anka_decision/README.md",
+      "sha256": "e4815718de830421a84de7857d54708ab12ec6f8d850a405160bae5652622d53",
+      "size": 1924
     },
     {
       "path": "src/anka_decision/__init__.py",
@@ -1948,11 +1953,6 @@
       "size": 7424
     },
     {
-      "path": "src/anka_decision/README.md",
-      "sha256": "e4815718de830421a84de7857d54708ab12ec6f8d850a405160bae5652622d53",
-      "size": 1924
-    },
-    {
       "path": "src/anka_decision/sequence_research.py",
       "sha256": "ed80994ab35259d8a6a751e91167cdbd101b2b39d64487431194422ee9cfd635",
       "size": 7979
@@ -1966,6 +1966,11 @@
       "path": "src/anka_decision/tactical_scoring.py",
       "sha256": "38dfc9747ef3632d5cc2f560596efdc24621bf2d1d14718468b5f7deefed9c36",
       "size": 5145
+    },
+    {
+      "path": "src/anka_execution/README.md",
+      "sha256": "790eb294aa542d4b9d60ea6700be65d95f59fecc8dace2800476bf10a045fef5",
+      "size": 710
     },
     {
       "path": "src/anka_execution/__init__.py",
@@ -2016,11 +2021,6 @@
       "path": "src/anka_execution/outcomes.py",
       "sha256": "c66b3c26d39d8e8df8803e8afe9bea65da7a23b0aa9605fae100cda9301f14e8",
       "size": 4908
-    },
-    {
-      "path": "src/anka_execution/README.md",
-      "sha256": "790eb294aa542d4b9d60ea6700be65d95f59fecc8dace2800476bf10a045fef5",
-      "size": 710
     },
     {
       "path": "src/anka_execution/service.py",
@@ -2408,21 +2408,6 @@
       "size": 93651
     },
     {
-      "path": "src/anka_game_kernel/mechanics/fight_queries/__init__.py",
-      "sha256": "8b83acb3b5bdf056f8e2d998e717eaf003fe6e1806e394322d0da482e383bd46",
-      "size": 259
-    },
-    {
-      "path": "src/anka_game_kernel/mechanics/fight_queries/service.py",
-      "sha256": "7a66497358f1d268cbf200762e0b6a932f98bee7fcfdbcb9f32372f62cab84eb",
-      "size": 16199
-    },
-    {
-      "path": "src/anka_game_kernel/mechanics/fight_queries/spell_decisions.py",
-      "sha256": "649c747c43134eb204820defb254e435d410716e528cc2af9f49d529cabb251c",
-      "size": 8041
-    },
-    {
       "path": "src/anka_game_kernel/mechanics/fight/__init__.py",
       "sha256": "05bc4c4e2fb770265aca4d4ff55b47963d521164c8b66bd185f7df002e6cf280",
       "size": 612
@@ -2446,6 +2431,21 @@
       "path": "src/anka_game_kernel/mechanics/fight/service.py",
       "sha256": "d749e740e07d0a2b6c7bcfad47694e5adaf8ef2171a08aac30778f54d9a65869",
       "size": 11575
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/__init__.py",
+      "sha256": "8b83acb3b5bdf056f8e2d998e717eaf003fe6e1806e394322d0da482e383bd46",
+      "size": 259
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/service.py",
+      "sha256": "7a66497358f1d268cbf200762e0b6a932f98bee7fcfdbcb9f32372f62cab84eb",
+      "size": 16199
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/spell_decisions.py",
+      "sha256": "649c747c43134eb204820defb254e435d410716e528cc2af9f49d529cabb251c",
+      "size": 8041
     },
     {
       "path": "src/anka_game_kernel/mechanics/geometry/__init__.py",
@@ -2663,14 +2663,14 @@
       "size": 1165
     },
     {
-      "path": "src/anka_game_kernel/results/fight_queries.py",
-      "sha256": "227915b907bcd53b5f55ac8622e4823e7bc668d7271c72e85efba8f3716bdaf6",
-      "size": 1424
-    },
-    {
       "path": "src/anka_game_kernel/results/fight.py",
       "sha256": "3cb03aa01a4de75c59017d18e23417e8dfac5e00bed14c666154084738d27690",
       "size": 3832
+    },
+    {
+      "path": "src/anka_game_kernel/results/fight_queries.py",
+      "sha256": "227915b907bcd53b5f55ac8622e4823e7bc668d7271c72e85efba8f3716bdaf6",
+      "size": 1424
     },
     {
       "path": "src/anka_game_kernel/results/los.py",
@@ -2678,14 +2678,14 @@
       "size": 1797
     },
     {
-      "path": "src/anka_game_kernel/results/movement_projection.py",
-      "sha256": "6cb3bd115434eb769011a162c8567535055cd5e8da9ea502080c393b42e40538",
-      "size": 503
-    },
-    {
       "path": "src/anka_game_kernel/results/movement.py",
       "sha256": "2d9cd672e7f9b4d23f534c9b802637e03dd10eeaa7cf7fac71ec81a6d5fd02af",
       "size": 2601
+    },
+    {
+      "path": "src/anka_game_kernel/results/movement_projection.py",
+      "sha256": "6cb3bd115434eb769011a162c8567535055cd5e8da9ea502080c393b42e40538",
+      "size": 503
     },
     {
       "path": "src/anka_game_kernel/results/range.py",
@@ -2718,6 +2718,11 @@
       "size": 2919
     },
     {
+      "path": "src/anka_live_state/README.md",
+      "sha256": "45c98b778640d62d43bcfb113cd2155168d80b730c6f2da3614852b0a51e89ee",
+      "size": 946
+    },
+    {
       "path": "src/anka_live_state/__init__.py",
       "sha256": "de65b8d4f2f0da4f0dd4836b3549d3b3734866589a9a27b79881e25de02b5379",
       "size": 55
@@ -2736,11 +2741,6 @@
       "path": "src/anka_live_state/quality.py",
       "sha256": "bb4c69ef24373e1d5721e1eba4d8e1ec1755de85b7329191a515c678de736bdc",
       "size": 3816
-    },
-    {
-      "path": "src/anka_live_state/README.md",
-      "sha256": "45c98b778640d62d43bcfb113cd2155168d80b730c6f2da3614852b0a51e89ee",
-      "size": 946
     },
     {
       "path": "src/anka_live_state/reducer.py",
@@ -2778,6 +2778,11 @@
       "size": 5688
     },
     {
+      "path": "src/anka_protocol/README.md",
+      "sha256": "a16b697562cd849bb3bc228a7c686913dcb7223441ba030d97e94802750a9da5",
+      "size": 2159
+    },
+    {
       "path": "src/anka_protocol/__init__.py",
       "sha256": "822d88802e803020797fde7ec08859320873b95b2659e4135503d4d20b6882ec",
       "size": 54
@@ -2808,6 +2813,11 @@
       "size": 844
     },
     {
+      "path": "src/anka_protocol/adapters/historical.py",
+      "sha256": "44ba3ffb12f0cfb6bb75759169d20b341726b5a6640ea621644c1ade3019564b",
+      "size": 2724
+    },
+    {
       "path": "src/anka_protocol/adapters/historical_combat.py",
       "sha256": "e48c85a7140c392326b2c753b5bd164210b301227971ceaf934809174356da12",
       "size": 4863
@@ -2826,11 +2836,6 @@
       "path": "src/anka_protocol/adapters/historical_semantic.py",
       "sha256": "adc8083b40654098bf3429383f72d85b95de112fddb60a9f1b76b3ffe69b4c0d",
       "size": 6325
-    },
-    {
-      "path": "src/anka_protocol/adapters/historical.py",
-      "sha256": "44ba3ffb12f0cfb6bb75759169d20b341726b5a6640ea621644c1ade3019564b",
-      "size": 2724
     },
     {
       "path": "src/anka_protocol/api.py",
@@ -2898,11 +2903,6 @@
       "size": 10906
     },
     {
-      "path": "src/anka_protocol/README.md",
-      "sha256": "a16b697562cd849bb3bc228a7c686913dcb7223441ba030d97e94802750a9da5",
-      "size": 2159
-    },
-    {
       "path": "src/anka_protocol/registry/__init__.py",
       "sha256": "f291bb96b53368bd20786b28e438fa5d39f24a8e04c4ebdd30f2586740d22a65",
       "size": 215
@@ -2943,6 +2943,11 @@
       "size": 4960
     },
     {
+      "path": "src/anka_workflow/README.md",
+      "sha256": "7dd1ba149878636d251061d928f6f346a64171ca29d2d0d241db7c73905c688a",
+      "size": 943
+    },
+    {
       "path": "src/anka_workflow/__init__.py",
       "sha256": "7b1326819f36f3cb9adc18207a720ef8ef0692c97b8f5133b1ca8961e18fbf2c",
       "size": 49
@@ -2966,11 +2971,6 @@
       "path": "src/anka_workflow/mission_research.py",
       "sha256": "d78a5adbd30ec5c6fae671222ef627d5982f1333241d451477c3eb9a87586ed1",
       "size": 2613
-    },
-    {
-      "path": "src/anka_workflow/README.md",
-      "sha256": "7dd1ba149878636d251061d928f6f346a64171ca29d2d0d241db7c73905c688a",
-      "size": 943
     },
     {
       "path": "start.bat",
@@ -3083,16 +3083,6 @@
       "size": 4711
     },
     {
-      "path": "tests/test_m1_architecture_gate.py",
-      "sha256": "4db7c8f92e810418f1eabbab94d0b11e73c06a5f455b0900b0b6b89b710bfb87",
-      "size": 3809
-    },
-    {
-      "path": "tests/test_m1_contracts_lab.py",
-      "sha256": "7ca0cc7da778d27e726763237a74cf14a78e49c8723c34efa8d54ad732e98136",
-      "size": 11146
-    },
-    {
       "path": "tests/test_m11_execution.py",
       "sha256": "500a368170d9520603755a7d7dee1957698026b3842aa4a090f7028ae98420dc",
       "size": 24431
@@ -3141,6 +3131,16 @@
       "path": "tests/test_m12_composition_packaging.py",
       "sha256": "a720c8c9fb6feb32971f4ca1f6795e8c9771c8dabfed60eb00a51b21bddfd451",
       "size": 7647
+    },
+    {
+      "path": "tests/test_m1_architecture_gate.py",
+      "sha256": "4db7c8f92e810418f1eabbab94d0b11e73c06a5f455b0900b0b6b89b710bfb87",
+      "size": 3809
+    },
+    {
+      "path": "tests/test_m1_contracts_lab.py",
+      "sha256": "7ca0cc7da778d27e726763237a74cf14a78e49c8723c34efa8d54ad732e98136",
+      "size": 11146
     },
     {
       "path": "tests/test_m2_kernel_adapter.py",
@@ -3573,6 +3573,11 @@
       "size": 1746
     },
     {
+      "path": "tests/test_semantic_p7.py",
+      "sha256": "e42d82f8f516fb410ea371f301e8f0e2c92818b1f5ea672047e41fc85a3b0e3b",
+      "size": 8685
+    },
+    {
       "path": "tests/test_semantic_p7_architecture.py",
       "sha256": "058ff010e1ca1ab23c6cb200f119210c9195cb5c46df1dee8b7e68e02e38d4fe",
       "size": 1334
@@ -3581,11 +3586,6 @@
       "path": "tests/test_semantic_p7_cli.py",
       "sha256": "93a38309ac8f7e6c1bd2d16f85d0c8fe55c3edf7a2ed612772e2de364cf923dd",
       "size": 4838
-    },
-    {
-      "path": "tests/test_semantic_p7.py",
-      "sha256": "e42d82f8f516fb410ea371f301e8f0e2c92818b1f5ea672047e41fc85a3b0e3b",
-      "size": 8685
     },
     {
       "path": "tools/bootstrap_failure.py",
@@ -3673,6 +3673,11 @@
       "size": 5992
     },
     {
+      "path": "tools/windows/_entry.bat",
+      "sha256": "22a9ec57e828463b27fd8bdacc14e0970ab6fa66220561162701e2b54c6775d2",
+      "size": 5443
+    },
+    {
       "path": "tools/windows_bridge_setup.py",
       "sha256": "26101e9ecf3dc5836f4371df916b71629e8aecc9099a26be03c53603cba2d337",
       "size": 7003
@@ -3683,11 +3688,6 @@
       "size": 895
     },
     {
-      "path": "tools/windows/_entry.bat",
-      "sha256": "22a9ec57e828463b27fd8bdacc14e0970ab6fa66220561162701e2b54c6775d2",
-      "size": 5443
-    },
-    {
       "path": "verification/M12_offline_release_receipt.json",
       "sha256": "56ee8d10c2b4ed1862ffddc70adf071ff4c05c4530231e2eaba965ef0e0dc327",
       "size": 3445
@@ -3696,11 +3696,6 @@
       "path": "verification/M3_client_offline_receipt.json",
       "sha256": "737c19e6a6d25c124a8662a06d702ec96865707bf91022bfb1ce80ee8c1839ed",
       "size": 2220
-    },
-    {
-      "path": "verification/P1_acceptance_receipt.json",
-      "sha256": "f9133af5d2ea48d42477fcc7b2597ee226fe9727c7c2d93e06ccaed64aedd05d",
-      "size": 470
     },
     {
       "path": "verification/P10_offline_acceptance_receipt.json",
@@ -3753,6 +3748,11 @@
       "size": 3135
     },
     {
+      "path": "verification/P1_acceptance_receipt.json",
+      "sha256": "f9133af5d2ea48d42477fcc7b2597ee226fe9727c7c2d93e06ccaed64aedd05d",
+      "size": 470
+    },
+    {
       "path": "verification/P20_RELEASE_RECEIPT.json",
       "sha256": "361613dc0248a80cd71c769f59c1784ae10a4ebfd4e0ea711ba77c01bbe06966",
       "size": 1548
@@ -3801,11 +3801,6 @@
       "path": "verification/P29_offline_acceptance_receipt.json",
       "sha256": "456167e6864aa0667330f2c4d987f1b694026eb4c0b22fda6413e6ec110d239a",
       "size": 2787
-    },
-    {
-      "path": "verification/P3_offline_acceptance_receipt.json",
-      "sha256": "cbeb9fd1130700198afd7ef254fa10040c07fb5471f224976b04777cf32d4ff7",
-      "size": 1382
     },
     {
       "path": "verification/P30_offline_acceptance_receipt.json",
@@ -3858,9 +3853,9 @@
       "size": 3499
     },
     {
-      "path": "verification/P4_OFFLINE_ACCEPTANCE_RECEIPT.json",
-      "sha256": "78a4d0d8a9727762f3ed6c37dddf01914c75ff3349af863373c04dcaa7b49129",
-      "size": 880
+      "path": "verification/P3_offline_acceptance_receipt.json",
+      "sha256": "cbeb9fd1130700198afd7ef254fa10040c07fb5471f224976b04777cf32d4ff7",
+      "size": 1382
     },
     {
       "path": "verification/P40_offline_acceptance_receipt.json",
@@ -3913,9 +3908,9 @@
       "size": 3681
     },
     {
-      "path": "verification/P5_OFFLINE_ACCEPTANCE_RECEIPT.json",
-      "sha256": "b6fda0b6a3245b6721e41f5d500c7373ff37324d51d0d182bcd217c65a544ca8",
-      "size": 2037
+      "path": "verification/P4_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "78a4d0d8a9727762f3ed6c37dddf01914c75ff3349af863373c04dcaa7b49129",
+      "size": 880
     },
     {
       "path": "verification/P50_offline_acceptance_receipt.json",
@@ -3968,9 +3963,9 @@
       "size": 2253
     },
     {
-      "path": "verification/P6_OFFLINE_ACCEPTANCE_RECEIPT.json",
-      "sha256": "17341841061ab28432336308d6890a1ff01604236a61b06cb244e33584fa03fd",
-      "size": 1550
+      "path": "verification/P5_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "b6fda0b6a3245b6721e41f5d500c7373ff37324d51d0d182bcd217c65a544ca8",
+      "size": 2037
     },
     {
       "path": "verification/P60_offline_acceptance_receipt.json",
@@ -4006,6 +4001,11 @@
       "path": "verification/P66_offline_acceptance_receipt.json",
       "sha256": "aa134c80f2c2b6c605c656621ef22e577b7a3f29a4e853d666b403bdee83b314",
       "size": 2272
+    },
+    {
+      "path": "verification/P6_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "17341841061ab28432336308d6890a1ff01604236a61b06cb244e33584fa03fd",
+      "size": 1550
     },
     {
       "path": "verification/P7_OFFLINE_ACCEPTANCE_RECEIPT.json",
@@ -4138,7 +4138,7 @@
       "status": "PASS"
     }
   },
-  "release_content_sha256": "e16c6ed5e796bb4b5ddbb7d235d0d8afb207bfaf3641031e2500a7ec5374cdf1",
+  "release_content_sha256": "ad2ecfad47511ca685f3fc423d0e1942c3cf225050b535225f25e2a5937e4046",
   "release_file_count": 813,
   "release_id": "ANKA_NEXT_M12_006",
   "schema_version": 1,
