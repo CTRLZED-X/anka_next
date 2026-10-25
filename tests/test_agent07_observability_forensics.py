@@ -644,6 +644,90 @@ class TestAgent07WorkflowLifecycleClassification(unittest.TestCase):
 
 
 class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
+    def test_end_turn_handoff_cannot_report_complete_over_contradictory_action_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-conflict',
+                invocation_id='inv-agent07-endturn-conflict',
+            )
+            try:
+                action_id='action-agent07-endturn-conflict'
+                attempt_id='attempt-agent07-endturn-conflict'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-conflict'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',
+                    fight_epoch=13,
+                    turn_epoch=41,
+                )
+
+                report=turn_handoff_report(obs.recent)
+                self.assertEqual(report['status'],'CONTRADICTORY_ACTION_EVIDENCE')
+                self.assertIn('PRE_SEND_TERMINAL_WITH_SEND',report['hard_conflicts'])
+                self.assertEqual(report['next_owner_account_id'],'acct-enu')
+            finally:
+                obs.finish('BLOCKED')
+
     def test_same_owner_reappearance_is_not_skipped_for_later_other_account(self):
         with tempfile.TemporaryDirectory() as td:
             obs = LocalDiagnostics(
