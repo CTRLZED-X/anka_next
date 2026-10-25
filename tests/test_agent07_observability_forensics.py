@@ -6,9 +6,9 @@ from hashlib import sha256
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from anka_contracts.diagnostics import DiagnosticEvent
+from anka_contracts.diagnostics import BoundaryExpectation, DiagnosticEvent, OperationTraceSpec
 from anka_observability.api import LocalDiagnostics
-from anka_observability.bundle import verify_incident
+from anka_observability.bundle import _render_read_first, verify_incident
 from anka_observability.recovery import recover_unclean_run
 from anka_observability.forensics import READY_TRACE, PartyReadyAnalyzer, action_lifecycle_report, turn_handoff_report
 from anka_observability.redaction import has_unredacted_sensitive_data
@@ -1022,6 +1022,137 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
                 run_manifest = json.loads(z.read('run_manifest.json'))
             self.assertNotIn('evt-' + ('x' * 113), {row.get('event_id') for row in recovered_rows})
             self.assertIn('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED', run_manifest['observer_errors'])
+
+
+
+
+class TestAgent07CausalDiagnosisDerivation(unittest.TestCase):
+    def test_coherently_rehashed_diagnosis_gpt_and_markdown_cannot_change_first_divergence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-causal-rehash',
+                invocation_id='inv-agent07-causal-rehash',
+            )
+            try:
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    action_id='action-agent07-causal-rehash',
+                )
+                obs.record(
+                    'execution.guard_failed',
+                    severity='ERROR',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    action_id='action-agent07-causal-rehash',
+                )
+                trace = OperationTraceSpec(
+                    'AGENT07_CAUSAL_REHASH',
+                    (
+                        BoundaryExpectation(
+                            'workflow.action_requested',
+                            'workflow.action_authorization',
+                            'anka_workflow',
+                            'workflow',
+                        ),
+                        BoundaryExpectation(
+                            'execution.admitted',
+                            'execution.pre_input_authorization',
+                            'anka_execution',
+                            'execution',
+                        ),
+                        BoundaryExpectation(
+                            'execution.input_sent',
+                            'execution.external_boundary',
+                            'anka_execution',
+                            'execution',
+                        ),
+                    ),
+                    ('action_id',),
+                )
+                path = obs.export_incident(
+                    'AGENT07_CAUSAL_REHASH',
+                    boundary='execution.pre_input_authorization',
+                    trace_spec=trace,
+                    control_state='BLOCKED',
+                )
+                initial = verify_incident(path)
+                self.assertEqual(initial['status'], 'PASS', initial['errors'])
+
+                with ZipFile(path) as z:
+                    files = {name: z.read(name) for name in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                root_diag = json.loads(files['diagnosis.json'])
+                diag = json.loads(files['analysis/diagnosis.json'])
+                gpt = json.loads(files['analysis/gpt_summary.json'])
+                facts = json.loads(files['analysis/proven_facts.json'])
+                workflow = json.loads(files['analysis/workflow_lifecycle.json'])
+                handoff = json.loads(files['analysis/turn_handoff.json'])
+                run_manifest = json.loads(files['run_manifest.json'])
+
+                root_diag['first_divergent_boundary'] = 'client.fake_boundary'
+                root_diag['suspected_owner'] = 'anka_client'
+                diag['first_divergent_boundary'] = 'client.fake_boundary'
+                diag['suspected_owner'] = 'anka_client'
+                gpt['first_divergence'] = 'client.fake_boundary'
+                gpt['suspected_owner'] = 'anka_client'
+
+                def store_json(name, payload):
+                    blob = (
+                        json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                    ).encode('utf8')
+                    files[name] = blob
+                    manifest['files'][name] = {
+                        'sha256': sha256(blob).hexdigest(),
+                        'bytes': len(blob),
+                    }
+
+                store_json('diagnosis.json', root_diag)
+                store_json('analysis/diagnosis.json', diag)
+                store_json('analysis/gpt_summary.json', gpt)
+                summary_sha = sha256(files['analysis/gpt_summary.json']).hexdigest()
+                read_first = _render_read_first(
+                    gpt,
+                    diag,
+                    facts,
+                    workflow,
+                    handoff,
+                    run_manifest,
+                    summary_sha,
+                    primary_export_failed=bool(manifest.get('primary_export_failed')),
+                )
+                files['GPT_READ_FIRST.md'] = read_first
+                manifest['files']['GPT_READ_FIRST.md'] = {
+                    'sha256': sha256(read_first).hexdigest(),
+                    'bytes': len(read_first),
+                }
+                files['manifest.json'] = (
+                    json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                ).encode('utf8')
+
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for name, data in files.items():
+                        z.writestr(name, data)
+
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn(
+                    'DIAGNOSIS_DERIVATION_MISMATCH:first_divergent_boundary',
+                    result['errors'],
+                )
+                self.assertIn(
+                    'DIAGNOSIS_DERIVATION_MISMATCH:suspected_owner',
+                    result['errors'],
+                )
+                self.assertNotIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                self.assertNotIn('DIAGNOSIS_ALIAS_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
 
 
 
