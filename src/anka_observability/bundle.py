@@ -521,7 +521,7 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         f'**Physical input state:** {physical_input_state} (most conservative state present in included evidence).\n\n'
         f'**Detail:** {sanitize(detail)}\n\n'
         'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n'
-    ).encode('utf8')
+    )
     emergency_gpt_summary={'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
         'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
         'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
@@ -542,6 +542,7 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n\n'
         f'**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
         f'**Machine summary SHA-256:** {emergency_gpt_sha256}\n')
+    read_first=read_first.encode('utf8')
     artifacts={
         'diagnosis.json':_serialized(diagnosis),'analysis/diagnosis.json':_serialized(diagnosis),
         'evidence_matrix.json':_serialized({'schema_version':2,'sections':sections}),
