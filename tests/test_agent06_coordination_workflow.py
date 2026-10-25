@@ -118,6 +118,76 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
         self.assertFalse(already_joined.allowed)
         self.assertEqual(already_joined.reason, "ALREADY_JOINED")
 
+    def test_optional_turn_owner_fails_closed_instead_of_crashing_snapshot(self):
+        roster = ROSTER + (
+            PartyRosterMember(
+                "acct-feca",
+                "client-feca",
+                43,
+                "follower",
+                required=False,
+            ),
+        )
+        coordinator = PartyCoordinatorService("party-agent06-optional", roster)
+        coordinator.observe(
+            MemberPartyObservation(
+                "coordobs-agent06-opt-1",
+                "acct-cra",
+                "client-cra",
+                41,
+                1,
+                1,
+                1,
+                1,
+                "fight-agent06-optional",
+                190580738,
+                "FIGHT_ACTIVE",
+                43,
+                True,
+                True,
+                True,
+                "HEALTHY",
+                ("evidence-agent06-opt-1",),
+                False,
+            )
+        )
+        coordinator.observe(
+            MemberPartyObservation(
+                "coordobs-agent06-opt-2",
+                "acct-enu",
+                "client-enu",
+                42,
+                2,
+                2,
+                1,
+                1,
+                "fight-agent06-optional",
+                190580738,
+                "FIGHT_ACTIVE",
+                43,
+                True,
+                True,
+                True,
+                "HEALTHY",
+                ("evidence-agent06-opt-2",),
+                False,
+            )
+        )
+
+        snapshot = coordinator.snapshot()
+        self.assertEqual(snapshot.phase, "BLOCKED")
+        self.assertIsNone(snapshot.turn_owner_account_id)
+        self.assertIn(
+            "TURN_OWNER_NOT_REQUIRED_MEMBER",
+            snapshot.conflicting_evidence,
+        )
+        denied = coordinator.turn_permit(
+            "party-agent06-optional",
+            "acct-feca",
+        )
+        self.assertFalse(denied.allowed)
+        self.assertEqual(denied.reason, "TURN_OWNER_NOT_REQUIRED_MEMBER")
+
     def test_ready_first_turn_and_next_owner_require_cross_account_convergence(self):
         coordinator = PartyCoordinatorService("party-agent06", ROSTER)
         coordinator.observe(observation(10, "acct-cra", turn_epoch=0, owner=None))
