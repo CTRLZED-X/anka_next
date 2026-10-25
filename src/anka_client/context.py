@@ -35,14 +35,21 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     map_id=map_gen=coord_gen=None
     if bridge is None:
         reasons.append('BRIDGE_PROJECTION_MISSING')
-    elif bridge.status!='RESEARCH_PROJECTION_ONLY' or not bridge.source_verified:
+    elif bridge.status!='RESEARCH_PROJECTION_ONLY' or bridge.source_verified is not True:
         reasons.append('BRIDGE_PROJECTION_UNPROVEN')
     else:
-        if not bridge.live_certified: reasons.append('BRIDGE_NOT_CURRENT_CERTIFIED')
-        map_id=bridge.map_id;map_gen=bridge.map_generation;coord_gen=bridge.coordinate_generation
-        if bridge.client_size!=(window.client_width,window.client_height): reasons.append('BRIDGE_WINDOW_SIZE_MISMATCH')
+        if bridge.live_certified is not True: reasons.append('BRIDGE_NOT_CURRENT_CERTIFIED')
+        raw_generation=(bridge.map_id,bridge.map_generation,bridge.coordinate_generation)
+        if all(type(v) is int and v>0 for v in raw_generation):
+            map_id,map_gen,coord_gen=raw_generation
+        else:
+            reasons.append('BRIDGE_GENERATION_MISSING')
+        size=bridge.client_size
+        if (type(size) is not tuple or len(size)!=2
+                or any(type(v) is not int or v<=0 for v in size)
+                or size!=(window.client_width,window.client_height)):
+            reasons.append('BRIDGE_WINDOW_SIZE_MISMATCH')
         if expected_map_id is not None and map_id!=expected_map_id: reasons.append('BRIDGE_MAP_MISMATCH')
-        if not all(type(v) is int and v>0 for v in (map_id,map_gen,coord_gen)): reasons.append('BRIDGE_GENERATION_MISSING')
     loadout_gen=None
     if loadout is None:
         reasons.append('LOADOUT_EVIDENCE_MISSING')
