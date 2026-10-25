@@ -7,10 +7,13 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from anka_client.bridge_discovery import probe_bridge_range
 from anka_client.calibration import load_calibration_profile
-from anka_client.unity_bridge import ReadOnlyBridgeInspector
+from anka_client.unity_bridge import (
+    BridgeTransportRejected, LocalLoopbackBridgeReader, ReadOnlyBridgeInspector
+)
 from anka_client.win32_bridge_ownership import _loopback_listener_owners
 from anka_contracts.client import WindowObservation
 
@@ -192,6 +195,28 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         raw = struct.pack('<I', 2) + struct.pack('<6I', 2, 0, 0, 0, 0, PID)
         with self.assertRaisesRegex(OSError, 'TCP_LISTENER_TABLE_TRUNCATED'):
             _loopback_listener_owners(raw, PORT)
+
+    def test_pathological_bridge_json_is_normalized_to_transport_rejection(self):
+        class Response:
+            status = 200
+            def getheader(self, _name):
+                return None
+            def read(self, _limit):
+                return (b'[' * 2000) + b'0' + (b']' * 2000)
+
+        class Connection:
+            def __init__(self, *_args, **_kwargs):
+                pass
+            def request(self, *_args, **_kwargs):
+                pass
+            def getresponse(self):
+                return Response()
+            def close(self):
+                pass
+
+        with mock.patch('anka_client.unity_bridge.http.client.HTTPConnection', Connection):
+            with self.assertRaisesRegex(BridgeTransportRejected, 'BRIDGE_COMMUNICATION_FAILED'):
+                LocalLoopbackBridgeReader().get_json(PORT, '/health')
 
     def test_calibration_loader_rejects_string_coordinate_coercion(self):
         data = {
