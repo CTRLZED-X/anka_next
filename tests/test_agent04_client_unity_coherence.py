@@ -179,6 +179,19 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError, 'TCP_LISTENER_TABLE_TRUNCATED'):
             _loopback_listener_owners(raw, PORT)
 
+    def test_native_transient_projection_loss_forces_retry(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        tick_loss = '''_coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
+            _coordinateByCell.Clear();
+            _lastProjectionSignature = null;
+            return;'''
+        rebuild_loss = '''_coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
+                _coordinateByCell.Clear();
+                _lastProjectionSignature = null;
+                return;'''
+        self.assertIn(tick_loss, source)
+        self.assertIn(rebuild_loss, source)
+
     def test_native_projection_signature_tracks_hwnd_replacement(self):
         source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
         self.assertIn('window.Handle.ToInt64().ToString()', source)
