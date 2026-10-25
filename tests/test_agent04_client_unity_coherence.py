@@ -70,10 +70,10 @@ class SequenceReader:
 
 
 class OwnerSequence:
-    def __init__(self, *owners: int | None):
+    def __init__(self, *owners: tuple[int,int] | None):
         self.owners = list(owners)
 
-    def __call__(self, port: int) -> int | None:
+    def __call__(self, port: int) -> tuple[int,int] | None:
         if not self.owners:
             raise AssertionError('unexpected extra listener-owner query')
         return self.owners.pop(0)
@@ -140,7 +140,7 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         report = probe_bridge_range(
             (window(),), port_start=PORT, port_count=1,
             reader_factory=lambda: FakeReader(health()),
-            listener_owner_resolver=lambda _port: 9999,
+            listener_owner_resolver=lambda _port: (9999, CREATED),
         )
         self.assertEqual(report['status'], 'NOT_DETECTED')
         self.assertEqual(report['listener_owner_rejections'], 1)
@@ -150,7 +150,7 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         report = probe_bridge_range(
             (window(),), port_start=PORT, port_count=1,
             reader_factory=lambda: FakeReader(health()),
-            listener_owner_resolver=OwnerSequence(PID, 9999),
+            listener_owner_resolver=OwnerSequence((PID, CREATED), (9999, CREATED)),
         )
         self.assertEqual(report['status'], 'NOT_DETECTED')
         self.assertEqual(report['listener_owner_rejections'], 1)
@@ -159,12 +159,22 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         report = probe_bridge_range(
             (window(),), port_start=PORT, port_count=1,
             reader_factory=lambda: FakeReader(health()),
-            listener_owner_resolver=lambda _port: PID,
+            listener_owner_resolver=lambda _port: (PID, CREATED),
         )
         self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
         self.assertTrue(report['listener_owner_proof_active'])
         self.assertEqual(report['listener_owner_rejections'], 0)
         self.assertEqual(report['projection_ready_matches'], 1)
+
+    def test_listener_owner_recycled_pid_generation_is_rejected(self):
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(health()),
+            listener_owner_resolver=lambda _port: (PID, CREATED + 1),
+        )
+        self.assertEqual(report['status'], 'NOT_DETECTED')
+        self.assertEqual(report['listener_owner_rejections'], 1)
+        self.assertEqual(report['projection_ready_matches'], 0)
 
     def test_windows_tcp_owner_table_parser_accepts_only_loopback_listener(self):
         loopback = struct.unpack('<I', socket.inet_aton('127.0.0.1'))[0]
