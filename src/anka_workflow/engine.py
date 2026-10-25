@@ -200,7 +200,12 @@ class MissionWorkflow:
         if signal.kind=='WORLD_REENTRY_PROVEN' and signal.fight_epoch==s.fight_epoch and s.phase=='WORLD':
             return self._nonprogress(signal,'WORLD_REENTRY_ALREADY_OBSERVED','DUPLICATE')
         if s.phase in _TERMINAL:
-            if signal.kind=='STOP_REQUESTED':return self._nonprogress(signal,'ALREADY_TERMINAL','DUPLICATE')
+            # Terminal snapshots are immutable replay fences.  A repeated stop is
+            # already satisfied and must not append a fresh transport identity;
+            # otherwise unique STOP_REQUESTED traffic can grow history forever
+            # after the workflow has supposedly become bounded and immutable.
+            if signal.kind=='STOP_REQUESTED':
+                return WorkflowApplyResult('DUPLICATE',False,'ALREADY_TERMINAL',s,None)
             return WorkflowApplyResult('REJECTED',False,'WORKFLOW_TERMINAL',s,None)
         # Never forget an already-processed transition just to bound memory: that
         # could make an old command replayable after restart. Reserve the final
@@ -257,8 +262,13 @@ class MissionWorkflow:
                 return self._transition('BLOCKED',signal,reason='RECOVERY_FAILED',terminal_reason='RECOVERY_FAILED')
             if signal.kind=='RECOVERY_SUCCEEDED' and s.resume_phase:
                 return self._transition(s.resume_phase,signal,reason='RECOVERY_SUCCEEDED',resume_phase=None)
-            # Fight-end evidence can legitimately overtake a watchdog/recovery state.
-            if signal.kind=='FIGHT_ENDED' and s.resume_phase in ('READY','FIGHT_ACTIVE'):
+            # Fight-end evidence can legitimately overtake watchdog recovery from
+            # every phase in which the same authoritative FIGHT_ENDED proof is
+            # accepted outside recovery.  Restricting this to READY/FIGHT_ACTIVE
+            # strands an early-ended fight merely because its watchdog fired first.
+            if signal.kind=='FIGHT_ENDED' and s.resume_phase in (
+                'FIGHT_ENTRY','PARTY_JOIN','PLACEMENT','READY','FIGHT_ACTIVE'
+            ):
                 if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
                 return self._transition('FIGHT_END_RECONCILIATION',signal,reason='FIGHT_END_SUPERSEDES_RECOVERY',pending_action_id=None,resume_phase=None)
             return WorkflowApplyResult('REJECTED',False,'RECOVERY_SIGNAL_REQUIRED',s,None)
