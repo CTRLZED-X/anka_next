@@ -301,6 +301,7 @@ public static class CoordinateProjection
             return string.Join("|", new[]
             {
                 SafeInstanceId(camera).ToString(),
+                window.Handle.ToInt64().ToString(),
                 Round(transform.position.x), Round(transform.position.y), Round(transform.position.z),
                 Round(transform.rotation.x), Round(transform.rotation.y),
                 Round(transform.rotation.z), Round(transform.rotation.w),
