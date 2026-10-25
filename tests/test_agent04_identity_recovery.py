@@ -47,6 +47,20 @@ class Agent04IdentityRecoveryTests(unittest.TestCase):
         )[0]
         self.assertEqual(result.state, 'IDENTITY_MATCHED')
 
+    def test_unsupported_breed_record_does_not_poison_supported_record(self):
+        scan = WindowScan(NOW, (window(),))
+        result = bind_accounts(
+            ('Curseni',), scan,
+            (evidence(breed='FECA'), evidence(breed='CRA')),
+        )[0]
+        self.assertEqual((result.state, result.breed), ('IDENTITY_MATCHED', 'CRA'))
+
+    def test_exact_duplicate_evidence_does_not_create_false_ambiguity(self):
+        scan = WindowScan(NOW, (window(),))
+        item = evidence()
+        result = bind_accounts(('Curseni',), scan, (item, item))[0]
+        self.assertEqual(result.state, 'IDENTITY_MATCHED')
+
     def test_two_fresh_trusted_records_remain_ambiguous(self):
         scan = WindowScan(NOW, (window(),))
         result = bind_accounts(
