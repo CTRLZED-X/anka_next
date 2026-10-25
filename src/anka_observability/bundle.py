@@ -1114,8 +1114,11 @@ def verify_incident(path:Path)->dict:
                         if (expected_finding.failure_code!='EVIDENCE_GAP'
                                 and diag.get('failure_code')!=expected_finding.failure_code):
                             add('DIAGNOSIS_DERIVATION_MISMATCH:failure_code')
-                elif finding_source=='NONE' and 'first_divergent_boundary' in diag:
-                    add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                elif finding_source=='NONE':
+                    if 'first_divergent_boundary' in diag:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                    if graph_analysis_mode=='GENERIC_TRACE' and recomputed_trace_finding is not None:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
                 if isinstance(run_manifest,dict):
                     if diag.get('observer_dropped_events')!=run_manifest.get('observer_dropped_events'):
                         add('DIAGNOSIS_DROPPED_EVENTS_MISMATCH')
