@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from anka_contracts.client import WindowObservation
+from anka_client.discovery import client_instance_id
 from anka_client.unity_bridge import (
     EXPECTED_BRIDGE_ADAPTER, EXPECTED_BRIDGE_VERSION, LocalLoopbackBridgeReader
 )
@@ -31,6 +32,8 @@ def _projection_ready_for_window(health: dict, window: WindowObservation) -> boo
         value=health.get(key)
         if type(value) is not str or not value:
             return False
+    if health.get('clientInstanceId') != client_instance_id(window):
+        return False
     fingerprint=health.get('windowFingerprint')
     if type(fingerprint) is not str:
         return False
