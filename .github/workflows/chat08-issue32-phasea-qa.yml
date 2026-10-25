@@ -153,10 +153,15 @@ jobs:
           print("NO_TARGET_CLASSIFICATION="+loaded.classification)
           print("NO_TARGET_RESUME_AUTHORIZED="+str(loaded.resume_authorized))
           print("NO_TARGET_ADMISSION="+admit_workflow_resume(no_target,100).status)
-          assert not loaded.resume_authorized, (
-              "RECOVERING snapshot without resume_phase was classified resumable"
-          )
-          assert admit_workflow_resume(no_target,100).status=='REJECTED'
+          if loaded.resume_authorized or admit_workflow_resume(no_target,100).status!='REJECTED':
+              print("BLOCKER_RECOVERING_WITHOUT_RESUME_TARGET=REPRODUCED")
+
+          # Malformed recovery targets also must not become resumable authority.
+          for bad_resume in ('BOGUS','RECOVERING','COMPLETED'):
+              malformed=replace(s,resume_phase=bad_resume)
+              m=load_workflow_snapshot(dump_workflow_snapshot(malformed))
+              print("BAD_RESUME_"+bad_resume+"_CLASSIFICATION="+m.classification)
+              print("BAD_RESUME_"+bad_resume+"_AUTHORIZED="+str(m.resume_authorized))
 
           # Legacy CREATED safe bootstrap should match the deterministic
           # constructor shape, including its derived progress token.
@@ -183,9 +188,20 @@ jobs:
           bad=load_workflow_snapshot(tampered)
           print("TAMPERED_TOKEN_CLASSIFICATION="+bad.classification)
           print("TAMPERED_TOKEN_RESUME_AUTHORIZED="+str(bad.resume_authorized))
-          assert not bad.resume_authorized, (
-              "legacy CREATED with non-constructor progress_token was promoted to SAFE authority"
-          )
+          if bad.resume_authorized:
+              print("BLOCKER_TAMPERED_PRISTINE_PROGRESS_TOKEN=REPRODUCED")
 
+          blockers=[]
+          if loaded.resume_authorized or admit_workflow_resume(no_target,100).status!='REJECTED':
+              blockers.append("RECOVERING_RESUME_TARGET_UNPROVEN")
+          for bad_resume in ('BOGUS','RECOVERING','COMPLETED'):
+              malformed=replace(s,resume_phase=bad_resume)
+              m=load_workflow_snapshot(dump_workflow_snapshot(malformed))
+              if m.resume_authorized:
+                  blockers.append("INVALID_RECOVERY_RESUME_PHASE_"+bad_resume)
+          if bad.resume_authorized:
+              blockers.append("LEGACY_CREATED_PROGRESS_TOKEN_UNPROVEN")
+          print("CHAT08_BLOCKERS="+",".join(blockers))
+          assert not blockers, blockers
           print("CHAT08_ISSUE32_PHASEA_REQUIRED_MATRIX=PASS")
           PY
