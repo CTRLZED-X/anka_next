@@ -29,7 +29,6 @@ class _Dir:
     reconnected_pending:bool=False
     fin_seq:int|None=None
     overlap_proof:RecentByteProof=field(default_factory=RecentByteProof)
-    overlap_untrusted:bool=False
 
 @dataclass
 class _Flow:
@@ -37,6 +36,7 @@ class _Flow:
     dirs:dict[str,_Dir]=field(default_factory=dict)
     active:bool=False
     reset_seen:bool=False
+    overlap_untrusted:bool=False
 
 class TransportEnvelopeAssembler:
     def __init__(self, *, capture_session_id:str, flow_clients:Mapping[str,str], max_pending_segments:int=1024):
@@ -70,9 +70,10 @@ class TransportEnvelopeAssembler:
             if continuity in ('COMPLETE','CONTIGUOUS'):
                 continuity='RECONNECTED'
             state.reconnected_pending=False
-        if state.overlap_untrusted and continuity in ('COMPLETE','CONTIGUOUS','RECONNECTED'):
-            # Once byte identity is conflicting or no longer provable, this TCP
-            # generation never returns to trusted continuity.
+        if flow.overlap_untrusted and continuity in ('COMPLETE','CONTIGUOUS','RECONNECTED'):
+            # A byte conflict in either half-stream invalidates semantic trust
+            # for the whole TCP connection generation until a fresh SYN proves
+            # a separately distinguishable generation.
             continuity='GAP_INSIDE'
         self._producer_sequence+=1
         utc,mono,provenance=self._times(seg)
@@ -87,11 +88,11 @@ class TransportEnvelopeAssembler:
         return seg.seq + (1 if seg.syn else 0)
 
     @staticmethod
-    def _mark_overlap_untrusted(state:_Dir)->None:
+    def _mark_overlap_untrusted(flow:_Flow,state:_Dir)->None:
         state.unresolved_gaps+=1
-        state.overlap_untrusted=True
+        flow.overlap_untrusted=True
 
-    def _trim_verified_overlap(self,state:_Dir,seq:int,payload:bytes)->tuple[int,bytes]:
+    def _trim_verified_overlap(self,flow:_Flow,state:_Dir,seq:int,payload:bytes)->tuple[int,bytes]:
         """Remove only overlap whose exact bytes are still provably identical."""
         if state.expected is None or seq>=state.expected:
             return seq,payload
@@ -99,7 +100,7 @@ class TransportEnvelopeAssembler:
         overlap_end=min(end,state.expected)
         verdict=state.overlap_proof.compare(seq,payload,overlap_end)
         if verdict!=MATCH:
-            self._mark_overlap_untrusted(state)
+            self._mark_overlap_untrusted(flow,state)
         if end<=state.expected:
             if verdict==MATCH:
                 state.duplicates+=1
@@ -129,7 +130,7 @@ class TransportEnvelopeAssembler:
             # A SYN after terminal evidence, or a different SYN on an already
             # anchored tuple, starts a fresh connection generation.
             self._retire_generation(flow)
-            flow.generation+=1;self._reconnects+=1;flow.dirs={};flow.reset_seen=False
+            flow.generation+=1;self._reconnects+=1;flow.dirs={};flow.reset_seen=False;flow.overlap_untrusted=False
             state=_Dir(reconnected_pending=True,loss_epoch_seen=self._loss_epoch);flow.dirs[seg.direction]=state
         state.syn_seq=seg.seq;state.expected=(seg.seq+1)%_MOD;state.loss_epoch_seen=self._loss_epoch;flow.active=True
         return state
@@ -174,7 +175,7 @@ class TransportEnvelopeAssembler:
         # Every retransmitted overlap is byte-checked before it can be discarded
         # or before a new suffix can be trusted.
         if state.expected is not None and seq<state.expected:
-            seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+            seq,payload=self._trim_verified_overlap(flow,state,seq,seg.payload)
         else:
             payload=seg.payload
         if not payload:return ()
@@ -210,7 +211,7 @@ class TransportEnvelopeAssembler:
         while state.pending:
             seg=state.pending[0];seq=self._payload_seq(seg)
             if state.expected is not None and seq<state.expected:
-                seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+                seq,payload=self._trim_verified_overlap(flow,state,seq,seg.payload)
             else:
                 payload=seg.payload
             if not payload:
@@ -252,7 +253,7 @@ class TransportEnvelopeAssembler:
                         out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'RESET'))
                         continue
                     if state.expected is not None and seq<state.expected:
-                        seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+                        seq,payload=self._trim_verified_overlap(flow,state,seq,seg.payload)
                     else:
                         payload=seg.payload
                     if not payload:
