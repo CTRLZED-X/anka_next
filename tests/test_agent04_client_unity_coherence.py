@@ -34,6 +34,8 @@ def window(hwnd: int = 33, *, size: tuple[int, int] = (1280, 649)) -> WindowObse
 def health(*, hwnd: int = 33, width: int = 1280, height: int = 649) -> dict:
     return {
         'source': 'unity_bridge',
+        'bridgeVersion': '2.2.77',
+        'adapter': 'dofus_authoritative_cell_map',
         'available': True,
         'status': 'MAP_COORDINATES_READY',
         'processId': PID,
@@ -128,6 +130,20 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         )
         self.assertEqual((result.status, result.reason),
                          ('BLOCKED', 'BRIDGE_GENERATION_CHANGED_DURING_READ'))
+
+    def test_stale_bridge_version_is_rejected(self):
+        stale = health()
+        stale['bridgeVersion'] = '2.2.76'
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(stale),
+        )
+        self.assertEqual(report['status'], 'NOT_DETECTED')
+        self.assertEqual(report['projection_ready_matches'], 0)
+
+        identity = ReadOnlyBridgeInspector(FakeReader(stale)).inspect_identity(window(), PORT)
+        self.assertEqual((identity.status, identity.reason),
+                         ('BLOCKED', 'BRIDGE_VERSION_UNEXPECTED'))
 
     def test_zero_projection_generation_never_counts_ready(self):
         stale = health()
