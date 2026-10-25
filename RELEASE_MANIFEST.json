@@ -9,8 +9,8 @@
   "files": [
     {
       "path": ".github/workflows/integration-release.yml",
-      "sha256": "d73469d588a5b42b42a682b3c4d8a777b935ab92698e2c813191989a69ef3676",
-      "size": 2169
+      "sha256": "2f9c171936c6b0b64fce43e948bdc54f45b548a439209ce18c0dfb2c7dd9ec1f",
+      "size": 2168
     },
     {
       "path": ".gitignore",
@@ -4138,7 +4138,7 @@
       "status": "PASS"
     }
   },
-  "release_content_sha256": "b5bf2ba60b6f254288385afbb79069c6200846fcdc1913679370ef732371ba45",
+  "release_content_sha256": "a9a7e4fe8cceacb7feebb0da2c98f74e504b7157c41558bf1d34c03e873f53f2",
   "release_file_count": 813,
   "release_id": "ANKA_NEXT_M12_006",
   "schema_version": 1,
