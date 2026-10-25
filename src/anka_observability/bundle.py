@@ -7,7 +7,7 @@ from __future__ import annotations
 from hashlib import sha256
 from datetime import datetime
 from pathlib import Path
-from tempfile import gettempdir
+from tempfile import mkdtemp
 from uuid import uuid4
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
@@ -654,7 +654,11 @@ def export_incident(observer,code:str,*,boundary:str,detail:str='',trace_spec:Op
         # ZIP construction/compression/path failures are observer failures, not
         # application authority.  RuntimeError/ValueError from the ZIP layer are
         # just as important to contain as OSError.
-        fallback=Path(gettempdir())/'ANKA_NEXT'/'incidents'/(id_+'.zip')
+        # Use a freshly created private temporary directory rather than a fixed
+        # shared path that can be pre-created/replaced by a symlink. This keeps a
+        # primary diagnostic-path failure from turning Observability into a
+        # runtime failure or writing outside the intended fallback location.
+        fallback=Path(mkdtemp(prefix='ANKA_NEXT-incident-'))/(id_+'.zip')
         # Rebuild normal artifacts so the evidence matrix truthfully marks the
         # primary export path as failed. If that advanced rebuild fails too, the
         # emergency envelope remains independent of the analyzer.
