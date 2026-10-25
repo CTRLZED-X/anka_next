@@ -252,9 +252,21 @@ class PartyCoordinatorService:
         elif turn_owner is None:phase='WAIT_TURN_OWNER'
         else:phase='TURN_ACTIVE'
         member_tuple=tuple(o for o in obs if o is not None)
+        # Required members own party barriers, but optional roster members may
+        # still receive pre-turn permits. Their permission-relevant semantics
+        # therefore must participate in the opaque generation token; otherwise
+        # an optional member's authority can change while permit_generation does
+        # not, defeating stale-permit fencing.
+        optional_tuple=tuple(
+            self._observations[x.account_id]
+            for x in self._roster
+            if not x.required and x.account_id in self._observations
+        )
         semantic_obj={
             'party':self.party_id,'party_generation':self._party_generation,'fight_epoch':fight_epoch,'fight_id':fight_id,'phase':phase,
-            'members':[o.semantic_tuple() for o in member_tuple], 'same':same,'owner':turn_owner,
+            'members':[o.semantic_tuple() for o in member_tuple],
+            'optional_members':[o.semantic_tuple() for o in optional_tuple],
+            'same':same,'owner':turn_owner,
             'join':join.satisfied,'placement':placement.satisfied,'ready':ready.satisfied,
             'missing':sorted(missing),'conflicts':sorted(set(local_conflicts)),
         }
@@ -332,7 +344,10 @@ class PartyCoordinatorService:
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
                 elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.joined is True:allowed=False;reason='ALREADY_JOINED'
-                evidence=tuple(dict.fromkeys(tuple(e for o in snap.members for e in o.evidence_ids))) if allowed else ()
+                evidence=tuple(dict.fromkeys(
+                    tuple(e for o in snap.members for e in o.evidence_ids)
+                    + (member.evidence_ids if member is not None else ())
+                )) if allowed else ()
             elif scope=='PLACEMENT':
                 allowed=True;reason='PERMIT_GRANTED'
                 if not snap.same_fight_proven:allowed=False;reason='SAME_FIGHT_UNPROVEN'
