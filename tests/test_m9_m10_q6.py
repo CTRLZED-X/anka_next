@@ -29,8 +29,8 @@ def mission(*,target=2,max_attempts=3,stop_loss=False,stop_unknown=True,watchdog
     cfg=MissionConfigSpec('sufokia_direction_cycle',6,8,target,max_attempts,stop_loss,stop_unknown,'a'*64)
     return compile_mission(cfg,ROUTES,watchdog_budget_ticks=watchdog,recovery_budget=recovery)
 
-def sig(n,kind,tick,*,fight=None,result=None,action=None,status=None):
-    return WorkflowSignal(f'wfsig-{n}',kind,tick,(f'ev-{n}',),fight,result,action,status)
+def sig(n,kind,tick,*,fight=None,result=None,action=None,status=None,recovery_generation=None):
+    return WorkflowSignal(f'wfsig-{n}',kind,tick,(f'ev-{n}',),fight,result,action,status,recovery_generation=recovery_generation)
 
 def advance_to_active(w:MissionWorkflow,fight=1,start=0):
     events=[sig(start+1,'START',0),sig(start+2,'PREFLIGHT_OK',1),sig(start+3,'ENCOUNTER_SELECTED',2),
@@ -227,7 +227,7 @@ class TestM10Workflow(unittest.TestCase):
         self.assertEqual(w.snapshot().phase,'READY');deadline=w.snapshot().watchdog_deadline_tick
         hb=w.apply(sig(8,'HEARTBEAT',deadline));self.assertFalse(hb.semantic_progress);self.assertEqual(w.snapshot().watchdog_deadline_tick,deadline)
         rec=w.apply(sig(9,'WATCHDOG',deadline+1));self.assertEqual(rec.snapshot.phase,'RECOVERING');self.assertEqual(rec.snapshot.recovery_budget_remaining,0)
-        resume=w.apply(sig(10,'RECOVERY_SUCCEEDED',deadline+2));self.assertEqual(resume.snapshot.phase,'READY')
+        resume=w.apply(sig(10,'RECOVERY_SUCCEEDED',deadline+2,recovery_generation=rec.snapshot.active_recovery_generation));self.assertEqual(resume.snapshot.phase,'READY')
         blocked=w.apply(sig(11,'WATCHDOG',resume.snapshot.watchdog_deadline_tick+1));self.assertEqual(blocked.snapshot.phase,'BLOCKED');self.assertIn('WORKFLOW_TIMEOUT_READY',blocked.snapshot.terminal_reason)
 
     def test_repeated_recovery_timeout_preserves_original_resume_phase(self):
@@ -238,7 +238,7 @@ class TestM10Workflow(unittest.TestCase):
         self.assertEqual((first.snapshot.phase,first.snapshot.resume_phase,first.snapshot.recovery_budget_remaining),('RECOVERING','READY',1))
         second=w.apply(sig(9,'WATCHDOG',first.snapshot.watchdog_deadline_tick+1))
         self.assertEqual((second.snapshot.phase,second.snapshot.resume_phase,second.snapshot.recovery_budget_remaining),('RECOVERING','READY',0))
-        resumed=w.apply(sig(10,'RECOVERY_SUCCEEDED',second.snapshot.phase_started_tick+1))
+        resumed=w.apply(sig(10,'RECOVERY_SUCCEEDED',second.snapshot.phase_started_tick+1,recovery_generation=second.snapshot.active_recovery_generation))
         self.assertEqual(resumed.snapshot.phase,'READY')
         self.assertIsNone(resumed.snapshot.resume_phase)
 

@@ -6,8 +6,10 @@ import json
 from threading import RLock
 
 from anka_contracts.workflow import (
-    EffectiveMissionPlan, EncounterCandidate, WorkflowApplyResult, WorkflowSignal,
-    WorkflowSnapshot, WorkflowTransition,
+    EffectiveMissionPlan, EncounterCandidate, RECOVERY_RESUME_PHASES,
+    WorkflowApplyResult, WorkflowSignal, WorkflowSnapshot, WorkflowTransition,
+    correlate_recovery_outcome, initial_workflow_progress_token,
+    next_workflow_recovery_generation, with_accepted_workflow_tick,
 )
 
 
@@ -53,8 +55,8 @@ class MissionWorkflow:
         self._seen:set[str]=set()
         self._signal_history_limit=_signal_history_limit(plan)
         self._snapshot=WorkflowSnapshot(run_id,'CREATED',0,0,0,0,0,0,0,None,(),(),(),0,
-            _token(run_id,'CREATED',0,(0,0,0,0,0),0,None,(),(),0),0,None,plan.recovery_budget,None,_EXPECTED['CREATED'],
-            plan_id=plan.plan_id)
+            initial_workflow_progress_token(run_id),0,None,plan.recovery_budget,None,_EXPECTED['CREATED'],
+            plan_id=plan.plan_id,recovery_generation=0,active_recovery_generation=None,last_processed_tick=0)
 
     @classmethod
     def resume(cls, plan:EffectiveMissionPlan, snapshot:WorkflowSnapshot, *, resume_tick:int, observer=None):
@@ -71,6 +73,19 @@ class MissionWorkflow:
         if snapshot.phase in _TERMINAL:
             engine._snapshot=snapshot
             return engine
+        if snapshot.recovery_generation is None:
+            raise WorkflowRejected('RESUME_RECOVERY_GENERATION_UNPROVEN')
+        if snapshot.last_processed_tick is None:
+            raise WorkflowRejected('RESUME_WORKFLOW_WATERMARK_UNPROVEN')
+        if snapshot.phase=='RECOVERING':
+            if snapshot.active_recovery_generation is None or snapshot.active_recovery_generation!=snapshot.recovery_generation:
+                raise WorkflowRejected('RESUME_ACTIVE_RECOVERY_GENERATION_UNPROVEN')
+            if snapshot.resume_phase not in RECOVERY_RESUME_PHASES:
+                raise WorkflowRejected('RESUME_RECOVERY_TARGET_UNPROVEN')
+        # Durable accepted-signal time and the semantic resume/watchdog origin are
+        # independent fences.  Neither may be rewound by restart.
+        if resume_tick < snapshot.last_processed_tick or resume_tick < snapshot.phase_started_tick:
+            raise WorkflowRejected('RESUME_TICK_REGRESSION')
         gen=snapshot.progress_generation+1
         progress=_token(snapshot.run_id,snapshot.phase,snapshot.fight_epoch,(snapshot.attempts,snapshot.wins,snapshot.losses,snapshot.unknowns,snapshot.aborted),snapshot.route_index,None,snapshot.counted_fight_epochs,snapshot.started_fight_epochs,gen)
         engine._snapshot=replace(snapshot,progress_generation=gen,progress_token=progress,phase_started_tick=resume_tick,watchdog_deadline_tick=resume_tick+plan.watchdog_budget_ticks,resume_phase=None if snapshot.phase!='RECOVERING' else snapshot.resume_phase)
@@ -96,7 +111,8 @@ class MissionWorkflow:
                     fight_epoch=Ellipsis, counters:tuple[int,int,int,int,int]|None=None,
                     counted=Ellipsis,started=Ellipsis,route_index=Ellipsis,recovery_remaining=Ellipsis,
                     resume_phase=Ellipsis,terminal_reason=Ellipsis,goal_pending=Ellipsis,
-                    selected_encounter_id=Ellipsis,selected_encounter_map_id=Ellipsis)->WorkflowApplyResult:
+                    selected_encounter_id=Ellipsis,selected_encounter_map_id=Ellipsis,
+                    recovery_generation=Ellipsis,active_recovery_generation=Ellipsis)->WorkflowApplyResult:
         old=self._snapshot
         gen=old.progress_generation+1
         fe=old.fight_epoch if fight_epoch is Ellipsis else fight_epoch
@@ -110,20 +126,28 @@ class MissionWorkflow:
         gp=old.goal_reached_pending_reentry if goal_pending is Ellipsis else goal_pending
         sei=old.selected_encounter_id if selected_encounter_id is Ellipsis else selected_encounter_id
         sem=old.selected_encounter_map_id if selected_encounter_map_id is Ellipsis else selected_encounter_map_id
+        rg=old.recovery_generation if recovery_generation is Ellipsis else recovery_generation
+        if active_recovery_generation is Ellipsis:
+            arg=old.active_recovery_generation if new_phase=='RECOVERING' else None
+        else:
+            arg=active_recovery_generation
         if counters is None:counters=(old.attempts,old.wins,old.losses,old.unknowns,old.aborted)
         deadline=None if new_phase in _TERMINAL|{'CREATED'} else signal.monotonic_tick+self.plan.watchdog_budget_ticks
         processed=old.processed_signal_ids+(signal.signal_id,)
         progress=_token(old.run_id,new_phase,fe,counters,ri,pa,co,st,gen)
         snap=WorkflowSnapshot(old.run_id,new_phase,fe,*counters,ri,pa,co,st,processed,gen,progress,
             signal.monotonic_tick,deadline,rr,rp,_EXPECTED[new_phase],tr,gp,plan_id=old.plan_id,
-            selected_encounter_id=sei,selected_encounter_map_id=sem)
+            selected_encounter_id=sei,selected_encounter_map_id=sem,recovery_generation=rg,
+            active_recovery_generation=arg,last_processed_tick=old.last_processed_tick)
+        snap=with_accepted_workflow_tick(snap,signal.monotonic_tick)
         trans=WorkflowTransition('transition-'+sha256((old.run_id+signal.signal_id+new_phase).encode()).hexdigest()[:24],old.run_id,old.phase,new_phase,signal.kind,signal.evidence_ids,fe if fe>0 else None,_EXPECTED[new_phase],rr,new_phase in _TERMINAL)
         self._seen.add(signal.signal_id);self._snapshot=snap
         return WorkflowApplyResult('APPLIED',True,reason,snap,trans)
 
     def _nonprogress(self,signal:WorkflowSignal,reason:str,status='APPLIED')->WorkflowApplyResult:
         self._seen.add(signal.signal_id)
-        self._snapshot=replace(self._snapshot,processed_signal_ids=self._snapshot.processed_signal_ids+(signal.signal_id,))
+        snap=replace(self._snapshot,processed_signal_ids=self._snapshot.processed_signal_ids+(signal.signal_id,))
+        self._snapshot=with_accepted_workflow_tick(snap,signal.monotonic_tick)
         return WorkflowApplyResult(status,False,reason,self._snapshot,None)
 
     def _record(self,name:str,signal:WorkflowSignal,result:WorkflowApplyResult,**kwargs)->None:
@@ -190,7 +214,18 @@ class MissionWorkflow:
         s=self._snapshot
         if signal.signal_id in self._seen or signal.signal_id in s.processed_signal_ids:
             return WorkflowApplyResult('DUPLICATE',False,'SIGNAL_IDEMPOTENT',s,None)
-        if signal.monotonic_tick < s.phase_started_tick:
+        # Recovery outcomes are correlated before ordinary temporal admission so a
+        # duplicate already-settled generation stays idempotent, while only the
+        # current active attempt proceeds to the time/phase authority checks.
+        if signal.kind in ('RECOVERY_SUCCEEDED','RECOVERY_FAILED'):
+            correlation=correlate_recovery_outcome(s,signal)
+            if correlation.disposition=='IDEMPOTENT':
+                return WorkflowApplyResult('DUPLICATE',False,correlation.reason,s,None)
+            if correlation.disposition!='CURRENT':
+                return WorkflowApplyResult('REJECTED',False,correlation.reason,s,None)
+        if s.last_processed_tick is None:
+            return WorkflowApplyResult('REJECTED',False,'WORKFLOW_WATERMARK_UNPROVEN',s,None)
+        if signal.monotonic_tick < s.last_processed_tick or signal.monotonic_tick < s.phase_started_tick:
             return WorkflowApplyResult('REJECTED',False,'MONOTONIC_TICK_REGRESSION',s,None)
         # Semantic duplicates with a new transport/signal identity are idempotent too.
         if signal.kind=='FIGHT_OUTCOME' and signal.fight_epoch is not None and signal.fight_epoch in s.counted_fight_epochs:
@@ -200,7 +235,12 @@ class MissionWorkflow:
         if signal.kind=='WORLD_REENTRY_PROVEN' and signal.fight_epoch==s.fight_epoch and s.phase=='WORLD':
             return self._nonprogress(signal,'WORLD_REENTRY_ALREADY_OBSERVED','DUPLICATE')
         if s.phase in _TERMINAL:
-            if signal.kind=='STOP_REQUESTED':return self._nonprogress(signal,'ALREADY_TERMINAL','DUPLICATE')
+            # Terminal snapshots are immutable replay fences.  A repeated stop is
+            # already satisfied and must not append a fresh transport identity;
+            # otherwise unique STOP_REQUESTED traffic can grow history forever
+            # after the workflow has supposedly become bounded and immutable.
+            if signal.kind=='STOP_REQUESTED':
+                return WorkflowApplyResult('DUPLICATE',False,'ALREADY_TERMINAL',s,None)
             return WorkflowApplyResult('REJECTED',False,'WORKFLOW_TERMINAL',s,None)
         # Never forget an already-processed transition just to bound memory: that
         # could make an old command replayable after restart. Reserve the final
@@ -227,7 +267,14 @@ class MissionWorkflow:
                 # RECOVERING; otherwise RECOVERY_SUCCEEDED can strand the state
                 # machine in RECOVERING with no valid resume target.
                 resume_target=s.resume_phase if s.phase=='RECOVERING' else s.phase
-                return self._transition('RECOVERING',signal,reason='WATCHDOG_RECOVERY_REQUIRED',recovery_remaining=s.recovery_budget_remaining-1,resume_phase=resume_target)
+                try:
+                    recovery_generation=next_workflow_recovery_generation(s)
+                except ValueError:
+                    return WorkflowApplyResult('REJECTED',False,'RECOVERY_GENERATION_UNPROVEN',s,None)
+                return self._transition('RECOVERING',signal,reason='WATCHDOG_RECOVERY_REQUIRED',
+                                        recovery_remaining=s.recovery_budget_remaining-1,resume_phase=resume_target,
+                                        recovery_generation=recovery_generation,
+                                        active_recovery_generation=recovery_generation)
             return self._transition('BLOCKED',signal,reason='WATCHDOG_BUDGET_EXHAUSTED',terminal_reason='WORKFLOW_TIMEOUT_'+s.phase)
         if signal.kind=='HEARTBEAT':
             return self._nonprogress(signal,'HEARTBEAT_NOT_SEMANTIC_PROGRESS')
@@ -253,12 +300,77 @@ class MissionWorkflow:
         if s.pending_action_id is not None and signal.kind!='FIGHT_ENDED':
             return WorkflowApplyResult('REJECTED',False,'PENDING_ACTION_RECONCILIATION_REQUIRED',s,None)
         if s.phase=='RECOVERING':
+            # A watchdog may race the authoritative proof it was waiting for.
+            # Preserve that proof instead of requiring an unrelated recovery
+            # acknowledgement and risking a permanent lifecycle stall.
+            if s.resume_phase=='PREFLIGHT' and signal.kind=='PREFLIGHT_OK':
+                return self._transition('WORLD',signal,reason='PREFLIGHT_OK_SUPERSEDES_RECOVERY',resume_phase=None)
+            if s.resume_phase=='WORLD' and signal.kind=='ROUTE_STEP_PROVEN':
+                return self._transition('WORLD',signal,reason='ROUTE_STEP_PROVEN_SUPERSEDES_RECOVERY',
+                                        route_index=s.route_index+1,resume_phase=None)
+            if s.resume_phase=='WORLD' and signal.kind=='ENCOUNTER_SELECTED':
+                if len(s.started_fight_epochs)>=self.plan.config.max_attempts:
+                    return self._transition('STOPPED',signal,reason='MAX_ATTEMPTS_REACHED',
+                                            terminal_reason='MAX_ATTEMPTS_REACHED',resume_phase=None)
+                return self._transition('ENCOUNTER_SELECTED',signal,reason='ENCOUNTER_SELECTED_SUPERSEDES_RECOVERY',
+                                        selected_encounter_id=signal.encounter_id,
+                                        selected_encounter_map_id=signal.encounter_map_id,resume_phase=None)
+            if s.resume_phase=='ENCOUNTER_SELECTED' and signal.kind=='FIGHT_ENTRY_PROVEN':
+                if signal.fight_epoch is None or signal.fight_epoch<=s.fight_epoch or signal.fight_epoch in s.started_fight_epochs:
+                    return WorkflowApplyResult('REJECTED',False,'NEW_FIGHT_EPOCH_REQUIRED',s,None)
+                return self._transition('FIGHT_ENTRY',signal,reason='FIGHT_ENTRY_PROVEN_SUPERSEDES_RECOVERY',
+                                        fight_epoch=signal.fight_epoch,
+                                        started=s.started_fight_epochs+(signal.fight_epoch,),resume_phase=None)
+            recovery_progress={
+                'FIGHT_ENTRY':('PARTY_JOIN_PROVEN','PARTY_JOIN'),
+                'PARTY_JOIN':('PLACEMENT_PROVEN','PLACEMENT'),
+                'PLACEMENT':('READY_PROVEN','READY'),
+                'READY':('FIRST_TURN_PROVEN','FIGHT_ACTIVE'),
+            }
+            expected=recovery_progress.get(s.resume_phase)
+            if expected is not None and signal.kind==expected[0]:
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                return self._transition(expected[1],signal,reason=signal.kind+'_SUPERSEDES_RECOVERY',resume_phase=None)
+            if s.resume_phase=='FIGHT_END_RECONCILIATION' and signal.kind=='FIGHT_OUTCOME':
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                attempts,wins,losses,unknowns,aborted=s.attempts+1,s.wins,s.losses,s.unknowns,s.aborted
+                if signal.fight_result=='VICTORY':wins+=1
+                elif signal.fight_result=='DEFEAT':losses+=1
+                elif signal.fight_result=='UNKNOWN':unknowns+=1
+                else:aborted+=1
+                stop_reason=None
+                if wins>=self.plan.config.target_wins:stop_reason='TARGET_WINS_REACHED'
+                elif signal.fight_result=='DEFEAT' and self.plan.config.stop_on_loss:stop_reason='LOSS_CONFIRMED'
+                elif signal.fight_result=='UNKNOWN' and self.plan.config.stop_on_unknown:stop_reason='OUTCOME_UNKNOWN'
+                elif attempts>=self.plan.config.max_attempts:stop_reason='MAX_ATTEMPTS_REACHED'
+                return self._transition('WORLD_REENTRY',signal,reason='FIGHT_OUTCOME_SUPERSEDES_RECOVERY',
+                                        counters=(attempts,wins,losses,unknowns,aborted),
+                                        counted=s.counted_fight_epochs+(s.fight_epoch,),
+                                        goal_pending=stop_reason is not None,terminal_reason=stop_reason,
+                                        resume_phase=None)
+            if s.resume_phase=='WORLD_REENTRY' and signal.kind=='WORLD_REENTRY_PROVEN':
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                if s.goal_reached_pending_reentry:
+                    terminal='COMPLETED' if s.terminal_reason=='TARGET_WINS_REACHED' else 'STOPPED'
+                    return self._transition(terminal,signal,reason='WORLD_REENTRY_SUPERSEDES_RECOVERY',
+                                            terminal_reason=s.terminal_reason,goal_pending=False,
+                                            selected_encounter_id=None,selected_encounter_map_id=None,
+                                            resume_phase=None)
+                return self._transition('WORLD',signal,reason='WORLD_REENTRY_SUPERSEDES_RECOVERY',
+                                        goal_pending=False,terminal_reason=None,
+                                        selected_encounter_id=None,selected_encounter_map_id=None,
+                                        resume_phase=None)
             if signal.kind=='RECOVERY_FAILED':
                 return self._transition('BLOCKED',signal,reason='RECOVERY_FAILED',terminal_reason='RECOVERY_FAILED')
             if signal.kind=='RECOVERY_SUCCEEDED' and s.resume_phase:
                 return self._transition(s.resume_phase,signal,reason='RECOVERY_SUCCEEDED',resume_phase=None)
-            # Fight-end evidence can legitimately overtake a watchdog/recovery state.
-            if signal.kind=='FIGHT_ENDED' and s.resume_phase in ('READY','FIGHT_ACTIVE'):
+            # Fight-end evidence can legitimately overtake watchdog recovery from
+            # every phase in which the same authoritative FIGHT_ENDED proof is
+            # accepted outside recovery.  Restricting this to READY/FIGHT_ACTIVE
+            # strands an early-ended fight merely because its watchdog fired first.
+            if signal.kind=='FIGHT_ENDED' and s.resume_phase in (
+                'FIGHT_ENTRY','PARTY_JOIN','PLACEMENT','READY','FIGHT_ACTIVE'
+            ):
                 if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
                 return self._transition('FIGHT_END_RECONCILIATION',signal,reason='FIGHT_END_SUPERSEDES_RECOVERY',pending_action_id=None,resume_phase=None)
             return WorkflowApplyResult('REJECTED',False,'RECOVERY_SIGNAL_REQUIRED',s,None)
