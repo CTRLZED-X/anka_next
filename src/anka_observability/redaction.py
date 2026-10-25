@@ -84,6 +84,29 @@ def sanitize_export(obj:Any, depth:int=0)->Any:
     return '[UNSERIALIZABLE]'
 
 
+def has_unredacted_sensitive_data(obj:Any, depth:int=0)->bool:
+    """Detect sensitive material that escaped the normal redaction boundary.
+
+    This is intentionally conservative and is used by the incident verifier on
+    already-bounded artifacts. Generated bundles should contain ``[REDACTED]``
+    for sensitive keys and no free-text credential/path/email patterns. A deeply
+    nested hostile object is treated as suspicious rather than silently trusted.
+    """
+    if depth>12:return True
+    if isinstance(obj,dict):
+        for key,value in obj.items():
+            if _sensitive_key(key) and value!='[REDACTED]':
+                return True
+            if has_unredacted_sensitive_data(value,depth+1):
+                return True
+        return False
+    if isinstance(obj,(list,tuple)):
+        return any(has_unredacted_sensitive_data(value,depth+1) for value in obj)
+    if isinstance(obj,str):
+        return any(pattern.search(obj) is not None for pattern,_ in _REDACTIONS)
+    return False
+
+
 def has_diagnostic_truncation(obj:Any, depth:int=0)->bool:
     """Return whether bounded sanitization removed part of the value."""
     if depth>8:return False
