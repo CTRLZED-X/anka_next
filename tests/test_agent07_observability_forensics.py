@@ -10,7 +10,7 @@ from anka_contracts.diagnostics import DiagnosticEvent
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import verify_incident
 from anka_observability.recovery import recover_unclean_run
-from anka_observability.forensics import READY_TRACE, action_lifecycle_report
+from anka_observability.forensics import READY_TRACE, action_lifecycle_report, turn_handoff_report
 from anka_observability.redaction import has_unredacted_sensitive_data
 
 
@@ -369,6 +369,88 @@ class TestAgent07ExecutionStageProjection(unittest.TestCase):
                 self.assertIn('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH', tampered['errors'])
             finally:
                 obs.finish('BLOCKED')
+
+
+class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
+    def test_same_owner_reappearance_is_not_skipped_for_later_other_account(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-borrow',
+                invocation_id='inv-agent07-endturn-borrow',
+            )
+            try:
+                action_id='action-agent07-endturn-borrow'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-borrow'},
+                )
+                obs.record(
+                    'execution.admitted',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='SENT',
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                first_owner = obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=31,
+                )
+                self.assertIn(first_owner, ('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',
+                    fight_epoch=12,
+                    turn_epoch=32,
+                )
+
+                report = turn_handoff_report(obs.recent)
+                self.assertEqual(report['status'], 'SETTLED_SAME_OWNER_REPROVED')
+                self.assertEqual(report['next_owner_account_id'], 'acct-cra')
+                self.assertEqual(report['next_turn_epoch'], 31)
+            finally:
+                obs.finish('BLOCKED')
+
+
 
 
 class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
