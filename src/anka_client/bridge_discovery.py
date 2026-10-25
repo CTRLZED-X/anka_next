@@ -105,6 +105,8 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             # which HWND the native projection selected.
             if len(candidates)!=1:
                 return ('AMBIGUOUS_WINDOW',matched,False)
+            if health.get('clientInstanceId') != client_instance_id(candidates[0]):
+                return ('STALE_OR_FOREIGN_BRIDGE',None,False)
             projection=_projection_ready_for_window(health,candidates[0])
             return ('VALID',matched,projection)
         except Exception:
