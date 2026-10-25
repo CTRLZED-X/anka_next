@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "pack_version": "anka-platform-r3-external-data",
+  "source_game_version": "3.6.10.10",
+  "client_builds": {
+    "3.7.10.10": {
+      "status": "OFFLINE_CONFIGURED_AUTOMATION_COMPATIBLE",
+      "scope": "Configured CRA/ENU automation subset and bundled patrol/map readiness only",
+      "limitations": [
+        "This is not a claim that every static Dofus definition is identical across builds.",
+        "Observed secondary spell-level references 86580, 86583 and 86541 are absent from the older dictionary and must remain raw/uninvented.",
+        "A future client update that changes configured spell/static definitions requires a new compatibility record."
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "authority": {
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "historical_or_current_drafts_admitted": false,
+    "live_ready": false,
+    "physical_input_enabled": false
+  },
+  "complete_live_cra_enu_acceptance_percent": 0,
+  "date": "2026-10-21",
+  "live_start": {
+    "exit_code": 40,
+    "failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS"
+  },
+  "milestone": "P55",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 273,
+    "check": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "transactional_fixture_smoke": "PASS_SYNTHETIC_TRANSACTION_FENCE"
+  },
+  "roadmap_scope_estimate_percent": 92,
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_canonical_state_tests_passed": 140,
+    "isolated_test_methods_passed": 1433,
+    "isolated_test_modules_discovered": 82,
+    "isolated_test_modules_passed": 82,
+    "new_p55_tests_passed": 22,
+    "physical_input_sent": false
+  },
+  "transactional_journal": {
+    "atomic_logical_batch": true,
+    "batch_reduced_before_event_insert": true,
+    "commit_ack_uncertainty_fences_writer": true,
+    "exact_batch_replay_idempotent": true,
+    "failed_rollback_fences_writer": true,
+    "reopen_replay_required_after_fence": true,
+    "scope": "SYNTHETIC_FIXTURE_ONLY"
+  },
+  "title": "Transactional Canonical fixture batches and commit-uncertainty fencing",
+  "verification_fingerprint": "605f4a4af2d38ee676b47072f38384057ead72960b2e17946658b843c86503d6"
+}

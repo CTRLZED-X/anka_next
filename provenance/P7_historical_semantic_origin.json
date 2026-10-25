@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "release": "P7",
+  "role": "HISTORICAL_MAPPING_REFERENCE_ONLY",
+  "source_release": "R5.198",
+  "sources": {
+    "src/anka_platform/protocol/adapters/dofus_3_7_10_10/handler_modules/resources.py": {
+      "sha256": "a82077527b26a7c3b751bf05f5c3763302e11cf1359a4fba135acdbaea121416",
+      "bytes": 9908
+    },
+    "src/anka_platform/protocol/adapters/dofus_3_7_10_10/adapter.py": {
+      "sha256": "92e7a9d0b5dfadd252548e400c64196279fb7a428d5633f0365fa53f3697a392",
+      "bytes": 31983
+    },
+    "src/anka_platform/protocol/protobuf.py": {
+      "sha256": "caf8f31def8e111accbe55d7a0ec67820378be9b25d25ec5dc9cbf9db69b2c1d",
+      "bytes": 3665
+    }
+  },
+  "supported_research_wire_names": [
+    "jtk",
+    "jti",
+    "kqo"
+  ],
+  "test_oracles": "independent synthetic payloads only; not actual live-client evidence",
+  "certifies_current_build": false,
+  "canonical_commits_allowed": false,
+  "physical_input_allowed": false
+}

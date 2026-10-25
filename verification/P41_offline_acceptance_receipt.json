@@ -1,0 +1,63 @@
+{
+  "base_archive_name": "ANKA_NEXT_P40_CROSS_ACCOUNT_PROTOCOL_EVIDENCE_INDEPENDENCE_OFFLINE_VERIFIED.zip",
+  "base_archive_sha256": "a3278f5d6f4473d87fcd366fe133fa58d943608ff1067dac9739c2c7445ec1c1",
+  "changes": [
+    "Observed cell refresh is not a proven displacement, when corroborated by same-cell before/after positions",
+    "P35/P36 unanchored position observations stay explicitly ambiguous",
+    "Same exact wire source cannot inflate research coverage for same role and capability",
+    "Different capabilities of one packet remain independently annotatable"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P41",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "basis": "Subjective roadmap estimate only; not software quality or real-client readiness",
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "estimated_weighted_roadmap_pct": 88
+  },
+  "remaining_blockers": [
+    "Missing independent current-client protocol/actor witness data",
+    "Real Windows/Npcap and calibrated Dofus Unity bridge unverified",
+    "Production canonical admission and real execution driver absent",
+    "No actual end-to-end CRA+ENU live fight accepted"
+  ],
+  "safety": {
+    "adapter_activated": false,
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "docs/P41_CELL_TRANSITION_AND_PROTOCOL_CLAIM_INTEGRITY.md": "ffd3ceaa267c0f1bab7245e72b0cc5e528d568506ae064726632f806b4d32428",
+    "src/anka_app/cell_transition_evidence.py": "459386bde8fec1d8d9c483fc7c174655bc583d2b0dd71e5a16d7812c342ef063",
+    "src/anka_app/effect_reconciliation_offline.py": "d0e7437e5ec9eecbb48c97431e7c2d0f005e15377c79c617e8b235fe40d5d51b",
+    "src/anka_app/target_effect_research_offline.py": "d4ab674b9c1e7941583a30e380b4ffdee6d0adf9d3a383f8e4a16e401f137d2b",
+    "src/anka_protocol/evidence_intake.py": "aa4122c8b4b23e3a9c627e30aefa635130404a7946da0547fadf868dda95f570",
+    "tests/test_p41_cell_transition_evidence.py": "e8fa80fad97945b22565becad8790f5c52d7a0833cbe4d02b8d4c820219c8343",
+    "tests/test_p41_packet_claim_uniqueness.py": "a34fbde17510c456f824a94f57eac459eaa939a5bd01ba5dc5eba2c9b51d092e"
+  },
+  "title": "Cell-transition research evidence and packet-capability source uniqueness",
+  "verification": {
+    "check_exit_code": 0,
+    "complete_module_inventory": 59,
+    "complete_tests_passed": 1121,
+    "fingerprint": "f0c034fbd27b612d18333f031b8b43c6c443001f26710d62eda6634509c18a2d",
+    "focused_subtests_passed": 12,
+    "focused_tests_passed": 336,
+    "live_tested": false,
+    "module_isolated_all_status": "PASS",
+    "note": "Earlier 15s timeout in P37 verifier self-test was INCOMPLETE; 70s rerun of module PASS. Checkpointed per-module completion across 59 modules.",
+    "p41_tests_passed": 17,
+    "physical_input_sent": false,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_zip_integrity": "PASS",
+    "windows_tested": false
+  }
+}

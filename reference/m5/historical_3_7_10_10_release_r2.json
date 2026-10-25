@@ -1,0 +1,28 @@
+{
+  "adapter_release_id": "adapter-dofus-3.7.10.10-historical-m5-r2",
+  "code_sha256": "57c5a59bb5e19dca1e57352ac98ed3d3e7c4d59eed144aef820e3b7a7e4c11b8",
+  "corrections": [
+    "TCP-fragmented frame context can advance with zero semantic facts.",
+    "Completed fragmented semantics retain all contributing WireEnvelope refs.",
+    "Frame fan-out is bounded and quarantined.",
+    "Runtime transaction binds exact descriptor, checkpoint, current envelope evidence, and fences rollback stream holes."
+  ],
+  "corrective_release_of": "adapter-dofus-3.7.10.10-historical-m5-r1",
+  "current_build_certified": false,
+  "evidence_manifest_sha256": "5ab5e7485b646834f5d63b489891b8ee4a7a49a03a9147753c2c74c5da28f5f4",
+  "lifecycle": "REPLAY_CERTIFIED",
+  "limitations": [
+    "Historical replay does not certify the current Dofus client.",
+    "No live action scope is authorized.",
+    "Unknown/unproven wire traffic fences the connection generation.",
+    "Midstream process restart is not hydrated; Capture must establish a fresh TCP generation."
+  ],
+  "observed_client_build": "Dofus 3.7.10.10",
+  "reused_modules": [
+    "src/anka_protocol/adapters/dofus_3_7_10_10/adapter.py",
+    "src/anka_protocol/adapters/historical_semantic.py",
+    "src/anka_protocol/wire.py"
+  ],
+  "schema_version": 1,
+  "source_role": "HISTORICAL_REFERENCE_ONLY"
+}

@@ -1,0 +1,3131 @@
+{
+  "schema_version": 2,
+  "legacy_release": "R5.198",
+  "legacy_release_sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+  "starting_target_release": "ANKA_NEXT_P66",
+  "starting_target_release_sha256": "9c0edf863de39be9479bbd25e39c22d089af088268f9cf0afcc87e37f7765297",
+  "allowed_reuse_modes": [
+    "UNCHANGED_REUSE",
+    "ADAPTED_REUSE",
+    "REIMPLEMENTED_FROM_BEHAVIOR",
+    "HISTORICAL_FIXTURE_ONLY",
+    "DISCARDED"
+  ],
+  "rows": [
+    {
+      "legacy_path": "src/anka_game_kernel/__init__.py",
+      "legacy_file_sha256": "cbf939dc7ca930d13757af8d1355a56c4542c3c29fbb7cde62e25d0ab359bbf2",
+      "target_path": "src/anka_game_kernel/__init__.py",
+      "target_sha256": "cbf939dc7ca930d13757af8d1355a56c4542c3c29fbb7cde62e25d0ab359bbf2",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/api/__init__.py",
+      "legacy_file_sha256": "20d341d41073bad502ec06cbaf3c8aed2ae0b4638e3091c1a6b232d40396d0b8",
+      "target_path": "src/anka_game_kernel/api/__init__.py",
+      "target_sha256": "20d341d41073bad502ec06cbaf3c8aed2ae0b4638e3091c1a6b232d40396d0b8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/api/kernel.py",
+      "legacy_file_sha256": "e0cc4fcb5daae040458026a2307a28e3dfcf9c19ed2146f4750974723e9a7126",
+      "target_path": "src/anka_game_kernel/api/kernel.py",
+      "target_sha256": "e0cc4fcb5daae040458026a2307a28e3dfcf9c19ed2146f4750974723e9a7126",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/config.py",
+      "legacy_file_sha256": "72c3801b4c420d9fdf3eb94e25cc958f0284a1ab65a6332f5b1aba2caec8a9c0",
+      "target_path": "src/anka_game_kernel/config.py",
+      "target_sha256": "72c3801b4c420d9fdf3eb94e25cc958f0284a1ab65a6332f5b1aba2caec8a9c0",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/__init__.py",
+      "legacy_file_sha256": "605e108af368c296c88bea1b0178515c3b14e31065e025003d8d78d282a00c09",
+      "target_path": "src/anka_game_kernel/contexts/__init__.py",
+      "target_sha256": "605e108af368c296c88bea1b0178515c3b14e31065e025003d8d78d282a00c09",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/effect_stacks.py",
+      "legacy_file_sha256": "abd9e40baf040b9ba05be30b8875708e5e17d31d3583edce1df6d70e20f1d291",
+      "target_path": "src/anka_game_kernel/contexts/effect_stacks.py",
+      "target_sha256": "abd9e40baf040b9ba05be30b8875708e5e17d31d3583edce1df6d70e20f1d291",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/fight.py",
+      "legacy_file_sha256": "bf3fedd3e6deed46ea720484164d3630863367b6bd19cc2dd12b66dc282b837a",
+      "target_path": "src/anka_game_kernel/contexts/fight.py",
+      "target_sha256": "bf3fedd3e6deed46ea720484164d3630863367b6bd19cc2dd12b66dc282b837a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/per_mp_modifiers.py",
+      "legacy_file_sha256": "acaa863de247cff81bb16eb4c6d04fcd60334ce459c4ac0e45253a47f8f500cb",
+      "target_path": "src/anka_game_kernel/contexts/per_mp_modifiers.py",
+      "target_sha256": "acaa863de247cff81bb16eb4c6d04fcd60334ce459c4ac0e45253a47f8f500cb",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/projection.py",
+      "legacy_file_sha256": "dc762625152a09c9262ad0f814679364209b2c244efb5a9f5685cdbb70e26eef",
+      "target_path": "src/anka_game_kernel/contexts/projection.py",
+      "target_sha256": "dc762625152a09c9262ad0f814679364209b2c244efb5a9f5685cdbb70e26eef",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/spell_sequences.py",
+      "legacy_file_sha256": "d50c5a14446391ca775359351928c982520f968d9c06e1261a5afee555df2749",
+      "target_path": "src/anka_game_kernel/contexts/spell_sequences.py",
+      "target_sha256": "d50c5a14446391ca775359351928c982520f968d9c06e1261a5afee555df2749",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/turn_history.py",
+      "legacy_file_sha256": "df524ae6e8ead079ea67ce3cac2ecb00c8904d8c33b04c1c90e25a728d283430",
+      "target_path": "src/anka_game_kernel/contexts/turn_history.py",
+      "target_sha256": "df524ae6e8ead079ea67ce3cac2ecb00c8904d8c33b04c1c90e25a728d283430",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/contexts/world.py",
+      "legacy_file_sha256": "7bfdd39abb86b178e5fb776e41de032ff0c93fa98c57c1a4de1ea5738b033087",
+      "target_path": "src/anka_game_kernel/contexts/world.py",
+      "target_sha256": "7bfdd39abb86b178e5fb776e41de032ff0c93fa98c57c1a4de1ea5738b033087",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/data/spell_mechanics/verified_spells.json",
+      "legacy_file_sha256": "f799f71000c9a8d7afb0918e40dfda09a2747d2e9e2a5954f9bce3c146467b0d",
+      "target_path": "src/anka_game_kernel/data/spell_mechanics/verified_spells.json",
+      "target_sha256": "f799f71000c9a8d7afb0918e40dfda09a2747d2e9e2a5954f9bce3c146467b0d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/__init__.py",
+      "legacy_file_sha256": "b8ce1c53478c652bd67ad3251966407e71d1d2be436ba2e1e7172378f77dfa37",
+      "target_path": "src/anka_game_kernel/domain/__init__.py",
+      "target_sha256": "b8ce1c53478c652bd67ad3251966407e71d1d2be436ba2e1e7172378f77dfa37",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/actor_taxonomy.py",
+      "legacy_file_sha256": "3a8ac4699f09e4f97374593a8aca742deb18a0659459f1044a5d9b70236955a7",
+      "target_path": "src/anka_game_kernel/domain/actor_taxonomy.py",
+      "target_sha256": "3a8ac4699f09e4f97374593a8aca742deb18a0659459f1044a5d9b70236955a7",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/actors.py",
+      "legacy_file_sha256": "a2437220d1ff120781c4fb34b16ec2923daf81c26078ee0c57729356edcb1594",
+      "target_path": "src/anka_game_kernel/domain/actors.py",
+      "target_sha256": "a2437220d1ff120781c4fb34b16ec2923daf81c26078ee0c57729356edcb1594",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/certainty.py",
+      "legacy_file_sha256": "5bc0cc46414fbee39bd7a63d061d3e65808f0222981c514398e67099e2613bf4",
+      "target_path": "src/anka_game_kernel/domain/certainty.py",
+      "target_sha256": "5bc0cc46414fbee39bd7a63d061d3e65808f0222981c514398e67099e2613bf4",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/characteristics.py",
+      "legacy_file_sha256": "b3346d556b131d2ba35026919e6c6450897e7d025347c4d562e35116d9a48498",
+      "target_path": "src/anka_game_kernel/domain/characteristics.py",
+      "target_sha256": "b3346d556b131d2ba35026919e6c6450897e7d025347c4d562e35116d9a48498",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/classes.py",
+      "legacy_file_sha256": "1d79eb56380bee87ff6f34352cf6ee4d6607028400edc807c050fc8f9744a1a8",
+      "target_path": "src/anka_game_kernel/domain/classes.py",
+      "target_sha256": "1d79eb56380bee87ff6f34352cf6ee4d6607028400edc807c050fc8f9744a1a8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/combat_stats.py",
+      "legacy_file_sha256": "6b3a5ebf212addc9a7be996c19578fd06e0ac638be80b60f85dd3ec4651c82ee",
+      "target_path": "src/anka_game_kernel/domain/combat_stats.py",
+      "target_sha256": "6b3a5ebf212addc9a7be996c19578fd06e0ac638be80b60f85dd3ec4651c82ee",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/companions.py",
+      "legacy_file_sha256": "9dcbe8270c720bbfd722feddc53c7d1ab62c992f31bc23870e7e1bd23347f2b7",
+      "target_path": "src/anka_game_kernel/domain/companions.py",
+      "target_sha256": "9dcbe8270c720bbfd722feddc53c7d1ab62c992f31bc23870e7e1bd23347f2b7",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/effect_conditions.py",
+      "legacy_file_sha256": "0b6cef2d035b6e7ff2762e5d7dfbbd5c0f360d2af9455fd3bd4a5eafc52a70bd",
+      "target_path": "src/anka_game_kernel/domain/effect_conditions.py",
+      "target_sha256": "0b6cef2d035b6e7ff2762e5d7dfbbd5c0f360d2af9455fd3bd4a5eafc52a70bd",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/effects.py",
+      "legacy_file_sha256": "a491e10aad20a343ddb5e98a9f9b7aac0b9b80aed24baea29625f4e9ee4da6d6",
+      "target_path": "src/anka_game_kernel/domain/effects.py",
+      "target_sha256": "a491e10aad20a343ddb5e98a9f9b7aac0b9b80aed24baea29625f4e9ee4da6d6",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/ids.py",
+      "legacy_file_sha256": "b1eab3c0e534efae3a1ce55fb7f8589badc58c27b81fa6840f5123ef97db2798",
+      "target_path": "src/anka_game_kernel/domain/ids.py",
+      "target_sha256": "b1eab3c0e534efae3a1ce55fb7f8589badc58c27b81fa6840f5123ef97db2798",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/live_requirements.py",
+      "legacy_file_sha256": "3f9774862e9f04493837d8e8d7c019ef2f31a59801fc2ab88bcf54ecab67cc8d",
+      "target_path": "src/anka_game_kernel/domain/live_requirements.py",
+      "target_sha256": "3f9774862e9f04493837d8e8d7c019ef2f31a59801fc2ab88bcf54ecab67cc8d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/map_locations.py",
+      "legacy_file_sha256": "24fbb98ba9a48e8cb01b3b3ce2dde693d399ffae6e7a2d25f1bc338e91c40617",
+      "target_path": "src/anka_game_kernel/domain/map_locations.py",
+      "target_sha256": "24fbb98ba9a48e8cb01b3b3ce2dde693d399ffae6e7a2d25f1bc338e91c40617",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/maps.py",
+      "legacy_file_sha256": "af3405d571aeca3d740a83a4241a8bc2ef10b1ae73b1753d32422f1391b0a42d",
+      "target_path": "src/anka_game_kernel/domain/maps.py",
+      "target_sha256": "af3405d571aeca3d740a83a4241a8bc2ef10b1ae73b1753d32422f1391b0a42d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/mechanics.py",
+      "legacy_file_sha256": "73b13eb08ffb5c620d21e9684312a2d0b0147e3eee593a918a5636e2a78bc8fa",
+      "target_path": "src/anka_game_kernel/domain/mechanics.py",
+      "target_sha256": "73b13eb08ffb5c620d21e9684312a2d0b0147e3eee593a918a5636e2a78bc8fa",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/monster_taxonomy.py",
+      "legacy_file_sha256": "4122129470f37b404af7df60ae18c499df35c05903735278eb2de16fbf9dda1f",
+      "target_path": "src/anka_game_kernel/domain/monster_taxonomy.py",
+      "target_sha256": "4122129470f37b404af7df60ae18c499df35c05903735278eb2de16fbf9dda1f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/monsters.py",
+      "legacy_file_sha256": "a9462f57604e64f762abca3e48359c09882c9a4ce57d53d21ac8412befaf3d4c",
+      "target_path": "src/anka_game_kernel/domain/monsters.py",
+      "target_sha256": "a9462f57604e64f762abca3e48359c09882c9a4ce57d53d21ac8412befaf3d4c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/provenance.py",
+      "legacy_file_sha256": "fceb6a047700e3313dc07d3423d53afa4e511b9e43cf9cced0afe04eb6f3453b",
+      "target_path": "src/anka_game_kernel/domain/provenance.py",
+      "target_sha256": "fceb6a047700e3313dc07d3423d53afa4e511b9e43cf9cced0afe04eb6f3453b",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/spell_effects.py",
+      "legacy_file_sha256": "30ac6b08b11361081a34739674abb852ecf25ec7f6244e1c5fe098cd0a8c7057",
+      "target_path": "src/anka_game_kernel/domain/spell_effects.py",
+      "target_sha256": "30ac6b08b11361081a34739674abb852ecf25ec7f6244e1c5fe098cd0a8c7057",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/spell_modifiers.py",
+      "legacy_file_sha256": "f6789e484d63afa8758ce43d9cdaa6c66cdb790389610a91876ad0ca40e8397a",
+      "target_path": "src/anka_game_kernel/domain/spell_modifiers.py",
+      "target_sha256": "f6789e484d63afa8758ce43d9cdaa6c66cdb790389610a91876ad0ca40e8397a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/spell_variants.py",
+      "legacy_file_sha256": "9ea5a226f123e7f1fee33e64b3d21fc82d546d7049e4d9bc9321bc3971e15ce3",
+      "target_path": "src/anka_game_kernel/domain/spell_variants.py",
+      "target_sha256": "9ea5a226f123e7f1fee33e64b3d21fc82d546d7049e4d9bc9321bc3971e15ce3",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/spells.py",
+      "legacy_file_sha256": "9154ad849a546cef887a339cc8ec319cecbee707d851f3a5651d0974220d9bce",
+      "target_path": "src/anka_game_kernel/domain/spells.py",
+      "target_sha256": "9154ad849a546cef887a339cc8ec319cecbee707d851f3a5651d0974220d9bce",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/state_criteria.py",
+      "legacy_file_sha256": "c97dfff27c9833b9eb48863fe3f86b991f3609ac6145a7ccb81fdd03dcecb0d5",
+      "target_path": "src/anka_game_kernel/domain/state_criteria.py",
+      "target_sha256": "c97dfff27c9833b9eb48863fe3f86b991f3609ac6145a7ccb81fdd03dcecb0d5",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/states.py",
+      "legacy_file_sha256": "184d4b32cb6ad4f206fed44d3f53c45e75df2f71323041bb7384785df7f668fe",
+      "target_path": "src/anka_game_kernel/domain/states.py",
+      "target_sha256": "184d4b32cb6ad4f206fed44d3f53c45e75df2f71323041bb7384785df7f668fe",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/statuses.py",
+      "legacy_file_sha256": "e6a7c717eef2249890856bb6e6a35b3c961be42318124f54318609a95ec8c798",
+      "target_path": "src/anka_game_kernel/domain/statuses.py",
+      "target_sha256": "e6a7c717eef2249890856bb6e6a35b3c961be42318124f54318609a95ec8c798",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/values.py",
+      "legacy_file_sha256": "aac1c8ea5ccdfa6318f8b9386e11451aa0a2912ed4b91ab2e7bb8b75b0b3d562",
+      "target_path": "src/anka_game_kernel/domain/values.py",
+      "target_sha256": "aac1c8ea5ccdfa6318f8b9386e11451aa0a2912ed4b91ab2e7bb8b75b0b3d562",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/domain/world.py",
+      "legacy_file_sha256": "282f0296f092e92e065153071aa6b5967c317bc158a48cb04e696c20165a2078",
+      "target_path": "src/anka_game_kernel/domain/world.py",
+      "target_sha256": "282f0296f092e92e065153071aa6b5967c317bc158a48cb04e696c20165a2078",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/errors.py",
+      "legacy_file_sha256": "d90059cdc06588ce432a7322d9780ee0d4c99b00005ea69d10f5b814f8917783",
+      "target_path": "src/anka_game_kernel/errors.py",
+      "target_sha256": "d90059cdc06588ce432a7322d9780ee0d4c99b00005ea69d10f5b814f8917783",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/__init__.py",
+      "legacy_file_sha256": "c1018c3810f5bc66f4add77ef78fc6b432ecc2d510bd10ba54f520671f1c1638",
+      "target_path": "src/anka_game_kernel/knowledge/__init__.py",
+      "target_sha256": "c1018c3810f5bc66f4add77ef78fc6b432ecc2d510bd10ba54f520671f1c1638",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/effect_source_audit.py",
+      "legacy_file_sha256": "29fd8d2478eefd52e517788f9bf1726b480b7a4d969c36058c977c86b5894059",
+      "target_path": "src/anka_game_kernel/knowledge/effect_source_audit.py",
+      "target_sha256": "29fd8d2478eefd52e517788f9bf1726b480b7a4d969c36058c977c86b5894059",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/effect_source_discovery.py",
+      "legacy_file_sha256": "b6ab0f376d659a84c89b038472e9062e692a504ab2ea86358103f4daa64cb150",
+      "target_path": "src/anka_game_kernel/knowledge/effect_source_discovery.py",
+      "target_sha256": "b6ab0f376d659a84c89b038472e9062e692a504ab2ea86358103f4daa64cb150",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/mapuse.py",
+      "legacy_file_sha256": "62dd66fc590cb4ee8be63f1809ff5c4503d47cc9654490d557cef0d5ef8a0c28",
+      "target_path": "src/anka_game_kernel/knowledge/mapuse.py",
+      "target_sha256": "62dd66fc590cb4ee8be63f1809ff5c4503d47cc9654490d557cef0d5ef8a0c28",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/pack.py",
+      "legacy_file_sha256": "716d7314a654b9dd88c3f7f5f6aa8d19eadd321c32f372e42bd71c49b46b57f8",
+      "target_path": "src/anka_game_kernel/knowledge/pack.py",
+      "target_sha256": "716d7314a654b9dd88c3f7f5f6aa8d19eadd321c32f372e42bd71c49b46b57f8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/spell_mechanics.py",
+      "legacy_file_sha256": "9bdc6e6ea23854318a94f2b57e61fb996c2e5dc019649e50d6f473967d6b568c",
+      "target_path": "src/anka_game_kernel/knowledge/spell_mechanics.py",
+      "target_sha256": "9bdc6e6ea23854318a94f2b57e61fb996c2e5dc019649e50d6f473967d6b568c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/spell_overlay.py",
+      "legacy_file_sha256": "8e9dbf87e395fe88b0e8bceec0ae55a4a4f8d0faf2e9405b6dc0f578760e8d1a",
+      "target_path": "src/anka_game_kernel/knowledge/spell_overlay.py",
+      "target_sha256": "8e9dbf87e395fe88b0e8bceec0ae55a4a4f8d0faf2e9405b6dc0f578760e8d1a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/spell_readiness.py",
+      "legacy_file_sha256": "d2f7c71783c3c04d9cee646ef4667a0944a1f563605feaa51225893d07aea5cf",
+      "target_path": "src/anka_game_kernel/knowledge/spell_readiness.py",
+      "target_sha256": "d2f7c71783c3c04d9cee646ef4667a0944a1f563605feaa51225893d07aea5cf",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_catalog.py",
+      "legacy_file_sha256": "99bb7ebc8662264c9878ab2ed2c57321bc15471b068d481c1083ec004f038f4d",
+      "target_path": "src/anka_game_kernel/knowledge/static_catalog.py",
+      "target_sha256": "99bb7ebc8662264c9878ab2ed2c57321bc15471b068d481c1083ec004f038f4d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_classes.py",
+      "legacy_file_sha256": "406da4b27d0b1fdce84173d99a1306027612807270f1cd38f9d55a775b440bb6",
+      "target_path": "src/anka_game_kernel/knowledge/static_classes.py",
+      "target_sha256": "406da4b27d0b1fdce84173d99a1306027612807270f1cd38f9d55a775b440bb6",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_companions.py",
+      "legacy_file_sha256": "2c3e9381a27e7833eddabbf62ed910a48ea21ac15c163486d1d6d93744fe8ab0",
+      "target_path": "src/anka_game_kernel/knowledge/static_companions.py",
+      "target_sha256": "2c3e9381a27e7833eddabbf62ed910a48ea21ac15c163486d1d6d93744fe8ab0",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_map_locations.py",
+      "legacy_file_sha256": "44597521babc5912b52a6b69f40606b3bbf851e052ec49b04de10e02a794a8f1",
+      "target_path": "src/anka_game_kernel/knowledge/static_map_locations.py",
+      "target_sha256": "44597521babc5912b52a6b69f40606b3bbf851e052ec49b04de10e02a794a8f1",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_monster_taxonomy.py",
+      "legacy_file_sha256": "162ef45cec05980ef6740bbb413e77c5b51c08e83f3ea64eee4a9b0f2a3f5a29",
+      "target_path": "src/anka_game_kernel/knowledge/static_monster_taxonomy.py",
+      "target_sha256": "162ef45cec05980ef6740bbb413e77c5b51c08e83f3ea64eee4a9b0f2a3f5a29",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_monsters.py",
+      "legacy_file_sha256": "532fe961a7252095230414f747253ecabcd683ac0dff0e1b83083506a3ca3215",
+      "target_path": "src/anka_game_kernel/knowledge/static_monsters.py",
+      "target_sha256": "532fe961a7252095230414f747253ecabcd683ac0dff0e1b83083506a3ca3215",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_spells.py",
+      "legacy_file_sha256": "ccf8f11dda9312a015d2e65070a28228e1b904b4b91c912c0448b6ba2f9b28c1",
+      "target_path": "src/anka_game_kernel/knowledge/static_spells.py",
+      "target_sha256": "ccf8f11dda9312a015d2e65070a28228e1b904b4b91c912c0448b6ba2f9b28c1",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/knowledge/static_world.py",
+      "legacy_file_sha256": "cb4a2d123eea350be39a0b384abc58eec2836c8a9bf8a137a3bfb0cbc8d1c875",
+      "target_path": "src/anka_game_kernel/knowledge/static_world.py",
+      "target_sha256": "cb4a2d123eea350be39a0b384abc58eec2836c8a9bf8a137a3bfb0cbc8d1c875",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/__init__.py",
+      "legacy_file_sha256": "f8df78a6d66b1ea3ad5e39f3aebc938d846efd21901ba4eda8460a1b71e1543f",
+      "target_path": "src/anka_game_kernel/mechanics/__init__.py",
+      "target_sha256": "f8df78a6d66b1ea3ad5e39f3aebc938d846efd21901ba4eda8460a1b71e1543f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/actor_queries/__init__.py",
+      "legacy_file_sha256": "29162f63545c7facf044969560dde6b1eb825a12b8e44c1fe4aef82889e2cf08",
+      "target_path": "src/anka_game_kernel/mechanics/actor_queries/__init__.py",
+      "target_sha256": "29162f63545c7facf044969560dde6b1eb825a12b8e44c1fe4aef82889e2cf08",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/actor_queries/service.py",
+      "legacy_file_sha256": "6386dff8126115b83205389f8e6cb5c6bacca0b28f21691c87360c48a105e6b8",
+      "target_path": "src/anka_game_kernel/mechanics/actor_queries/service.py",
+      "target_sha256": "6386dff8126115b83205389f8e6cb5c6bacca0b28f21691c87360c48a105e6b8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/aoe/__init__.py",
+      "legacy_file_sha256": "43675b2bac62466eefff10419a7c9b648b200a9cf17e88290b39625e4f743ae4",
+      "target_path": "src/anka_game_kernel/mechanics/aoe/__init__.py",
+      "target_sha256": "43675b2bac62466eefff10419a7c9b648b200a9cf17e88290b39625e4f743ae4",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/aoe/model.py",
+      "legacy_file_sha256": "530f8de42f76683906596713e8aacb67805b0ea8d66f79f2666dd864c42efe78",
+      "target_path": "src/anka_game_kernel/mechanics/aoe/model.py",
+      "target_sha256": "530f8de42f76683906596713e8aacb67805b0ea8d66f79f2666dd864c42efe78",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/aoe/service.py",
+      "legacy_file_sha256": "dbc50d979a4030934f19b067387da64e90c8cd679747471081ab955effcf3349",
+      "target_path": "src/anka_game_kernel/mechanics/aoe/service.py",
+      "target_sha256": "dbc50d979a4030934f19b067387da64e90c8cd679747471081ab955effcf3349",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/casting/__init__.py",
+      "legacy_file_sha256": "a82c5d6c9f539bbfb3c38cbb8981e223ee528d022654ddaf1362c4cf2752ffbc",
+      "target_path": "src/anka_game_kernel/mechanics/casting/__init__.py",
+      "target_sha256": "a82c5d6c9f539bbfb3c38cbb8981e223ee528d022654ddaf1362c4cf2752ffbc",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/casting/model.py",
+      "legacy_file_sha256": "2b7735ac52b6032569cf438c001d2bb71e737df5080000e2f9ca694204cf7a0e",
+      "target_path": "src/anka_game_kernel/mechanics/casting/model.py",
+      "target_sha256": "2b7735ac52b6032569cf438c001d2bb71e737df5080000e2f9ca694204cf7a0e",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/casting/service.py",
+      "legacy_file_sha256": "f8c3c898b109ad3e6735954a527e21cbd0f881255bba2f79a0efca2365db9118",
+      "target_path": "src/anka_game_kernel/mechanics/casting/service.py",
+      "target_sha256": "f8c3c898b109ad3e6735954a527e21cbd0f881255bba2f79a0efca2365db9118",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/collision/__init__.py",
+      "legacy_file_sha256": "a5a67bcb1f5a06a04a3c4788bb7cc0f6a8ea5b119c0a8f19c24f3d885cd1eb0a",
+      "target_path": "src/anka_game_kernel/mechanics/collision/__init__.py",
+      "target_sha256": "a5a67bcb1f5a06a04a3c4788bb7cc0f6a8ea5b119c0a8f19c24f3d885cd1eb0a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/collision/service.py",
+      "legacy_file_sha256": "ab276efd0555d6319505136199808bdb5972dea07cf27eca63540492e30bd29e",
+      "target_path": "src/anka_game_kernel/mechanics/collision/service.py",
+      "target_sha256": "ab276efd0555d6319505136199808bdb5972dea07cf27eca63540492e30bd29e",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/displacement/__init__.py",
+      "legacy_file_sha256": "4d86fcd55a0faf8713e9b84e69c5a9e19f89580d898ba184b03c0c53d28606e1",
+      "target_path": "src/anka_game_kernel/mechanics/displacement/__init__.py",
+      "target_sha256": "4d86fcd55a0faf8713e9b84e69c5a9e19f89580d898ba184b03c0c53d28606e1",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/displacement/model.py",
+      "legacy_file_sha256": "79fe9ed2b7086dfeb78dc014c6bc2b4a54502a3d5ef2b79d024a9677cd52ad3f",
+      "target_path": "src/anka_game_kernel/mechanics/displacement/model.py",
+      "target_sha256": "79fe9ed2b7086dfeb78dc014c6bc2b4a54502a3d5ef2b79d024a9677cd52ad3f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/displacement/service.py",
+      "legacy_file_sha256": "18f145e9d90dcd2a253297ca350f9cfe410b09660fd0d3024a725b36d29228c7",
+      "target_path": "src/anka_game_kernel/mechanics/displacement/service.py",
+      "target_sha256": "18f145e9d90dcd2a253297ca350f9cfe410b09660fd0d3024a725b36d29228c7",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/effect_conditions/__init__.py",
+      "legacy_file_sha256": "7854ed9ec61f1868cfb10bb15542af690f22b452ea16bdedf7b2ce9a7c31d5e5",
+      "target_path": "src/anka_game_kernel/mechanics/effect_conditions/__init__.py",
+      "target_sha256": "7854ed9ec61f1868cfb10bb15542af690f22b452ea16bdedf7b2ce9a7c31d5e5",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/effect_conditions/service.py",
+      "legacy_file_sha256": "58a70a841d081478965a43ca5afedfe11c685fcd49402b335138233b10112f50",
+      "target_path": "src/anka_game_kernel/mechanics/effect_conditions/service.py",
+      "target_sha256": "58a70a841d081478965a43ca5afedfe11c685fcd49402b335138233b10112f50",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/effect_resolution/__init__.py",
+      "legacy_file_sha256": "0d79ec78f736545cce7130d56bb48882d6ca35e7d0b8cbf390873243d330885c",
+      "target_path": "src/anka_game_kernel/mechanics/effect_resolution/__init__.py",
+      "target_sha256": "0d79ec78f736545cce7130d56bb48882d6ca35e7d0b8cbf390873243d330885c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/effect_resolution/service.py",
+      "legacy_file_sha256": "82c3184386bd080ca6d0549a6b83e264f5a32b0d0ce1f092db979b9696716128",
+      "target_path": "src/anka_game_kernel/mechanics/effect_resolution/service.py",
+      "target_sha256": "82c3184386bd080ca6d0549a6b83e264f5a32b0d0ce1f092db979b9696716128",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight/__init__.py",
+      "legacy_file_sha256": "05bc4c4e2fb770265aca4d4ff55b47963d521164c8b66bd185f7df002e6cf280",
+      "target_path": "src/anka_game_kernel/mechanics/fight/__init__.py",
+      "target_sha256": "05bc4c4e2fb770265aca4d4ff55b47963d521164c8b66bd185f7df002e6cf280",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight/compiler.py",
+      "legacy_file_sha256": "2151b80240dfe7029b259cdfcf51c48ff3bcbed35efd0cc002d407eb21178d14",
+      "target_path": "src/anka_game_kernel/mechanics/fight/compiler.py",
+      "target_sha256": "2151b80240dfe7029b259cdfcf51c48ff3bcbed35efd0cc002d407eb21178d14",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight/model.py",
+      "legacy_file_sha256": "68c85082771a26a4b808d2d18acdd7d2b74dd7be61f1e1a19cc29d216b89849a",
+      "target_path": "src/anka_game_kernel/mechanics/fight/model.py",
+      "target_sha256": "68c85082771a26a4b808d2d18acdd7d2b74dd7be61f1e1a19cc29d216b89849a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight/projection.py",
+      "legacy_file_sha256": "1a2911dd4f19c5a1c21dfbff9d886a6e13b61d875bddd68898ee419ca281175a",
+      "target_path": "src/anka_game_kernel/mechanics/fight/projection.py",
+      "target_sha256": "1a2911dd4f19c5a1c21dfbff9d886a6e13b61d875bddd68898ee419ca281175a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight/service.py",
+      "legacy_file_sha256": "d749e740e07d0a2b6c7bcfad47694e5adaf8ef2171a08aac30778f54d9a65869",
+      "target_path": "src/anka_game_kernel/mechanics/fight/service.py",
+      "target_sha256": "d749e740e07d0a2b6c7bcfad47694e5adaf8ef2171a08aac30778f54d9a65869",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight_queries/__init__.py",
+      "legacy_file_sha256": "8b83acb3b5bdf056f8e2d998e717eaf003fe6e1806e394322d0da482e383bd46",
+      "target_path": "src/anka_game_kernel/mechanics/fight_queries/__init__.py",
+      "target_sha256": "8b83acb3b5bdf056f8e2d998e717eaf003fe6e1806e394322d0da482e383bd46",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight_queries/service.py",
+      "legacy_file_sha256": "7a66497358f1d268cbf200762e0b6a932f98bee7fcfdbcb9f32372f62cab84eb",
+      "target_path": "src/anka_game_kernel/mechanics/fight_queries/service.py",
+      "target_sha256": "7a66497358f1d268cbf200762e0b6a932f98bee7fcfdbcb9f32372f62cab84eb",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/fight_queries/spell_decisions.py",
+      "legacy_file_sha256": "649c747c43134eb204820defb254e435d410716e528cc2af9f49d529cabb251c",
+      "target_path": "src/anka_game_kernel/mechanics/fight_queries/spell_decisions.py",
+      "target_sha256": "649c747c43134eb204820defb254e435d410716e528cc2af9f49d529cabb251c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/geometry/__init__.py",
+      "legacy_file_sha256": "eb7f2341a3ad605d5119638ff6871a6d99be60144957d9e2005690c0f0bf0498",
+      "target_path": "src/anka_game_kernel/mechanics/geometry/__init__.py",
+      "target_sha256": "eb7f2341a3ad605d5119638ff6871a6d99be60144957d9e2005690c0f0bf0498",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/geometry/directions.py",
+      "legacy_file_sha256": "e15c5771d73564d6d0fe5e6dbd4d2868f9b24865c6b91886ec1b1c3a68fa5c1d",
+      "target_path": "src/anka_game_kernel/mechanics/geometry/directions.py",
+      "target_sha256": "e15c5771d73564d6d0fe5e6dbd4d2868f9b24865c6b91886ec1b1c3a68fa5c1d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/geometry/grid.py",
+      "legacy_file_sha256": "7fd60f4e9bbaad9f356dbab475f37aa6f60dbde83a477d62e18dfc0b2d1c9e84",
+      "target_path": "src/anka_game_kernel/mechanics/geometry/grid.py",
+      "target_sha256": "7fd60f4e9bbaad9f356dbab475f37aa6f60dbde83a477d62e18dfc0b2d1c9e84",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/geometry/service.py",
+      "legacy_file_sha256": "0e3aa88925fa513bf6f835325e56fe28f577a00e92fb8518f0a3d4a1724c0b9b",
+      "target_path": "src/anka_game_kernel/mechanics/geometry/service.py",
+      "target_sha256": "0e3aa88925fa513bf6f835325e56fe28f577a00e92fb8518f0a3d4a1724c0b9b",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/los/__init__.py",
+      "legacy_file_sha256": "bbcb45eeaa31a33d818ac53840468fa3614051e3af242637cdfbdbbe69eeed61",
+      "target_path": "src/anka_game_kernel/mechanics/los/__init__.py",
+      "target_sha256": "bbcb45eeaa31a33d818ac53840468fa3614051e3af242637cdfbdbbe69eeed61",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/los/service.py",
+      "legacy_file_sha256": "88764f31efd062613b98752e7addfa04e681dc507a133747bab206a4fabcebe8",
+      "target_path": "src/anka_game_kernel/mechanics/los/service.py",
+      "target_sha256": "88764f31efd062613b98752e7addfa04e681dc507a133747bab206a4fabcebe8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/movement/__init__.py",
+      "legacy_file_sha256": "45c2267ae22f52496e607fae0a55e4c7cdc40b860834a9fe67d469e6b419edf9",
+      "target_path": "src/anka_game_kernel/mechanics/movement/__init__.py",
+      "target_sha256": "45c2267ae22f52496e607fae0a55e4c7cdc40b860834a9fe67d469e6b419edf9",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/movement/model.py",
+      "legacy_file_sha256": "0def9da3b0e15c22e42a5339a9f4e21dd2999e28a70f80226557bc5b29aef044",
+      "target_path": "src/anka_game_kernel/mechanics/movement/model.py",
+      "target_sha256": "0def9da3b0e15c22e42a5339a9f4e21dd2999e28a70f80226557bc5b29aef044",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/movement/projection.py",
+      "legacy_file_sha256": "9b2555f4c189aec47f9069ce209c70b2704ed9efe894ff17fe3526b05fb2a0c5",
+      "target_path": "src/anka_game_kernel/mechanics/movement/projection.py",
+      "target_sha256": "9b2555f4c189aec47f9069ce209c70b2704ed9efe894ff17fe3526b05fb2a0c5",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/movement/service.py",
+      "legacy_file_sha256": "d0cf2e5add75afdf35cd347ed6b6f1a1e6b1540f28879f0cb4e0b9fdf645eff5",
+      "target_path": "src/anka_game_kernel/mechanics/movement/service.py",
+      "target_sha256": "d0cf2e5add75afdf35cd347ed6b6f1a1e6b1540f28879f0cb4e0b9fdf645eff5",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/projection/__init__.py",
+      "legacy_file_sha256": "7d1b5efb27e20eca50f37453557e22db23dccd9e531fac1ca66dad0fda9a1719",
+      "target_path": "src/anka_game_kernel/mechanics/projection/__init__.py",
+      "target_sha256": "7d1b5efb27e20eca50f37453557e22db23dccd9e531fac1ca66dad0fda9a1719",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/projection/service.py",
+      "legacy_file_sha256": "9bc5e09a92cba4993c9ff192d565ba104112d7d00d74f949e1b67959c8f67ab1",
+      "target_path": "src/anka_game_kernel/mechanics/projection/service.py",
+      "target_sha256": "9bc5e09a92cba4993c9ff192d565ba104112d7d00d74f949e1b67959c8f67ab1",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/range/__init__.py",
+      "legacy_file_sha256": "04fd0ecc91b49453c9636f222204a129d896c504568c118f65ffbc364a9931b8",
+      "target_path": "src/anka_game_kernel/mechanics/range/__init__.py",
+      "target_sha256": "04fd0ecc91b49453c9636f222204a129d896c504568c118f65ffbc364a9931b8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/range/model.py",
+      "legacy_file_sha256": "a2fb33a1648a552f02a0eb9b3a66d118c3a6df96ceead92732072f37761e790c",
+      "target_path": "src/anka_game_kernel/mechanics/range/model.py",
+      "target_sha256": "a2fb33a1648a552f02a0eb9b3a66d118c3a6df96ceead92732072f37761e790c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/range/service.py",
+      "legacy_file_sha256": "f1116a3711f2abdcd506a464d0fb0f65bf42862257dbf9f46544904dae334001",
+      "target_path": "src/anka_game_kernel/mechanics/range/service.py",
+      "target_sha256": "f1116a3711f2abdcd506a464d0fb0f65bf42862257dbf9f46544904dae334001",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/registry.py",
+      "legacy_file_sha256": "9763bcf82324af245629f2579d94006ed40d80446c9d0a9bec1b584e6b32bb9d",
+      "target_path": "src/anka_game_kernel/mechanics/registry.py",
+      "target_sha256": "9763bcf82324af245629f2579d94006ed40d80446c9d0a9bec1b584e6b32bb9d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/relocation/__init__.py",
+      "legacy_file_sha256": "3bdb582f3a10a72d07d74341affd1da6adbe3adf0cdd5ed987fd6d8b92f3a634",
+      "target_path": "src/anka_game_kernel/mechanics/relocation/__init__.py",
+      "target_sha256": "3bdb582f3a10a72d07d74341affd1da6adbe3adf0cdd5ed987fd6d8b92f3a634",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/relocation/model.py",
+      "legacy_file_sha256": "5d778d44e5bf2fd2b1825811609c2646c0be49e72acb9744512635264128b281",
+      "target_path": "src/anka_game_kernel/mechanics/relocation/model.py",
+      "target_sha256": "5d778d44e5bf2fd2b1825811609c2646c0be49e72acb9744512635264128b281",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/relocation/service.py",
+      "legacy_file_sha256": "749b5360163e82291b17a40e42b24b2218986c534126c71a44dbe2ad317a6c46",
+      "target_path": "src/anka_game_kernel/mechanics/relocation/service.py",
+      "target_sha256": "749b5360163e82291b17a40e42b24b2218986c534126c71a44dbe2ad317a6c46",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/states/__init__.py",
+      "legacy_file_sha256": "5bbb466316ee677094cc1ff1b4652961db89769e7c78ee5a4e60a2e2efd41e8d",
+      "target_path": "src/anka_game_kernel/mechanics/states/__init__.py",
+      "target_sha256": "5bbb466316ee677094cc1ff1b4652961db89769e7c78ee5a4e60a2e2efd41e8d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/states/model.py",
+      "legacy_file_sha256": "2b581cecc8fb622676d89a483b434c566e8fa38ff04cd4aca8c17b38d3d68243",
+      "target_path": "src/anka_game_kernel/mechanics/states/model.py",
+      "target_sha256": "2b581cecc8fb622676d89a483b434c566e8fa38ff04cd4aca8c17b38d3d68243",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/states/service.py",
+      "legacy_file_sha256": "63da39fbdaa23eb5b6c0041173c1e896fc1600ad65e3b465837168b21a0ba13e",
+      "target_path": "src/anka_game_kernel/mechanics/states/service.py",
+      "target_sha256": "63da39fbdaa23eb5b6c0041173c1e896fc1600ad65e3b465837168b21a0ba13e",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/status_queries/__init__.py",
+      "legacy_file_sha256": "60a3d9c931f22e93bb1b5fd1c681386b3ab52fa21c3642108f9380855afcae60",
+      "target_path": "src/anka_game_kernel/mechanics/status_queries/__init__.py",
+      "target_sha256": "60a3d9c931f22e93bb1b5fd1c681386b3ab52fa21c3642108f9380855afcae60",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/status_queries/service.py",
+      "legacy_file_sha256": "495e5466bea1065aefcbc73ebd8c40a0d844db53cbddcf94aab6149fdc10b9f8",
+      "target_path": "src/anka_game_kernel/mechanics/status_queries/service.py",
+      "target_sha256": "495e5466bea1065aefcbc73ebd8c40a0d844db53cbddcf94aab6149fdc10b9f8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/targeting/__init__.py",
+      "legacy_file_sha256": "02967b391e43d7f4378d185bc081c42ae72afea4039c0ba324c9ac8ac35a504c",
+      "target_path": "src/anka_game_kernel/mechanics/targeting/__init__.py",
+      "target_sha256": "02967b391e43d7f4378d185bc081c42ae72afea4039c0ba324c9ac8ac35a504c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/targeting/model.py",
+      "legacy_file_sha256": "dfe413b85bda1ddb42e39522e07e9663e53023ff6057aca8034c40cf6355baf9",
+      "target_path": "src/anka_game_kernel/mechanics/targeting/model.py",
+      "target_sha256": "dfe413b85bda1ddb42e39522e07e9663e53023ff6057aca8034c40cf6355baf9",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/targeting/service.py",
+      "legacy_file_sha256": "21487f07436771cf53f7f469e2a4d1cbed085b7301fce8f6b1e2d2aa27e3fa38",
+      "target_path": "src/anka_game_kernel/mechanics/targeting/service.py",
+      "target_sha256": "21487f07436771cf53f7f469e2a4d1cbed085b7301fce8f6b1e2d2aa27e3fa38",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/world/__init__.py",
+      "legacy_file_sha256": "bdb91f925497d33f4855c3e8178191dfd0f07f1dd9566bba97f7f6fa8d712210",
+      "target_path": "src/anka_game_kernel/mechanics/world/__init__.py",
+      "target_sha256": "bdb91f925497d33f4855c3e8178191dfd0f07f1dd9566bba97f7f6fa8d712210",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/mechanics/world/service.py",
+      "legacy_file_sha256": "5dea73ad6ac44523b3a4969e3b013ec9628ab47904d67ea77513c2956d2d3cc5",
+      "target_path": "src/anka_game_kernel/mechanics/world/service.py",
+      "target_sha256": "5dea73ad6ac44523b3a4969e3b013ec9628ab47904d67ea77513c2956d2d3cc5",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/normalization/__init__.py",
+      "legacy_file_sha256": "7bc77eda383e5ab39558d6165c094e98b932dedfbfd0048e676b888e20c4dc4c",
+      "target_path": "src/anka_game_kernel/normalization/__init__.py",
+      "target_sha256": "7bc77eda383e5ab39558d6165c094e98b932dedfbfd0048e676b888e20c4dc4c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/normalization/state_criteria.py",
+      "legacy_file_sha256": "cb98f5cab22d063382042e2952e8ecd038bf404d1921b456fe222d91439edfbf",
+      "target_path": "src/anka_game_kernel/normalization/state_criteria.py",
+      "target_sha256": "cb98f5cab22d063382042e2952e8ecd038bf404d1921b456fe222d91439edfbf",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/registries/__init__.py",
+      "legacy_file_sha256": "a0df254d911d30b9f5b7565a0c89065b52857a0aad1fb055b8cf466f8b8ea287",
+      "target_path": "src/anka_game_kernel/registries/__init__.py",
+      "target_sha256": "a0df254d911d30b9f5b7565a0c89065b52857a0aad1fb055b8cf466f8b8ea287",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/registries/base.py",
+      "legacy_file_sha256": "1cf36bb5bb3bb7c85a4e7def60c4881b25212fc8db52bcc94bb9945904386c14",
+      "target_path": "src/anka_game_kernel/registries/base.py",
+      "target_sha256": "1cf36bb5bb3bb7c85a4e7def60c4881b25212fc8db52bcc94bb9945904386c14",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/__init__.py",
+      "legacy_file_sha256": "9f875ce8c8279d4ba982e5888e784c44703d4827b8d3d22f8969911a04a9416c",
+      "target_path": "src/anka_game_kernel/results/__init__.py",
+      "target_sha256": "9f875ce8c8279d4ba982e5888e784c44703d4827b8d3d22f8969911a04a9416c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/action_projection.py",
+      "legacy_file_sha256": "2d2fb5992909d40e0edcca22b759b34e6184b6b48b32555eb67f26f53bc43932",
+      "target_path": "src/anka_game_kernel/results/action_projection.py",
+      "target_sha256": "2d2fb5992909d40e0edcca22b759b34e6184b6b48b32555eb67f26f53bc43932",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/actor_queries.py",
+      "legacy_file_sha256": "f6ac62eaab288c5c12199a7e988daeae4f405aecc8b4d243d9fb00e4f2e222c0",
+      "target_path": "src/anka_game_kernel/results/actor_queries.py",
+      "target_sha256": "f6ac62eaab288c5c12199a7e988daeae4f405aecc8b4d243d9fb00e4f2e222c0",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/aoe.py",
+      "legacy_file_sha256": "fb1bc3c487d8cc1d465458478a996510cbaa8b3eb1cb475f3a954eff00aa9f4a",
+      "target_path": "src/anka_game_kernel/results/aoe.py",
+      "target_sha256": "fb1bc3c487d8cc1d465458478a996510cbaa8b3eb1cb475f3a954eff00aa9f4a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/base.py",
+      "legacy_file_sha256": "5f690ee86050b0e7d092553dddd0e4a3a7394b2433ebaf4cdded064eea08ac7e",
+      "target_path": "src/anka_game_kernel/results/base.py",
+      "target_sha256": "5f690ee86050b0e7d092553dddd0e4a3a7394b2433ebaf4cdded064eea08ac7e",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/casting.py",
+      "legacy_file_sha256": "78976ef5e0395b3313385b264c7db536205bb53217e6dfcad86769d65374f216",
+      "target_path": "src/anka_game_kernel/results/casting.py",
+      "target_sha256": "78976ef5e0395b3313385b264c7db536205bb53217e6dfcad86769d65374f216",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/collision.py",
+      "legacy_file_sha256": "544b9941ced34ddb1915eaeb41fe002232646f5f7a39b6467eca46585167ef21",
+      "target_path": "src/anka_game_kernel/results/collision.py",
+      "target_sha256": "544b9941ced34ddb1915eaeb41fe002232646f5f7a39b6467eca46585167ef21",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/displacement.py",
+      "legacy_file_sha256": "b280f5451f31bf987f4d9476a0b80d1794bb58900ea124a2d251b72485c794a0",
+      "target_path": "src/anka_game_kernel/results/displacement.py",
+      "target_sha256": "b280f5451f31bf987f4d9476a0b80d1794bb58900ea124a2d251b72485c794a0",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/effect_conditions.py",
+      "legacy_file_sha256": "fd455372e028756868c09ff1f4691cb8ecd579bdde2d1650d870eacf9c82f048",
+      "target_path": "src/anka_game_kernel/results/effect_conditions.py",
+      "target_sha256": "fd455372e028756868c09ff1f4691cb8ecd579bdde2d1650d870eacf9c82f048",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/effect_resolution.py",
+      "legacy_file_sha256": "bb9818b349fa78db03a8c64391299dbf70d1980e903f47c7a86026083f2c696d",
+      "target_path": "src/anka_game_kernel/results/effect_resolution.py",
+      "target_sha256": "bb9818b349fa78db03a8c64391299dbf70d1980e903f47c7a86026083f2c696d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/fight.py",
+      "legacy_file_sha256": "3cb03aa01a4de75c59017d18e23417e8dfac5e00bed14c666154084738d27690",
+      "target_path": "src/anka_game_kernel/results/fight.py",
+      "target_sha256": "3cb03aa01a4de75c59017d18e23417e8dfac5e00bed14c666154084738d27690",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/fight_queries.py",
+      "legacy_file_sha256": "227915b907bcd53b5f55ac8622e4823e7bc668d7271c72e85efba8f3716bdaf6",
+      "target_path": "src/anka_game_kernel/results/fight_queries.py",
+      "target_sha256": "227915b907bcd53b5f55ac8622e4823e7bc668d7271c72e85efba8f3716bdaf6",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/los.py",
+      "legacy_file_sha256": "41b77be9a82db4bfdd83662ad8bf623cdd77923993561f65fe459e04a6d4ee56",
+      "target_path": "src/anka_game_kernel/results/los.py",
+      "target_sha256": "41b77be9a82db4bfdd83662ad8bf623cdd77923993561f65fe459e04a6d4ee56",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/movement.py",
+      "legacy_file_sha256": "2d9cd672e7f9b4d23f534c9b802637e03dd10eeaa7cf7fac71ec81a6d5fd02af",
+      "target_path": "src/anka_game_kernel/results/movement.py",
+      "target_sha256": "2d9cd672e7f9b4d23f534c9b802637e03dd10eeaa7cf7fac71ec81a6d5fd02af",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/movement_projection.py",
+      "legacy_file_sha256": "6cb3bd115434eb769011a162c8567535055cd5e8da9ea502080c393b42e40538",
+      "target_path": "src/anka_game_kernel/results/movement_projection.py",
+      "target_sha256": "6cb3bd115434eb769011a162c8567535055cd5e8da9ea502080c393b42e40538",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/range.py",
+      "legacy_file_sha256": "debdb0fad6fac1f4bf459204f983d76c47904f93809a2a6c50ed88142415531d",
+      "target_path": "src/anka_game_kernel/results/range.py",
+      "target_sha256": "debdb0fad6fac1f4bf459204f983d76c47904f93809a2a6c50ed88142415531d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/relocation.py",
+      "legacy_file_sha256": "eac0dfad7b9b83fab80693f15e5482c1cbfc00907fa2eebce5ad7732ec3fa9e4",
+      "target_path": "src/anka_game_kernel/results/relocation.py",
+      "target_sha256": "eac0dfad7b9b83fab80693f15e5482c1cbfc00907fa2eebce5ad7732ec3fa9e4",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/spell_readiness.py",
+      "legacy_file_sha256": "e983acf5ddbaa4aa3e16874497d49c5a29b4a4bcfdf57a72041c8d3abf8a2dba",
+      "target_path": "src/anka_game_kernel/results/spell_readiness.py",
+      "target_sha256": "e983acf5ddbaa4aa3e16874497d49c5a29b4a4bcfdf57a72041c8d3abf8a2dba",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/states.py",
+      "legacy_file_sha256": "0f1839867674519dc52b7cf8f47aa0aa3cfc03ffdf88a603b11e8590f09925a6",
+      "target_path": "src/anka_game_kernel/results/states.py",
+      "target_sha256": "0f1839867674519dc52b7cf8f47aa0aa3cfc03ffdf88a603b11e8590f09925a6",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/status_queries.py",
+      "legacy_file_sha256": "f215b48ce9dec60135735fd77209470f14e66d6cacc168d3468519f9d9985b62",
+      "target_path": "src/anka_game_kernel/results/status_queries.py",
+      "target_sha256": "f215b48ce9dec60135735fd77209470f14e66d6cacc168d3468519f9d9985b62",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_game_kernel/results/targeting.py",
+      "legacy_file_sha256": "05fa74275830307472dfc47779c379092d450b3196ffe0bee985c53450cc781d",
+      "target_path": "src/anka_game_kernel/results/targeting.py",
+      "target_sha256": "05fa74275830307472dfc47779c379092d450b3196ffe0bee985c53450cc781d",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve independent deterministic Game Kernel source byte-for-byte.",
+      "required_tests": [
+        "kernel parity",
+        "kernel unit/regression"
+      ],
+      "build_data_scope": "R5.198 mechanics/data scope; current-game scope only where separately evidenced.",
+      "known_limitations": "Does not certify current client/protocol or unsupported mechanics.",
+      "adr_regression_ids": [
+        "ADR-002"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/COMPATIBILITY.json",
+      "legacy_file_sha256": "19ba6bf31b3b0e92ac6b727ec00b890e71d4d88fbc1665320a9b290b8c0a44c3",
+      "target_path": "assets/game_data/COMPATIBILITY.json",
+      "target_sha256": "19ba6bf31b3b0e92ac6b727ec00b890e71d4d88fbc1665320a9b290b8c0a44c3",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190580738.json",
+      "legacy_file_sha256": "c62c67bdc8735ea9e4f3dbee315fb0c71c14422b0925d868b59c427b9547905a",
+      "target_path": "assets/game_data/Mapuse/map_190580738.json",
+      "target_sha256": "c62c67bdc8735ea9e4f3dbee315fb0c71c14422b0925d868b59c427b9547905a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190580739.json",
+      "legacy_file_sha256": "675517e3959ba3d1c522c8d71311c0ef668113fa5f7906feb7eb67d1298cfd8f",
+      "target_path": "assets/game_data/Mapuse/map_190580739.json",
+      "target_sha256": "675517e3959ba3d1c522c8d71311c0ef668113fa5f7906feb7eb67d1298cfd8f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190581250.json",
+      "legacy_file_sha256": "d3e01a3a5e9abed1646067c986521ebec3379ae0d893e544780dc359722fed7a",
+      "target_path": "assets/game_data/Mapuse/map_190581250.json",
+      "target_sha256": "d3e01a3a5e9abed1646067c986521ebec3379ae0d893e544780dc359722fed7a",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190581251.json",
+      "legacy_file_sha256": "250822625c6a38134433d53786baf847ffa1561ce9ff6c8130b86ef8e9095bd9",
+      "target_path": "assets/game_data/Mapuse/map_190581251.json",
+      "target_sha256": "250822625c6a38134433d53786baf847ffa1561ce9ff6c8130b86ef8e9095bd9",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/AlignmentSides.json",
+      "legacy_file_sha256": "dac50fca9139c6c4b50c3c7f520377396cd03a9772f6af1c4cf14777273efb6c",
+      "target_path": "assets/game_data/Static/AlignmentSides.json",
+      "target_sha256": "dac50fca9139c6c4b50c3c7f520377396cd03a9772f6af1c4cf14777273efb6c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Areas.json",
+      "legacy_file_sha256": "e36cf947c8bd29cae240d0c1144d0c43d9ced8a0a3f8852be3f010f7a2f9d408",
+      "target_path": "assets/game_data/Static/Areas.json",
+      "target_sha256": "e36cf947c8bd29cae240d0c1144d0c43d9ced8a0a3f8852be3f010f7a2f9d408",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Breeds.json",
+      "legacy_file_sha256": "fd5f704a249ae3a0989b45388704ce162f1563e8227f9ed03a449a2046e388b7",
+      "target_path": "assets/game_data/Static/Breeds.json",
+      "target_sha256": "fd5f704a249ae3a0989b45388704ce162f1563e8227f9ed03a449a2046e388b7",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Challenges.json",
+      "legacy_file_sha256": "a9620e912a1d91ac0901652ca0faf786c17db63763ff3a5cc78c5fd1c259ee3f",
+      "target_path": "assets/game_data/Static/Challenges.json",
+      "target_sha256": "a9620e912a1d91ac0901652ca0faf786c17db63763ff3a5cc78c5fd1c259ee3f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/CompanionSpells.json",
+      "legacy_file_sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
+      "target_path": "assets/game_data/Static/CompanionSpells.json",
+      "target_sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Companions.json",
+      "legacy_file_sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "target_path": "assets/game_data/Static/Companions.json",
+      "target_sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Dungeons.json",
+      "legacy_file_sha256": "808a5f6dd78bfe60caca90d39fdce24f901914bded2d8d51cc263f87e8ddc9dc",
+      "target_path": "assets/game_data/Static/Dungeons.json",
+      "target_sha256": "808a5f6dd78bfe60caca90d39fdce24f901914bded2d8d51cc263f87e8ddc9dc",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Effects.json",
+      "legacy_file_sha256": "13415603cec072f8ea0637ac7d309da4ddb32b5cd20333ec18ac56298ed21bed",
+      "target_path": "assets/game_data/Static/Effects.json",
+      "target_sha256": "13415603cec072f8ea0637ac7d309da4ddb32b5cd20333ec18ac56298ed21bed",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/InfoMessages.json",
+      "legacy_file_sha256": "af1e33428a751975cbd41fc16e064bdc9e872f04e8c89aa2921c9f3e980c7f8f",
+      "target_path": "assets/game_data/Static/InfoMessages.json",
+      "target_sha256": "af1e33428a751975cbd41fc16e064bdc9e872f04e8c89aa2921c9f3e980c7f8f",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/MapCoordinates.json",
+      "legacy_file_sha256": "c151bc947f59affeaebc631fdb6c6a81415575834f378841b60d036245fb31de",
+      "target_path": "assets/game_data/Static/MapCoordinates.json",
+      "target_sha256": "c151bc947f59affeaebc631fdb6c6a81415575834f378841b60d036245fb31de",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/MapPositions.json",
+      "legacy_file_sha256": "90846bc4d37db23fe951beac535a6ffefc0f40aae23a0c7d2be4e7b67ae40952",
+      "target_path": "assets/game_data/Static/MapPositions.json",
+      "target_sha256": "90846bc4d37db23fe951beac535a6ffefc0f40aae23a0c7d2be4e7b67ae40952",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/MonsterRaces.json",
+      "legacy_file_sha256": "ee63f070d04e767d8b872b636d8053b1491c09f09193c6ea9ab791c55607c9e3",
+      "target_path": "assets/game_data/Static/MonsterRaces.json",
+      "target_sha256": "ee63f070d04e767d8b872b636d8053b1491c09f09193c6ea9ab791c55607c9e3",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/MonsterSuperRaces.json",
+      "legacy_file_sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
+      "target_path": "assets/game_data/Static/MonsterSuperRaces.json",
+      "target_sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Monsters.json",
+      "legacy_file_sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "target_path": "assets/game_data/Static/Monsters.json",
+      "target_sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/PointOfInterest.json",
+      "legacy_file_sha256": "11284881ffc0b272d6c14505fbf1577046a6229bd7dc90d0d0a734a55010068c",
+      "target_path": "assets/game_data/Static/PointOfInterest.json",
+      "target_sha256": "11284881ffc0b272d6c14505fbf1577046a6229bd7dc90d0d0a734a55010068c",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Skills.json",
+      "legacy_file_sha256": "b37919e660addf316d5ec026ab99eb62b75b045dad6d189b06628ffb1499d206",
+      "target_path": "assets/game_data/Static/Skills.json",
+      "target_sha256": "b37919e660addf316d5ec026ab99eb62b75b045dad6d189b06628ffb1499d206",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellLevels.json",
+      "legacy_file_sha256": "4ca21db4c23fcaae31ebde808b1d4fd0b9069458dc6ebace5d39c35145b8f440",
+      "target_path": "assets/game_data/Static/SpellLevels.json",
+      "target_sha256": "4ca21db4c23fcaae31ebde808b1d4fd0b9069458dc6ebace5d39c35145b8f440",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellStates.json",
+      "legacy_file_sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
+      "target_path": "assets/game_data/Static/SpellStates.json",
+      "target_sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellVariants.json",
+      "legacy_file_sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
+      "target_path": "assets/game_data/Static/SpellVariants.json",
+      "target_sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/Spells.json",
+      "legacy_file_sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "target_path": "assets/game_data/Static/Spells.json",
+      "target_sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/SubAreas.json",
+      "legacy_file_sha256": "accbb60f645fe66401766911db653545986239b482bac84d122cc5c593f903a0",
+      "target_path": "assets/game_data/Static/SubAreas.json",
+      "target_sha256": "accbb60f645fe66401766911db653545986239b482bac84d122cc5c593f903a0",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "gamedata/Static/SuperAreas.json",
+      "legacy_file_sha256": "8d908b1f61d30df55f0a740effea1db97d8dbc1d56be690702b357592c26ae55",
+      "target_path": "assets/game_data/Static/SuperAreas.json",
+      "target_sha256": "8d908b1f61d30df55f0a740effea1db97d8dbc1d56be690702b357592c26ae55",
+      "reuse_mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve static game-data bytes with explicit compatibility scope.",
+      "required_tests": [
+        "asset hash parity",
+        "kernel data load"
+      ],
+      "build_data_scope": "Historical R5.198 data compatibility scope.",
+      "known_limitations": "Not proof of full current-game compatibility.",
+      "adr_regression_ids": [
+        "ADR-002",
+        "R2"
+      ]
+    },
+    {
+      "legacy_path": "defaults/shared_ui_calibration_1280x649.yaml",
+      "legacy_file_sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
+      "target_path": "reference/calibration/shared_ui_calibration_1280x649.yaml",
+      "target_sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
+      "reuse_mode": "ADAPTED_REUSE",
+      "semantic_change": false,
+      "rationale": "Preserve historical measured coordinates as reference-only calibration.",
+      "required_tests": [
+        "calibration provenance",
+        "wrong size/DPI invalidation"
+      ],
+      "build_data_scope": "1280x649 historical layout only",
+      "known_limitations": "Must be revalidated on the current host; never authorizes input by itself.",
+      "adr_regression_ids": [
+        "R5.195",
+        "ADR-005"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/capture/pcapng.py",
+      "legacy_file_sha256": "100463dfd5e9a23ec38b16f0487dbb2475c9de5b1696796b3a652f2655b77f6b",
+      "target_path": "src/anka_capture/pcapng.py",
+      "target_sha256": "27e4ab7a61383e653d80cd7cd6acb53b4c94e34289521b09fad58abca419e3e7",
+      "reuse_mode": "ADAPTED_REUSE",
+      "semantic_change": true,
+      "rationale": "Selective transport parser reuse with DTO/protocol coupling removed.",
+      "required_tests": [
+        "capture parser",
+        "malformed/truncation",
+        "P61-P66 transport integrity"
+      ],
+      "build_data_scope": "historical parser behavior plus new strict transport rules",
+      "known_limitations": "Not a byte-for-byte copy; semantics require target tests.",
+      "adr_regression_ids": [
+        "RQ-PROD-004"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/protocol/adapters/dofus_3_7_10_10/adapter.py",
+      "legacy_file_sha256": "92e7a9d0b5dfadd252548e400c64196279fb7a428d5633f0365fa53f3697a392",
+      "target_path": null,
+      "target_sha256": null,
+      "reuse_mode": "HISTORICAL_FIXTURE_ONLY",
+      "semantic_change": false,
+      "rationale": "Preserve historical adapter identity/evidence for replay and qualification; do not activate as current build.",
+      "required_tests": [
+        "historical protocol replay",
+        "unknown/opaque mutations"
+      ],
+      "build_data_scope": "Dofus 3.7.10.10 historical adapter only",
+      "known_limitations": "Observed later builds cannot inherit certification.",
+      "adr_regression_ids": [
+        "ADR-008",
+        "R5.198"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/execution/service.py",
+      "legacy_file_sha256": "ecbc0291a480578b41a89b8ebe6926c44313cc59def02dad4398be7946ad7f59",
+      "target_path": null,
+      "target_sha256": null,
+      "reuse_mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "rationale": "Extract durable prepare/send uncertainty/settlement invariants into the new Execution boundary instead of copying the giant coupled service.",
+      "required_tests": [
+        "execution fault matrix",
+        "no blind retry",
+        "identity recheck"
+      ],
+      "build_data_scope": "behavioral safety invariants only",
+      "known_limitations": "Legacy cross-package coupling must not be imported.",
+      "adr_regression_ids": [
+        "ADR-005",
+        "ADR-012",
+        "R5.151"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/party/mission.py",
+      "legacy_file_sha256": "f67f2484fb29acc59c7043541f22de7b0c19f86c1d4129df189edb4d688029ca",
+      "target_path": null,
+      "target_sha256": null,
+      "reuse_mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "rationale": "Move party synchronization to Coordination and mission lifecycle to Workflow under new contracts.",
+      "required_tests": [
+        "coordination barriers",
+        "workflow counters",
+        "CRA/ENU systemic replay"
+      ],
+      "build_data_scope": "state-machine behavior only",
+      "known_limitations": "Do not preserve legacy shared mutable ownership/coupling.",
+      "adr_regression_ids": [
+        "ADR-011",
+        "R5.196"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/fight_ai/tactical_policy.py",
+      "legacy_file_sha256": "26f0ca1a071fa6afdb8873354b2c70b83cd6be8be9e2e6ec5cf2576a91732a19",
+      "target_path": null,
+      "target_sha256": null,
+      "reuse_mode": "ADAPTED_REUSE",
+      "semantic_change": true,
+      "rationale": "Preserve tactical domain knowledge but place it behind DecisionFrame/ActionPlan and KernelQueries.",
+      "required_tests": [
+        "decision determinism",
+        "ActionKey quarantine",
+        "planner substitution"
+      ],
+      "build_data_scope": "CRA/ENU tactical subset",
+      "known_limitations": "Must not import protocol/client/execution authority.",
+      "adr_regression_ids": [
+        "R5.142"
+      ]
+    },
+    {
+      "legacy_path": "src/anka_platform/web/app.py",
+      "legacy_file_sha256": "5ea0ced6c1e6470f9a93b2ee79a148a8599ad9bf1c84c0504732b0fe2fa086b3",
+      "target_path": null,
+      "target_sha256": null,
+      "reuse_mode": "DISCARDED",
+      "semantic_change": true,
+      "rationale": "Final operator product has no dashboard/web UI; hidden domain responsibilities must be migrated first.",
+      "required_tests": [
+        "operator surface",
+        "domain responsibility trace"
+      ],
+      "build_data_scope": "none",
+      "known_limitations": "Do not remove safety/startup semantics merely because UI is discarded.",
+      "adr_regression_ids": [
+        "ADR-006"
+      ]
+    }
+  ],
+  "policy": "Legacy is read-only reference/evidence. Reuse never grants runtime authority or current-build certification."
+}

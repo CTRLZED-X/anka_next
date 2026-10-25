@@ -1,0 +1,9 @@
+{
+  "milestone": "P4-offline-transport",
+  "source_archive_sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+  "reference_member": "ANKA_R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENED_LEAN_OFFLINE_VERIFIED_FINAL/src/anka_platform/capture/pcapng.py",
+  "reference_sha256": "100463dfd5e9a23ec38b16f0487dbb2475c9de5b1696796b3a652f2655b77f6b",
+  "adapted_destination": "src/anka_capture/pcapng.py",
+  "method": "selectively copied parsing functions, replaced DTO dependency, removed framing/protocol imports, tightened bounds, truncation and snapshot semantics",
+  "notes": "Not a pristine byte-for-byte reuse item; audited and covered by new tests. The source reference project remains unmodified."
+}

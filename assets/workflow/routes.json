@@ -1,0 +1,21 @@
+{
+  "routes": {
+    "sufokia_direction_cycle": {
+      "authority": "HISTORICAL_ROUTE_REFERENCE_ONLY",
+      "legacy_source_member": "ANKA_R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENED_LEAN_OFFLINE_VERIFIED_FINAL/missions/sufokia_farm.yaml",
+      "legacy_source_sha256": "bef2ea39b6b3002e56f369a093464fddba2a68fd520205e85a7455b70db6e89f",
+      "loop": true,
+      "start": [
+        7,
+        -12
+      ],
+      "steps": [
+        "R",
+        "D",
+        "L",
+        "U"
+      ]
+    }
+  },
+  "schema_version": 1
+}

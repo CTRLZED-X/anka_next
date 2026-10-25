@@ -1,0 +1,73 @@
+{
+  "baseline": "P51",
+  "baseline_zip_sha256": "8e478e8aa392fc1a4837cee29db5e2c70770a38644a013eaddfda3a58545e3e7",
+  "changes": {
+    "modified_baseline_paths": [
+      "00_READ_FIRST_NEXT_CHAT.md",
+      "IMPLEMENTATION_STATUS.md",
+      "README.md",
+      "src/anka_app/cli.py",
+      "src/anka_app/ingress_readiness.py"
+    ],
+    "new_file_paths": [
+      "docs/P52_MULTI_ACCOUNT_SOCKET_PROCESS_TOPOLOGY.md",
+      "tests/test_p52_multi_account_topology.py",
+      "verification/P52_offline_acceptance_receipt.json"
+    ]
+  },
+  "date": "2026-10-21",
+  "limitations": [
+    "No authentic Windows/current-client acceptance",
+    "IPv4 non-atomic snapshots remain provisional",
+    "No independently validated CRA/ENU to PID/flow/window witness",
+    "No current-build protocol certification or authoritative Canonical admission",
+    "No live execution or real mission acceptance"
+  ],
+  "milestone": "P52",
+  "next_priority": "Real Windows/current-client proof of process\u2194socket\u2194window\u2194character before game authority",
+  "progress": {
+    "end_to_end_live_cra_enu_acceptance_pct": 0,
+    "not_a_quality_or_readiness_metric": true,
+    "subjective_historical_roadmap_pct": 92
+  },
+  "provenance_sha256": {
+    "00_READ_FIRST_NEXT_CHAT.md": "398d36a24cb591318690382e6a6e2a5d56ae0566bf260834fbea47fd9b6a5682",
+    "IMPLEMENTATION_STATUS.md": "a6decadf127a82c528991a8b50a83245280548bc8fade52c615aa130d4961863",
+    "README.md": "8049b398fa2121aa400ee0d340fc21e507f1f6595404acf2fcdf20a5207ffeeb",
+    "docs/P52_MULTI_ACCOUNT_SOCKET_PROCESS_TOPOLOGY.md": "a4cc11d91d13a3869d2e54733918cbb26ab50262987522b65c6e1e0b60bf2f9c",
+    "src/anka_app/cli.py": "22d32d5625b8d0fad6ee8d33dbfaf307054277929426c4618eaf16b68b984067",
+    "src/anka_app/ingress_readiness.py": "3e87d1bdcbf4ced5227aee2e9b436b6da4bc0c45433fa2c1a105d42fe212b76f",
+    "tests/test_p52_multi_account_topology.py": "64ac6764c9c4d7ec49478d28fbb9b9e01831a1b9a37e97c359c328e8938f6957"
+  },
+  "safety": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "driver_loss_accounted": false,
+    "live_ready": false,
+    "physical_input_permitted": false,
+    "physical_input_sent": false,
+    "start_blocked": true
+  },
+  "scope": "OFFLINE AND PASSIVE HOST RESEARCH ONLY \u2014 NO CHARACTER CERTIFICATION",
+  "title": "Anonymous multi-client Windows process/socket topology",
+  "verification": {
+    "architecture_modules": 267,
+    "architecture_packages": 13,
+    "check_exit": 0,
+    "checkpoint_matches_final_source": true,
+    "incident_zip_integrity": "PASS",
+    "inherited_p51_owner_tests": 28,
+    "inherited_p51_preflight_tests": 2,
+    "input_fingerprint": "7d8cc3dfdd034231f72f79a29b72e73f1ab30a5a3e0cbb065688208799a5de23",
+    "module_isolated_full_regression": "PASS",
+    "new_p52_tests": 20,
+    "reused_assets_verified": 165,
+    "setup_exit": 0,
+    "start_exit": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "test_files_completed": 78,
+    "test_files_discovered": 78,
+    "tests_passed": 1356
+  }
+}

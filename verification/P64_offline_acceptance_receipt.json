@@ -1,0 +1,51 @@
+{
+  "milestone": "P64",
+  "title": "Explicit-consent Windows passive PCAPNG evidence acquisition",
+  "date": "2026-10-22",
+  "status": "FULLY_OFFLINE_VERIFIED_WINDOWS_UNTESTED",
+  "scope": "Optional read-only raw packet evidence acquisition; no current-build attestation",
+  "changes": {
+    "recording_default": "DISABLED",
+    "explicit_consent_config": "capture.save_raw_evidence == true",
+    "capture_path": "runtime/evidence/ (not bundled)",
+    "limits": {"max_frames": 5000, "max_bytes": 8388608, "max_frame_bytes": 65535},
+    "pcapng_parser_round_trip": true,
+    "incomplete_capture_loss_marker": true,
+    "raw_packet_data_excluded_from_incident_zip": true,
+    "automatic_two_case_preflight": true,
+    "synthetic_ethernet_fallback_not_origin_attested": true
+  },
+  "verification": {
+    "test_modules_passed": 91,
+    "test_modules_expected": 91,
+    "test_methods_passed": 1573,
+    "new_p64_test_methods": 17,
+    "source_bound_checkpoint": true,
+    "fingerprint": "7dde515fa5ef7f4622b4c149db065c3eb54d892752ff099dd868eb82897ce3c2",
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_intentional_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 284,
+    "reference_assets_verified": "165/165"
+  },
+  "authority": {
+    "real_windows_npcap_capture_verified": false,
+    "capture_driver_loss_visibility": "UNKNOWN",
+    "current_client_build_certified": false,
+    "account_character_binding_verified": false,
+    "authoritative_canonical_commits": 0,
+    "physical_input_enabled": false,
+    "complete_live_cra_enu_mission_verified_percent": 0
+  },
+  "estimated_roadmap_scope_percent": 92,
+  "operator_bat_files": ["setup.bat", "start.bat"],
+  "limitations": [
+    "Live Windows/Scapy/Npcap behavior was not tested on the target host.",
+    "Recorded packet bytes may be private; raw files are not sanitized or included in diagnostic archives.",
+    "Saved PCAPNG frame hashes and syntactic validity do not prove driver loss accounting or semantic completeness.",
+    "No current-client protocol certification, independent character identity, authoritative game state, or live execution."
+  ]
+}

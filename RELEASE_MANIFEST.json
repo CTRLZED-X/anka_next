@@ -1,0 +1,4141 @@
+{
+  "acceptance_tier": "ZERO_INPUT_INTEGRATED",
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifests": {
+    "pyproject.toml": "78db108d47f04793405ded2a5b32d410b08d2dddd5863c989851d9eb257aab26",
+    "requirements-p1.txt": "76157f5fda8bbfabfdca5132d6ff2fb8a73865236c77e6987865cc7381ad4854",
+    "requirements-windows-capture.txt": "3469606da451d761706920bcbdafe5107cda2c3df633b9649b9b99e5b5cf33de"
+  },
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "616375dc9df4697aa00e5a853cfa1f35e966139f95d769cb8a839267d1f6239a",
+      "size": 69
+    },
+    {
+      "path": "00_READ_FIRST_NEXT_CHAT.md",
+      "sha256": "b20a142be43d98bd701005c33061cee0fe86545675b65c40a1ad5ec571054bf8",
+      "size": 3760
+    },
+    {
+      "path": "IMPLEMENTATION_STATUS.md",
+      "sha256": "6da8f9158971c0f33a051b961126d2424380f0439d516d09c50aea066669c07e",
+      "size": 29017
+    },
+    {
+      "path": "PROJECT_INFO.txt",
+      "sha256": "89dfbd6b9098c935e126bfbc4d5f7df8e60ca1e9d934dddfa414bf21e1425e16",
+      "size": 142
+    },
+    {
+      "path": "README.md",
+      "sha256": "56e56d16c2ebe29306a7128d520a009bb4d647d96f2d8a487cf07a0f1e76061d",
+      "size": 4816
+    },
+    {
+      "path": "assets/calibration/shared_ui_1280x649.json",
+      "sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+      "size": 3828
+    },
+    {
+      "path": "assets/decision/legacy_r5198_spell_priorities.json",
+      "sha256": "23021984f787522571d7118744d33b7368dd86a08f01cd385183dbb7371cd0a2",
+      "size": 6383
+    },
+    {
+      "path": "assets/game_data/COMPATIBILITY.json",
+      "sha256": "19ba6bf31b3b0e92ac6b727ec00b890e71d4d88fbc1665320a9b290b8c0a44c3",
+      "size": 709
+    },
+    {
+      "path": "assets/game_data/Mapuse/map_190580738.json",
+      "sha256": "c62c67bdc8735ea9e4f3dbee315fb0c71c14422b0925d868b59c427b9547905a",
+      "size": 98349
+    },
+    {
+      "path": "assets/game_data/Mapuse/map_190580739.json",
+      "sha256": "675517e3959ba3d1c522c8d71311c0ef668113fa5f7906feb7eb67d1298cfd8f",
+      "size": 98200
+    },
+    {
+      "path": "assets/game_data/Mapuse/map_190581250.json",
+      "sha256": "d3e01a3a5e9abed1646067c986521ebec3379ae0d893e544780dc359722fed7a",
+      "size": 98267
+    },
+    {
+      "path": "assets/game_data/Mapuse/map_190581251.json",
+      "sha256": "250822625c6a38134433d53786baf847ffa1561ce9ff6c8130b86ef8e9095bd9",
+      "size": 98280
+    },
+    {
+      "path": "assets/game_data/Static/AlignmentSides.json",
+      "sha256": "dac50fca9139c6c4b50c3c7f520377396cd03a9772f6af1c4cf14777273efb6c",
+      "size": 184
+    },
+    {
+      "path": "assets/game_data/Static/Areas.json",
+      "sha256": "e36cf947c8bd29cae240d0c1144d0c43d9ced8a0a3f8852be3f010f7a2f9d408",
+      "size": 4970
+    },
+    {
+      "path": "assets/game_data/Static/Breeds.json",
+      "sha256": "fd5f704a249ae3a0989b45388704ce162f1563e8227f9ed03a449a2046e388b7",
+      "size": 6510
+    },
+    {
+      "path": "assets/game_data/Static/Challenges.json",
+      "sha256": "a9620e912a1d91ac0901652ca0faf786c17db63763ff3a5cc78c5fd1c259ee3f",
+      "size": 44602
+    },
+    {
+      "path": "assets/game_data/Static/CompanionSpells.json",
+      "sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
+      "size": 26605
+    },
+    {
+      "path": "assets/game_data/Static/Companions.json",
+      "sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "size": 4686
+    },
+    {
+      "path": "assets/game_data/Static/Dungeons.json",
+      "sha256": "808a5f6dd78bfe60caca90d39fdce24f901914bded2d8d51cc263f87e8ddc9dc",
+      "size": 13189
+    },
+    {
+      "path": "assets/game_data/Static/Effects.json",
+      "sha256": "13415603cec072f8ea0637ac7d309da4ddb32b5cd20333ec18ac56298ed21bed",
+      "size": 85336
+    },
+    {
+      "path": "assets/game_data/Static/InfoMessages.json",
+      "sha256": "af1e33428a751975cbd41fc16e064bdc9e872f04e8c89aa2921c9f3e980c7f8f",
+      "size": 157528
+    },
+    {
+      "path": "assets/game_data/Static/MapCoordinates.json",
+      "sha256": "c151bc947f59affeaebc631fdb6c6a81415575834f378841b60d036245fb31de",
+      "size": 573394
+    },
+    {
+      "path": "assets/game_data/Static/MapPositions.json",
+      "sha256": "90846bc4d37db23fe951beac535a6ffefc0f40aae23a0c7d2be4e7b67ae40952",
+      "size": 12062646
+    },
+    {
+      "path": "assets/game_data/Static/MonsterRaces.json",
+      "sha256": "ee63f070d04e767d8b872b636d8053b1491c09f09193c6ea9ab791c55607c9e3",
+      "size": 15427
+    },
+    {
+      "path": "assets/game_data/Static/MonsterSuperRaces.json",
+      "sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
+      "size": 2292
+    },
+    {
+      "path": "assets/game_data/Static/Monsters.json",
+      "sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "size": 998292
+    },
+    {
+      "path": "assets/game_data/Static/PointOfInterest.json",
+      "sha256": "11284881ffc0b272d6c14505fbf1577046a6229bd7dc90d0d0a734a55010068c",
+      "size": 5974
+    },
+    {
+      "path": "assets/game_data/Static/Skills.json",
+      "sha256": "b37919e660addf316d5ec026ab99eb62b75b045dad6d189b06628ffb1499d206",
+      "size": 19033
+    },
+    {
+      "path": "assets/game_data/Static/SpellLevels.json",
+      "sha256": "4ca21db4c23fcaae31ebde808b1d4fd0b9069458dc6ebace5d39c35145b8f440",
+      "size": 12176041
+    },
+    {
+      "path": "assets/game_data/Static/SpellStates.json",
+      "sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
+      "size": 391845
+    },
+    {
+      "path": "assets/game_data/Static/SpellVariants.json",
+      "sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
+      "size": 17996
+    },
+    {
+      "path": "assets/game_data/Static/Spells.json",
+      "sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "size": 1933321
+    },
+    {
+      "path": "assets/game_data/Static/SubAreas.json",
+      "sha256": "accbb60f645fe66401766911db653545986239b482bac84d122cc5c593f903a0",
+      "size": 42783
+    },
+    {
+      "path": "assets/game_data/Static/SuperAreas.json",
+      "sha256": "8d908b1f61d30df55f0a740effea1db97d8dbc1d56be690702b357592c26ae55",
+      "size": 653
+    },
+    {
+      "path": "assets/workflow/routes.json",
+      "sha256": "c4f710489e7d8e254c58d97fb4994cbdc8716eb0b3aa811dae2e458f6f082d73",
+      "size": 531
+    },
+    {
+      "path": "config/defaults/diagnostics.json",
+      "sha256": "cfeb1dc5310629f826332bff96355ef574b0527011afcdeb5a8ac1e7ea26ab13",
+      "size": 215
+    },
+    {
+      "path": "config/schema/user.schema.json",
+      "sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+      "size": 2639
+    },
+    {
+      "path": "config/user.example.json",
+      "sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+      "size": 343
+    },
+    {
+      "path": "config/user.json",
+      "sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+      "size": 343
+    },
+    {
+      "path": "docs/M0_BASELINE_AND_EVIDENCE_FREEZE.md",
+      "sha256": "4c4d919b69569134e1dc91a1763d8e7b6ad8f4a4a7b5856179f1954f24e40d60",
+      "size": 4396
+    },
+    {
+      "path": "docs/M10_WORKFLOW.md",
+      "sha256": "3df86d42e30aca848c1525f35601f93b5dc587f6afc3cdbf03cd5096e236a092",
+      "size": 2050
+    },
+    {
+      "path": "docs/M11_EXECUTION.md",
+      "sha256": "f37e527a0c733181bbb1619dba69375356701e70fca9abe04bf02ff944d854be",
+      "size": 3664
+    },
+    {
+      "path": "docs/M11_EXECUTION_SAFETY.md",
+      "sha256": "bcc76a5bffe7104eeebd57cf810d925b48279058e087486c000fd2ddecca65d2",
+      "size": 4406
+    },
+    {
+      "path": "docs/M12_002_SYSTEMIC_WINDOWS_STARTUP_HARDENING.md",
+      "sha256": "6465fdd29aebc08f1ffa1dcc25b8433b3030c5b397e10f5d1f5881cdc3394d80",
+      "size": 4357
+    },
+    {
+      "path": "docs/M12_003_LIVE_READINESS_CONCURRENCY_HARDENING.md",
+      "sha256": "cae0ac6a98ea0825c0fed081a8e6185f887ec71b8f8d7be3e23f6247d55bb708",
+      "size": 3793
+    },
+    {
+      "path": "docs/M12_004_EVIDENCE_INTEGRITY_AND_PROGRESS_HARDENING.md",
+      "sha256": "9d21b5b5059c4396b82a6e52fd212a5cc24ae96cd543783fc4e8913531c06708",
+      "size": 6215
+    },
+    {
+      "path": "docs/M12_005_RELEASE_TRUTH_AND_OBSERVER_ISOLATION.md",
+      "sha256": "e8fb8f655b8ccf382d69ef27019c8a6b8c41e054276a81ecfdf5526a75d9cfd9",
+      "size": 11877
+    },
+    {
+      "path": "docs/M12_006_CAUSAL_DIAGNOSTIC_AND_FULL_CHAIN_HARDENING.md",
+      "sha256": "8f8f130fd6fa9e66977a18b34d9e1f0e3311dd5b9adced9bde5b74c01e393cd4",
+      "size": 26074
+    },
+    {
+      "path": "docs/M12_RELEASE_AND_COMPOSITION.md",
+      "sha256": "2dd08a23629b1b143fc578106067e6021dd12e2f37817f59035b9d0515ed276d",
+      "size": 1417
+    },
+    {
+      "path": "docs/M1_CONTRACTS_ARCHITECTURE_LAB_BOOTSTRAP.md",
+      "sha256": "4f6f63aa6552479841c354158625097acd3ab375f5160904a4721a9f3e05ffa6",
+      "size": 3682
+    },
+    {
+      "path": "docs/M2_GAME_KERNEL_AND_DATA.md",
+      "sha256": "021420fe2dd176abf14d7253b578eb27247e9b7434274da309f78d1d2ff1290f",
+      "size": 2213
+    },
+    {
+      "path": "docs/M3_CLIENT_IDENTITY_CALIBRATION_PROJECTION.md",
+      "sha256": "1bdb53481304e8abc166b62cc439f9fca7d79f04a910f5f488d41d73d4a292a7",
+      "size": 2721
+    },
+    {
+      "path": "docs/M4_CAPTURE.md",
+      "sha256": "1b65d7735e993ff96285944b2d7474d2868cba90d4ca241a803fc62d97f2a88b",
+      "size": 1370
+    },
+    {
+      "path": "docs/M5_PROTOCOL_SDK_AND_QUALIFICATION.md",
+      "sha256": "25a3e8321615ce0f74861729240659f958679b95936d7f728c43ed52e73a0a80",
+      "size": 2847
+    },
+    {
+      "path": "docs/M6_CANONICAL_DURABLE_AUTHORITY.md",
+      "sha256": "703636547e42504b4d78a856934452133e56c913a73342f731b97c9e44d699c8",
+      "size": 2263
+    },
+    {
+      "path": "docs/M7_LIVE_STATE_PROVENANCE_FRESHNESS.md",
+      "sha256": "70e66474d58c5069cba890f0fcdd51c9b3f62d56b965c0751263d309dd6dee4f",
+      "size": 1483
+    },
+    {
+      "path": "docs/M8_DECISION.md",
+      "sha256": "888145de06e65689c92469efa14c8b52610844368801811bbe21f5942d4fed4e",
+      "size": 1811
+    },
+    {
+      "path": "docs/M9_COORDINATION.md",
+      "sha256": "10514c04f3ee7d73f18cb55559017cc9b8c86d7f6b7453c3986e170851c9ba63",
+      "size": 1988
+    },
+    {
+      "path": "docs/P10_SYNTHETIC_PROTOCOL_ADAPTER_QUALIFICATION.md",
+      "sha256": "13b92256ee8d11e0d80c2560bf572a747565a907b48ff11898bbe96e01e5b08f",
+      "size": 6818
+    },
+    {
+      "path": "docs/P11_FIGHT_TURN_EVIDENCE_RECONCILIATION.md",
+      "sha256": "d87324f1ed9c96679cf8d120a464657f168b92381a6389ba3b9d0a86d96f0690",
+      "size": 8388
+    },
+    {
+      "path": "docs/P12_KERNEL_BACKED_READ_ONLY_DECISION_PROBES.md",
+      "sha256": "b2fe0611b02ffdcab94c50df880fd20be893ada723e6601fc4f694e6fa73e720",
+      "size": 6219
+    },
+    {
+      "path": "docs/P13_KERNEL_MAP_AWARE_OFFLINE_RESEARCH.md",
+      "sha256": "c77aab40c02dcc6db11c57d822a3c568a2791d6ecc7c0b6d687650909176a736",
+      "size": 4117
+    },
+    {
+      "path": "docs/P14_BOUNDED_KERNEL_TACTICAL_RESEARCH.md",
+      "sha256": "d1842cf63be1a7e5c6e8e05405a35376ca61c024471dcd0f885f895ec69e9d58",
+      "size": 4255
+    },
+    {
+      "path": "docs/P15_SYNTHETIC_TACTICAL_SCORING.md",
+      "sha256": "b1dc4133835d87de02406341127be8f5a57c6b80835f8ebe131c4970aeaa3c22",
+      "size": 6134
+    },
+    {
+      "path": "docs/P16_STATEFUL_KERNEL_SEQUENCE_RESEARCH.md",
+      "sha256": "23f5962142906d70898369716adbb6037c789f444350e89faa76444214fdeead",
+      "size": 4814
+    },
+    {
+      "path": "docs/P17_COORDINATION_WORKFLOW_OFFLINE.md",
+      "sha256": "15d312d714f5dfb62c9fd897e30f075e4c2bb7038d976cf84e602c72b976b148",
+      "size": 4840
+    },
+    {
+      "path": "docs/P18_DURABLE_ACTION_SETTLEMENT_OFFLINE.md",
+      "sha256": "ce151e7d20f1c9d6bd4afbff57b62b39ce962050a5a73465f9ce0eed312d6e70",
+      "size": 7125
+    },
+    {
+      "path": "docs/P19_OFFLINE_FAKE_DRIVER_EXECUTION_INTEGRATION.md",
+      "sha256": "8156778eb9342ee2fe78dc9720407a17998f46cad78a62f90cab497a92f5e5a2",
+      "size": 6916
+    },
+    {
+      "path": "docs/P20_CROSS_SYSTEM_OFFLINE_INTEGRATION.md",
+      "sha256": "3278bd939f35de3445e1f61d9534a58d1e7ddfcec9488d2d35911c2fc4c873b6",
+      "size": 3476
+    },
+    {
+      "path": "docs/P21_AUTOMATED_ARCHITECTURE_GATES_AND_LIVE_READINESS.md",
+      "sha256": "9bb638f3915670d0befa5d0230fa55eb8125cf4c403bb3bc982249db4f6fc038",
+      "size": 3502
+    },
+    {
+      "path": "docs/P22_CAUSAL_EVENT_PROVENANCE_OFFLINE.md",
+      "sha256": "cb257f6abc5baca31456cb96c6f2533967e2bd97672665d5ade8ce22e2143c83",
+      "size": 3406
+    },
+    {
+      "path": "docs/P23_CAPTURE_FINALITY_AND_SEMANTIC_PROVENANCE.md",
+      "sha256": "fe3e2a5c2c531d0b4dcecb383a4bf67f6d7b797b18682cd863116933846f70fb",
+      "size": 5050
+    },
+    {
+      "path": "docs/P24_ISOLATED_VERIFICATION_AND_EVIDENCE_DIAGNOSTICS.md",
+      "sha256": "536a274cb5ff464c225203e3804f1c7629fecf3302895dc2766cf10cc13f0a0d",
+      "size": 3663
+    },
+    {
+      "path": "docs/P25_PASSIVE_WINDOWS_HOST_READINESS.md",
+      "sha256": "90c0ad21ae5b955f0ffa40405d63030269090a72ce14ed753d9d590d6ae2f47c",
+      "size": 4449
+    },
+    {
+      "path": "docs/P26_PASSIVE_STARTUP_CAPTURE_EVIDENCE.md",
+      "sha256": "83ae93fac1fccda15a2575963eac9ccbc9cc788698d40ac2b299d0946c4cc3f7",
+      "size": 5862
+    },
+    {
+      "path": "docs/P27_IN_MEMORY_WIRE_DIAGNOSTICS.md",
+      "sha256": "4292a60474783f402f82dc436a53f54889dc5d4793217cbdb47f20bfec34f272",
+      "size": 4034
+    },
+    {
+      "path": "docs/P28_PROTOCOL_EVIDENCE_INTAKE.md",
+      "sha256": "aabf25e34237f79704d1075f97368ac39d2aca47cf6e8b7670a348d05c4a29f6",
+      "size": 4862
+    },
+    {
+      "path": "docs/P29_PROTOCOL_ORACLE_COMPARISON.md",
+      "sha256": "cf0fb087afb76deab5557799df744aac67022d7f61ebb4229a79dd59b1238e09",
+      "size": 5070
+    },
+    {
+      "path": "docs/P30_DECLARATIVE_RESEARCH_PROTOCOL_ADAPTERS.md",
+      "sha256": "90a3e7e4c3c4073a48cc10562986fb882caefc532e82c6c52f6541324195a688",
+      "size": 6543
+    },
+    {
+      "path": "docs/P31_FIGHT_EVENT_RESEARCH_AND_ORACLE_COMPARISON.md",
+      "sha256": "e62368a0f4187636deb1fff4a29e6d4b0770756ce23011d9b66492995ff9e3c9",
+      "size": 5143
+    },
+    {
+      "path": "docs/P32_PROTOCOL_CAPABILITY_ACCEPTANCE_MATRIX.md",
+      "sha256": "578ec0fcc3defb3900256c62e500928189cef8109345087a27b70d1b76e05349",
+      "size": 5017
+    },
+    {
+      "path": "docs/P33_RESEARCH_SHADOW_REPLAY_CANONICAL_COMPATIBILITY.md",
+      "sha256": "2260996b1daa2131acc0f4af0400642336265a0cbdc48476979cbd1f0de235dc",
+      "size": 5669
+    },
+    {
+      "path": "docs/P34_RECONSTRUCTION_COVERAGE_AND_UNSUPPORTED_EFFECTS.md",
+      "sha256": "3ab46bf852cb236bf7f4f8eea043552106b2422aefdb56a34272a5d5dc8dabd9",
+      "size": 6518
+    },
+    {
+      "path": "docs/P35_CAUSAL_SNAPSHOT_RECONCILIATION_RESEARCH.md",
+      "sha256": "6d158f85edcb71a95a522ba278a9dd25f633435c11a640164a30b5f0184dfa81",
+      "size": 4192
+    },
+    {
+      "path": "docs/P36_TARGET_EFFECT_CONFOUNDER_AUDIT_AND_MODULE_ISOLATION.md",
+      "sha256": "ebd5925e363b9849987199b9d44d9f1d1554e698ecca2ecda0498e0230b6e0f6",
+      "size": 5758
+    },
+    {
+      "path": "docs/P37_CHECKPOINTED_RECOVERABLE_VERIFICATION.md",
+      "sha256": "ed273876589698e36109e2d0246f4bf9d3865e6a8bb1a151d8a4fe3398972f07",
+      "size": 5084
+    },
+    {
+      "path": "docs/P38_CAUSAL_OBSERVATION_WINDOW_HARDENING.md",
+      "sha256": "a84606112593e3f168a1b9089df273c717ff83051c1583bdd7aba46e6800ac8f",
+      "size": 5298
+    },
+    {
+      "path": "docs/P39_TARGET_CONTEXT_INTEGRITY.md",
+      "sha256": "14ddd4bbdc396feaa5a50996d29a4893f903444dfde4dc30fc74309afff2f586",
+      "size": 3313
+    },
+    {
+      "path": "docs/P3_READ_ONLY_CLIENT_ACCEPTANCE.md",
+      "sha256": "7b582f37d8d15cbf8f5a0df1408d954b88a0999e5a14263e0c66acf9af8b8370",
+      "size": 4624
+    },
+    {
+      "path": "docs/P40_CROSS_ACCOUNT_EVIDENCE_SOURCE_INDEPENDENCE.md",
+      "sha256": "d4cfa4c321cc93e7724a8bc9eb52ee57e263ada2f055e2903507b705ce8f7363",
+      "size": 4163
+    },
+    {
+      "path": "docs/P41_CELL_TRANSITION_AND_PROTOCOL_CLAIM_INTEGRITY.md",
+      "sha256": "ffd3ceaa267c0f1bab7245e72b0cc5e528d568506ae064726632f806b4d32428",
+      "size": 6189
+    },
+    {
+      "path": "docs/P42_EXACT_PROTOCOL_COMPARISON_PROVENANCE_BINDING.md",
+      "sha256": "c67b2f8d6070d8c4ff5c495e7671000e2d4eac73f94ca4f77638e9fc66ebad51",
+      "size": 5240
+    },
+    {
+      "path": "docs/P43_CASE_LEVEL_COMPARISON_LINEAGE_AND_RESULT_CONSISTENCY.md",
+      "sha256": "a20f158ab14a47b1ef5ceb098bfe6b2af1da32f881ccac7b715e3a5fd6965b20",
+      "size": 5066
+    },
+    {
+      "path": "docs/P44_READ_ONLY_NATIVE_UNITY_BRIDGE_INTEGRATION.md",
+      "sha256": "e1c3615158efbdb3b33ff8b8840cba7d46ce41c42534c2cb579e5c9b899fa62d",
+      "size": 5835
+    },
+    {
+      "path": "docs/P45_HISTORICAL_FIGHT_LIFECYCLE_AND_PROVENANCE.md",
+      "sha256": "63b8ac73ddbb4a6dd677b1b947e14483f7348068a5db7e58a7175c4c633693a8",
+      "size": 7277
+    },
+    {
+      "path": "docs/P46_HISTORICAL_COMBAT_OBSERVATIONS_AND_CROSS_FAMILY_CAUSAL_AUDIT.md",
+      "sha256": "dd7345b00a9696dbd3303b408cf32c24c5ceea01a90380d8c6aa7171b63659d5",
+      "size": 8175
+    },
+    {
+      "path": "docs/P47_HISTORICAL_WIRE_STREAM_REPLAY_AND_EVIDENCE_GAP_AUDIT.md",
+      "sha256": "05b50b29d87983dea05565802b66427825ace0568cc965b8c99f2b3af16ada93",
+      "size": 8041
+    },
+    {
+      "path": "docs/P48_CAPTURE_TRANSPORT_TO_HISTORICAL_RESEARCH.md",
+      "sha256": "16990a802998a670a8d033696c9704a10349208152375df43b8d14e04ef37ce5",
+      "size": 7429
+    },
+    {
+      "path": "docs/P49_SAVED_PCAPNG_HISTORICAL_REPLAY_UNCERTAINTY.md",
+      "sha256": "fb7a365148cd4cf5bcc9a4e80566ba7c714dc81a76c02715af0c9f26a8f7f4e9",
+      "size": 6913
+    },
+    {
+      "path": "docs/P4_OFFLINE_CAPTURE_ACCEPTANCE.md",
+      "sha256": "58d9aca761b1a03f3a493a7c5e68a800cecd5ca6db3284ece9df8e68e47cd5c1",
+      "size": 4124
+    },
+    {
+      "path": "docs/P50_PCAPNG_MULTIFLOW_DISCOVERY_AND_EXACT_SNAPSHOT_SELECTION.md",
+      "sha256": "1a1c4f0ed17869a3812e37cc70e83fa220b58935b54770f5894e6841b36c8a7e",
+      "size": 4141
+    },
+    {
+      "path": "docs/P51_WINDOWS_TCP_OWNER_SNAPSHOT_STABILITY.md",
+      "sha256": "98c56e9d4ab532344e625ea6c4294c88007caf4573baf4851eb607e894b8aea0",
+      "size": 3774
+    },
+    {
+      "path": "docs/P52_MULTI_ACCOUNT_SOCKET_PROCESS_TOPOLOGY.md",
+      "sha256": "a4cc11d91d13a3869d2e54733918cbb26ab50262987522b65c6e1e0b60bf2f9c",
+      "size": 4269
+    },
+    {
+      "path": "docs/P53_HISTORICAL_CHARACTER_FLOW_PROCESS_IDENTITY.md",
+      "sha256": "eda52f827c79e219c42c0cd15a1b193a16a721e2707e3d246b145d9962b3ad2f",
+      "size": 5094
+    },
+    {
+      "path": "docs/P54_HISTORICAL_PROCESS_FLOW_CHARACTER_ACTOR_CONTINUITY.md",
+      "sha256": "436c00ec31721d097fc354d40fd566c87a91ca89b8a478d5e8adb3c0f8c34d19",
+      "size": 4837
+    },
+    {
+      "path": "docs/P55_TRANSACTIONAL_CANONICAL_BATCH_AND_COMMIT_FENCING.md",
+      "sha256": "de2b901c3c79147e067f46813d2753b817c1c56221348b2c6b70d0fe629cb323",
+      "size": 5945
+    },
+    {
+      "path": "docs/P56_SOURCE_BOUND_BATCH_RECEIPTS_AND_SCHEMA_V2.md",
+      "sha256": "74cac007944d2f5d5aa99283ae664c297f60033db778380495040dd3282b5380",
+      "size": 3424
+    },
+    {
+      "path": "docs/P57_SQLITE_SCHEMA_CRASH_ATOMIC_BOOTSTRAP.md",
+      "sha256": "d19b3b8a95a3cd132527506151e2fce4d4d6825801a8f6496b5221490b1348a8",
+      "size": 3377
+    },
+    {
+      "path": "docs/P58_UNTRUSTED_CANONICAL_ADMISSION_REHEARSAL.md",
+      "sha256": "4cd02d030489f1a02f39d2b96b7cda26d7018dfd1b0860515fd9871dc96617dd",
+      "size": 3488
+    },
+    {
+      "path": "docs/P59_CAPTURE_BACKED_WIRE_PROVENANCE_CROSSCHECK.md",
+      "sha256": "a974cdf040c3345f1e30f42460fc355781032a6fa217a98ab99b1a83f7c1cd15",
+      "size": 5086
+    },
+    {
+      "path": "docs/P5_READ_ONLY_WINDOWS_CAPTURE.md",
+      "sha256": "a34cc56658d4e565ba94d6642fe8f84c7da6b052e964427b9abbb7bed5e0fd4b",
+      "size": 4440
+    },
+    {
+      "path": "docs/P60_PACKET_LOCAL_MESSAGE_PROVENANCE_INTEGRITY.md",
+      "sha256": "6ea26de2fbf1f47bae886555efc6bdd3003a3e3f40d7c5da8180299f499ff779",
+      "size": 4840
+    },
+    {
+      "path": "docs/P61_IPV6_FRAGMENT_TRANSPORT_EVIDENCE_INTEGRITY.md",
+      "sha256": "6cec2fd4b59bd0e8afb48ed0e34df9f0047b16223e9c84f1534122c9d89144de",
+      "size": 3637
+    },
+    {
+      "path": "docs/P62_REPORTED_PCAPNG_PACKET_LOSS_INTEGRITY.md",
+      "sha256": "ffb94242be0d1a811dfe54beaad780ccb20d803657fb6be0817a5561b7413665",
+      "size": 3311
+    },
+    {
+      "path": "docs/P63_PCAPNG_SECTION_BOUNDARY_INTEGRITY.md",
+      "sha256": "682b8446c05e2f56875a2769cdc3585687aeec4806a5ea666969606792d432aa",
+      "size": 3055
+    },
+    {
+      "path": "docs/P64_OPT_IN_WINDOWS_PASSIVE_PCAPNG_EVIDENCE_ACQUISITION.md",
+      "sha256": "70f57f11e9ce100d6b9b7dd803fa089c9da379eee550a7cbe8f2ae823e805f1d",
+      "size": 4981
+    },
+    {
+      "path": "docs/P65_CAPTURE_INTERRUPTION_LOSS_SEALING.md",
+      "sha256": "5b8a8367f1862fab7b3119d985704dde7da2da9b4a480f99ed7289126a366488",
+      "size": 3879
+    },
+    {
+      "path": "docs/P66_POST_STOP_DRAIN_EVIDENCE_SEALING.md",
+      "sha256": "1d1b481ba688589074c533d88d97cb35ea6a94049f8a697a21e792151731d27d",
+      "size": 3679
+    },
+    {
+      "path": "docs/P6_PROTOCOL_UPGRADE_BOUNDARY.md",
+      "sha256": "05867142fc291882976b55c6cffc57050214ab0e21bfa398c38c67c9043a7cd7",
+      "size": 2596
+    },
+    {
+      "path": "docs/P7_SEMANTIC_CANONICAL_STAGING.md",
+      "sha256": "620ab8c1d119e12a408e778e11b98ccebb60ca68c5dc95043a1b9e6a91560f40",
+      "size": 4645
+    },
+    {
+      "path": "docs/P8_DURABLE_CANONICAL_LIVE_STATE.md",
+      "sha256": "fde6ab95570645a7e87f4b8c3953a719218d4897c5d65ccd922e1fa718062cfa",
+      "size": 4522
+    },
+    {
+      "path": "docs/P9_EVIDENCE_QUALIFICATION_STATE_QUALITY.md",
+      "sha256": "0d06de986eec648b00763e4b10520b333abc311773e8bdbd337ce2cf6084f9d0",
+      "size": 6048
+    },
+    {
+      "path": "docs/Q8_DIAGNOSTICS.md",
+      "sha256": "867e61e4523f5625f44fd41834a8185f111bc88f0fdfed018a5b46ed0211005f",
+      "size": 3201
+    },
+    {
+      "path": "docs/Q9_ZERO_INPUT_INTEGRATION.md",
+      "sha256": "34e6a6e3f318c174bdcf4c1dcf9a76d113151de3511eba0f1333f8dfde92ddd6",
+      "size": 1555
+    },
+    {
+      "path": "docs/TARGET_ARCHITECTURE_V2.md",
+      "sha256": "b31e79693cfbf5284306fde08fcc4bd1758210d149dfcd9678c1363a0b6aef07",
+      "size": 81307
+    },
+    {
+      "path": "docs/history/IMPLEMENTATION_STATUS_P66_PRE_MASTER_ROADMAP.md",
+      "sha256": "cbcacb7d4388cbdfdfb18d6cafa895d6cb33ffa41b7cb7ccab93d7f9cab00cc7",
+      "size": 72721
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "cc09585a5d8e3ec99556e4089b0f3d7e6e90d4233b858042b5aab023b71a9842",
+      "size": 114
+    },
+    {
+      "path": "examples/SYNTHETIC_CAPTURE_P4.pcapng",
+      "sha256": "a18cc382dbeb03598a702ce1c2b3c4d352d42e453b6cf8bf636200e6a4eca979",
+      "size": 416
+    },
+    {
+      "path": "examples/SYNTHETIC_READY_NO_TURN_OWNER.zip",
+      "sha256": "6fae704d999e03f1ca11d6b83df84aece6688296d0d0b04c3ae179e217f16352",
+      "size": 2587
+    },
+    {
+      "path": "examples/SYNTHETIC_SETUP_DEPENDENCY_FAILED.zip",
+      "sha256": "c96a6a63d88af566d5df5027ecaeb6c86679e1863cdeabefeee2089b3bc9903a",
+      "size": 1680
+    },
+    {
+      "path": "native/unity_bridge/AuthoritativeCellPositionSource.cs",
+      "sha256": "5d5af4c574c0719e12523c34e4c00439ab66d86218adc54ddb9932c1b21bec0c",
+      "size": 35950
+    },
+    {
+      "path": "native/unity_bridge/AutomaticMapAdapter.cs",
+      "sha256": "446d239040ca7d9a9e4d109c7a9289e87933415e0674fe1463527e1106e8a301",
+      "size": 59264
+    },
+    {
+      "path": "native/unity_bridge/CompilerServicesCompat.cs",
+      "sha256": "56d3737754543c1b752e605cc45dfa049846ce53e2095a4e35a75dce76235a26",
+      "size": 2275
+    },
+    {
+      "path": "native/unity_bridge/Contracts.cs",
+      "sha256": "15a1a598480e15cb42dd4d77c0bbc364ae1ca17290d7697ed5b1c651c6c7f685",
+      "size": 16263
+    },
+    {
+      "path": "native/unity_bridge/CoordinateBridgeBehaviour.cs",
+      "sha256": "2aeba04a1f1e2638b38a7582114778190f32feaea401a591411428ebff3a9dda",
+      "size": 5657
+    },
+    {
+      "path": "native/unity_bridge/CoordinateProjection.cs",
+      "sha256": "e93a13b9ce3de2f8d039be49198d146ddadfb0c2b0c6cb5d497bfbb7226b66c7",
+      "size": 13645
+    },
+    {
+      "path": "native/unity_bridge/DofusCoordinateBridge.csproj",
+      "sha256": "0f7699288f1ba501bd33d46103470f2eb656bbb764640ef472030b3a4b88669b",
+      "size": 3027
+    },
+    {
+      "path": "native/unity_bridge/IDofusMapAdapter.cs",
+      "sha256": "18dd4809dcc6f7cac0aedda4855aead375a827c91363a27b2ff2940dc957594d",
+      "size": 514
+    },
+    {
+      "path": "native/unity_bridge/Json.cs",
+      "sha256": "e572ccde85f8cb7acba21f54a1d9133066797c7870a98ddc30a42090899fd67b",
+      "size": 947
+    },
+    {
+      "path": "native/unity_bridge/LocalHttpServer.cs",
+      "sha256": "01e3832511dc33756f94083dd328cf3e9eea74164f4ca6371e0a27a29d8e7bd0",
+      "size": 4510
+    },
+    {
+      "path": "native/unity_bridge/Plugin.cs",
+      "sha256": "71bae1ccea1b3b260a6638a4a62cbab1f2683f2d901a6cf4d0136e23f9821975",
+      "size": 1089
+    },
+    {
+      "path": "native/unity_bridge/README.md",
+      "sha256": "e19067ed6e4e47f6dd44785756052394d11299c4c4b497174d54b6e2a260fd92",
+      "size": 2246
+    },
+    {
+      "path": "native/unity_bridge/README_UPSTREAM_PROVEN.md",
+      "sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e",
+      "size": 2943
+    },
+    {
+      "path": "native/unity_bridge/RuntimeSceneScanner.cs",
+      "sha256": "fdd0b25e4c8ac04b93e10e71dbbcb28041af088df568a886e7dc85c561667655",
+      "size": 79858
+    },
+    {
+      "path": "provenance/P44_native_bridge_source.json",
+      "sha256": "ab5ed2691de0de9c649a5deab600727dae50baaf93efc71421e36198431bd5a7",
+      "size": 3169
+    },
+    {
+      "path": "provenance/P66_COPIED_ASSET_MANIFEST.json",
+      "sha256": "e98dd407e501db122f6eac9f59998cd5948bcc14bc9dd96a7c133561e56211a8",
+      "size": 28650
+    },
+    {
+      "path": "provenance/P6_protocol_source_manifest.json",
+      "sha256": "08e4a5af7e7ac87602518d4ee0e6c93a831fd17f510f07a8f787b71e257fbd90",
+      "size": 1328
+    },
+    {
+      "path": "provenance/P7_historical_semantic_origin.json",
+      "sha256": "07de8e5483a16dd415df0c5a8b06d8b0e4c63f238df547e1c7b0f2eb53f32283",
+      "size": 958
+    },
+    {
+      "path": "provenance/REUSE_MANIFEST.json",
+      "sha256": "e6db0f58ecf188c78e9262ae0e45a551801759abfc3c6ec158f92c3391520a6b",
+      "size": 145344
+    },
+    {
+      "path": "provenance/p4_capture_origin.json",
+      "sha256": "87376b0fbfdedcb401e0bd34322c4aeb464f37cab2bb874971fdeae83c8d2857",
+      "size": 735
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "78db108d47f04793405ded2a5b32d410b08d2dddd5863c989851d9eb257aab26",
+      "size": 522
+    },
+    {
+      "path": "qualification/historical_3_7_10_10_synthetic.json",
+      "sha256": "f7d730db6ec987bedcb97d237d142a9c5afd30acce4f0394682b288a071978a8",
+      "size": 8727
+    },
+    {
+      "path": "reference/baselines/archives/ANKA_NEXT_DEFINITIVE_MASTER_SPECIFICATION.zip",
+      "sha256": "69a3c3260a8dc20aeae2fe70e036c8bfcbfa2c275f9f370e1383419b3ff5461d",
+      "size": 94288
+    },
+    {
+      "path": "reference/baselines/archives/ANKA_NEXT_P66_STARTING_BASELINE.zip",
+      "sha256": "9c0edf863de39be9479bbd25e39c22d089af088268f9cf0afcc87e37f7765297",
+      "size": 2845569
+    },
+    {
+      "path": "reference/baselines/archives/R5_198_REFERENCE.zip",
+      "sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+      "size": 5696741
+    },
+    {
+      "path": "reference/calibration/shared_ui_calibration_1280x649.yaml",
+      "sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
+      "size": 2525
+    },
+    {
+      "path": "reference/m0/REUSE_MANIFEST_M0.json",
+      "sha256": "e6db0f58ecf188c78e9262ae0e45a551801759abfc3c6ec158f92c3391520a6b",
+      "size": 145344
+    },
+    {
+      "path": "reference/m0/baseline_sources.json",
+      "sha256": "04442036a1b15e7d8c444eeab972856bd51fe8c834b43f63b07725538e51f236",
+      "size": 2741
+    },
+    {
+      "path": "reference/m0/evidence_catalog.json",
+      "sha256": "d213da4359363853ab2d7b8be121d8e9a0c372b379cddfd1b830b66d20ffbfd8",
+      "size": 40732
+    },
+    {
+      "path": "reference/m0/legacy_inventory.json",
+      "sha256": "63acbc63789fa67e33c60b57793b492abfaaf45b04b685ac5a807b8fa2b7ff54",
+      "size": 11582
+    },
+    {
+      "path": "reference/m0/legacy_r5_198_file_manifest.json",
+      "sha256": "40acc59de03b7a948b047a3a154c248a57c90b4d44f43840bf251d634481edb0",
+      "size": 289921
+    },
+    {
+      "path": "reference/m0/live_pending_boundaries.json",
+      "sha256": "937bacb58505678a9172c7e6a08a92c6a9853d499f30c2474dab38817b534fb0",
+      "size": 2349
+    },
+    {
+      "path": "reference/m0/master_specification_file_manifest.json",
+      "sha256": "1d2451bac7fa2682122ee93cbd516d76a8d282c3b07c6623c99dc7685dbd781b",
+      "size": 5824
+    },
+    {
+      "path": "reference/m0/regression_catalog.json",
+      "sha256": "9a499178b96a5145aa8ac00fa9b4648c1e3380d3b1d1704ac87ff8561929ec30",
+      "size": 7764
+    },
+    {
+      "path": "reference/m0/starting_p66_file_manifest.json",
+      "sha256": "ce93ef0ccc806e6a5b9f235a0322e78e0177ce83765414b009a8c09f355823d8",
+      "size": 106395
+    },
+    {
+      "path": "reference/m2/KERNEL_SCOPE.json",
+      "sha256": "6d259120e0caa807f061c9ec6c6ea1dc7a494efeefa6ab7fa3bb2525377a99b2",
+      "size": 5070
+    },
+    {
+      "path": "reference/m2/game_data_provenance.json",
+      "sha256": "1a7570e232eec0e836b82f047b2e3d0393ec68b844a6a35613d979ec824f6e99",
+      "size": 10173
+    },
+    {
+      "path": "reference/m2/kernel_reuse_provenance.json",
+      "sha256": "7b5b991488108b59226a235e98bb8a3ea087ab46fbd9560659dca4cd00ef55b3",
+      "size": 53340
+    },
+    {
+      "path": "reference/m2/legacy_kernel_oracle_manifest.json",
+      "sha256": "e905c70e4dbb54cdbc7b03f2ec5fac6d26a3a1ae5993d8d72f3d420ef7cd4641",
+      "size": 20762
+    },
+    {
+      "path": "reference/m3/client_reuse_provenance.json",
+      "sha256": "453b2256f3bb01ec78190b10ee742d29d097233df661c1a8b92f50ddb67396e2",
+      "size": 8306
+    },
+    {
+      "path": "reference/m5/historical_3_7_10_10_release.json",
+      "sha256": "8df732c54323c4075b4190b7dcaada354dd92e18eed4ad6e009ed9b36d07e91b",
+      "size": 832
+    },
+    {
+      "path": "reference/m5/historical_3_7_10_10_release_r2.json",
+      "sha256": "47f955c84a543613de39b6b8f4165798b589b1419f3bbff0648908d754ee686c",
+      "size": 1341
+    },
+    {
+      "path": "reference/m5/releases/adapter-dofus-3.7.10.10-historical-m5-r1/src/anka_protocol/adapters/dofus_3_7_10_10/adapter.py",
+      "sha256": "c6be612a5118826f93531723b27eccb0eed0bb8cf350be35aece52ff7e3160d5",
+      "size": 9535
+    },
+    {
+      "path": "reference/m5/releases/adapter-dofus-3.7.10.10-historical-m5-r1/src/anka_protocol/adapters/historical_semantic.py",
+      "sha256": "adc8083b40654098bf3429383f72d85b95de112fddb60a9f1b76b3ffe69b4c0d",
+      "size": 6325
+    },
+    {
+      "path": "reference/m5/releases/adapter-dofus-3.7.10.10-historical-m5-r1/src/anka_protocol/wire.py",
+      "sha256": "29489f7651829802dfd1a8ad6027f59d40febe1ffbd351f763770747151c3503",
+      "size": 4822
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/README.md",
+      "sha256": "119852ace1354acc45ee7d32fd7c4880ef010d7389f13fef36f81fec3a37b6d2",
+      "size": 17507
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/SPECIFICATION_MANIFEST.json",
+      "sha256": "f30a9a205a0cca4b6079f8d48fd19ce359b2297b98ddb20ace953f596a352c3c",
+      "size": 5593
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/A_HISTORICAL_FAILURES.md",
+      "sha256": "0400b3afebbf393828f49645b1ccb286bf7c2fbdee445c5c433103eb0dd36759",
+      "size": 7310
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/B_GLOSSARY.md",
+      "sha256": "75c6043dd7bf33f3548ac1b3eb36339df4c90d8715790d43943ef9a50cbf6d03",
+      "size": 4252
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/C_EXAMPLE_SCHEMAS.md",
+      "sha256": "81129403d92b9177f1dcb1c1edfca082b4e31403e69580776503453be331e421",
+      "size": 2281
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/D_REFERENCE_EVIDENCE.md",
+      "sha256": "e9d5d64f69da671ab8f92e19e61b244c6cf29f463abe76e11cee4f5e43949119",
+      "size": 3020
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/E_SCENARIO_TEST_CATALOG.md",
+      "sha256": "7ddfd84b40f24a429cf3204162c46ab05b07ddc53beb913394d9d4ceee6d311c",
+      "size": 5784
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/appendices/F_ENGINEERING_REFERENCES.md",
+      "sha256": "ea1e749bd0d5dc95b9085dac17c4f30750f203e52c20cb61319944fa39ac7add",
+      "size": 2145
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/01_PRODUCT_REQUIREMENTS.md",
+      "sha256": "67b87671e0219fb1131be63887b0be59911d4a5608c5112442fc176f5ef1740d",
+      "size": 15587
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/02_ARCHITECTURE_AND_BOUNDARIES.md",
+      "sha256": "1be28daa0d410875714492b049c5a7860160092a67d6ee3b41e5d49b76a7f400",
+      "size": 13145
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/03_SYSTEM_SPECIFICATIONS.md",
+      "sha256": "b7ede851b11a9ce88459ed849fc10c6d2351f4ff3a5937b98168020e5931667d",
+      "size": 6641
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/04_CONTRACTS_STATE_AND_RUNTIME.md",
+      "sha256": "9f1e273ee105f2ac98ffb795bdf2e517ac14e27620a8e3392c509a31d59d66ff",
+      "size": 11093
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/05_PROTOCOL_EVOLUTION.md",
+      "sha256": "d8bb71cdcb90da39ecb602fc59a06a72d9181a88489bcf071da2c0f3e2e68d58",
+      "size": 7593
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/06_RELIABILITY_RECOVERY_CONCURRENCY.md",
+      "sha256": "b385d75f526f5f878468385b3761df3c1980c26e6bcef59ee09ebd40f90872f9",
+      "size": 6608
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/07_DIAGNOSTICS_AND_FORENSICS.md",
+      "sha256": "6d55b77144648d6e36b3143a45ff1f427bdd87432b8c7698f702d4cd43b23396",
+      "size": 9208
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/08_CONFIGURATION_OPERATIONS_PACKAGING.md",
+      "sha256": "d6fe4c6dabff9c629908853e66d79fa5f6d9d032c5f885e9edcabc2f00b74d6a",
+      "size": 6794
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/09_TESTING_VERIFICATION_QUALITY_GATES.md",
+      "sha256": "3255d0a6edccb57de2c86ff655bc2936dfe83470fb0277ffe6714369959fe2b1",
+      "size": 7358
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/10_DEVELOPMENT_ROADMAP.md",
+      "sha256": "295d9a6ec55d964ed9e3190d8e6f79445653f76ce8a42b59685e390e8572f48f",
+      "size": 9047
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/11_REUSE_AND_MIGRATION.md",
+      "sha256": "673e983b4fb680fa590ad94d8baa708565dafd95333d252bbb2d85d1b5bb4fd1",
+      "size": 4992
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/12_TRACEABILITY_ADRS_RISKS.md",
+      "sha256": "39afb5a9b7007d4905d4daf2736752810f704b773c91aa623c30cae9b1d91467",
+      "size": 8596
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/13_DEFINITION_OF_DONE.md",
+      "sha256": "08cd6a989db9c9a7281a6d74c45cb4db5ea85f8743acb95be5b78e726fe1486c",
+      "size": 5514
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/01_CAPTURE.md",
+      "sha256": "32aa3b8bc0d3298490785d3654ffa0cd93d6cfecc6a508c17caa7fc631dce314",
+      "size": 2687
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/02_PROTOCOL.md",
+      "sha256": "923e555c3d99910193e4f353f84501317cdd05497474a2b6d269d8c4ad78f68e",
+      "size": 2778
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/03_CANONICAL.md",
+      "sha256": "808e3ebd489983996c8ad2e4304548b0fa9fb5e6002328a524b54933f5c7f9b7",
+      "size": 1855
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/04_LIVE_STATE.md",
+      "sha256": "86cccc1ac15e3abd1ca62108e84a12808ebc6d6865f8b1190a3980c894762d2c",
+      "size": 2192
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/05_GAME_KERNEL.md",
+      "sha256": "e9d9785406bf893bc96d1882ad452fc00dea90c0c59e3bd11e2ae2ccd56eb543",
+      "size": 1837
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/06_DECISION.md",
+      "sha256": "a7685fd06be4860123edd1ccfbc61ab91a4821a0ae12c9c923b105c559a21c19",
+      "size": 2333
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/07_EXECUTION.md",
+      "sha256": "dc17dda160646052c0b11803ae8f71939db37a18e4d842d93d38a9cc9a99ecc7",
+      "size": 4201
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/08_COORDINATION.md",
+      "sha256": "a2c798e3a4b574be92fffed6f5a1be8c1e2747360de5865da9ed6ef857f49473",
+      "size": 1835
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/09_WORKFLOW.md",
+      "sha256": "e3e93b38a954d34c3ceaeff5775f87aa892f50b6b465ada5baab747091caa4e1",
+      "size": 2054
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/10_CLIENT.md",
+      "sha256": "24045067d8878efbcdbbe6bfe51dd571a5853d5711e7a39cc225d82ddab0a27a",
+      "size": 2135
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/docs/systems/11_OBSERVABILITY.md",
+      "sha256": "90a6d523eff98a81518fab536a1bb80d81e0192089916d47facfc4cacbdc0979",
+      "size": 2587
+    },
+    {
+      "path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT/templates/IMPLEMENTATION_STATUS_TEMPLATE.md",
+      "sha256": "7a7199e6e0e1db4b093b5554c0f92b10d22d7184288870fc475cca2bcd1f05ae",
+      "size": 1881
+    },
+    {
+      "path": "reference/protocol/dofus_3_7_10_10_scenarios.json",
+      "sha256": "ae0d197bbb040412daa461b48e66c8869f97c68b7c5c6a6966a8c2e539fd45b4",
+      "size": 2263
+    },
+    {
+      "path": "reference/protocol/dofus_3_7_10_10_wire_catalog.json",
+      "sha256": "44b204bffa1888b2306714d89fd4693bb013720dd2c98f3ff7299b0f40651a92",
+      "size": 23883
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/actions.source.txt",
+      "sha256": "63738ad976456dcd74b60a4bd79e457920bd4d3429d2441293a27df6c1b42fd0",
+      "size": 17782
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/adapter.source.txt",
+      "sha256": "92e7a9d0b5dfadd252548e400c64196279fb7a428d5633f0365fa53f3697a392",
+      "size": 31983
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/fight.source.txt",
+      "sha256": "b7d81931425531df1f1be590717b000766fe014af6415ed32fbf1a7892998d98",
+      "size": 23919
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/lifecycle.source.txt",
+      "sha256": "c66eed97c5ea1d223f456760a4865dcded098d9c70903e3d22ed23cb87f84060",
+      "size": 7630
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/registry.source.txt",
+      "sha256": "82874466135ad5f7be82a5c8f092868655ab59fbd4c189b2fd4bf23182680786",
+      "size": 5740
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/resources.source.txt",
+      "sha256": "a82077527b26a7c3b751bf05f5c3763302e11cf1359a4fba135acdbaea121416",
+      "size": 9908
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/wire_catalog.source.txt",
+      "sha256": "44b204bffa1888b2306714d89fd4693bb013720dd2c98f3ff7299b0f40651a92",
+      "size": 23883
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/archived_source/world_identity.source.txt",
+      "sha256": "cfac4d7e451ea0b484d6d0d15c80742a81690aca7fdf58d93d283aba6104ad0a",
+      "size": 28083
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/handler_inventory.json",
+      "sha256": "cd603f9308d261e7aa4e95a27623f19b2f3de6732255b15018c73fa2b4230bc3",
+      "size": 9077
+    },
+    {
+      "path": "reference/protocol/historical_3_7_10_10/identity_recovery_manifest.json",
+      "sha256": "ca61dfe638f13387c400e480284adb9a66ecb0e22873514f58f03a865397b5d3",
+      "size": 847
+    },
+    {
+      "path": "reference/protocol/manifest.json",
+      "sha256": "5ab5e7485b646834f5d63b489891b8ee4a7a49a03a9147753c2c74c5da28f5f4",
+      "size": 459
+    },
+    {
+      "path": "reference/protocol/research_adapters/registry.json",
+      "sha256": "a14f4c459518f97b849168f97f25b922392437434f1f5b2c912ffc3713e7ded2",
+      "size": 85
+    },
+    {
+      "path": "requirements-p1.txt",
+      "sha256": "76157f5fda8bbfabfdca5132d6ff2fb8a73865236c77e6987865cc7381ad4854",
+      "size": 31
+    },
+    {
+      "path": "requirements-windows-capture.txt",
+      "sha256": "3469606da451d761706920bcbdafe5107cda2c3df633b9649b9b99e5b5cf33de",
+      "size": 117
+    },
+    {
+      "path": "setup.bat",
+      "sha256": "9c3fb02fbe4ed955c1750768d4c9ea77dc5b517b964aca29212b5ae840f7d0cb",
+      "size": 77
+    },
+    {
+      "path": "src/anka_app/__init__.py",
+      "sha256": "d0fe30353665c3ed75050564502b5cc1e52aa1597a7a461bfa47871c03afadfc",
+      "size": 63
+    },
+    {
+      "path": "src/anka_app/action_authority.py",
+      "sha256": "e9a189576fe0f1c49bf20d5ab3944ce507de47f9164e589ac525bfa5900b786b",
+      "size": 7027
+    },
+    {
+      "path": "src/anka_app/adapters/__init__.py",
+      "sha256": "a696b78e79745e9d7e0c151e71d641109c4e3a82bb9424ee1bc5d1fdc9ba4691",
+      "size": 76
+    },
+    {
+      "path": "src/anka_app/adapters/kernel_queries.py",
+      "sha256": "a0fb1600b90f061f195a41006a353f0ed068187c06d4b99b52521972b5931d6a",
+      "size": 4830
+    },
+    {
+      "path": "src/anka_app/adapters/protocol_canonical.py",
+      "sha256": "877a9bc1f482e584f2739c0d7e9357845527b48a1a0cd83eeedb23420603f264",
+      "size": 7571
+    },
+    {
+      "path": "src/anka_app/adapters/workflow_config.py",
+      "sha256": "e5dd0738315da3ea68b4b07a10ae65231cf48285ee85de9f3a019dcbf24f1aa5",
+      "size": 790
+    },
+    {
+      "path": "src/anka_app/admission_offline.py",
+      "sha256": "3a24db5270a6fd4a3cfeb2bb8dc7634f143509ffafd73c94b2d0af318e8b33f2",
+      "size": 2697
+    },
+    {
+      "path": "src/anka_app/architecture_guard.py",
+      "sha256": "e52c58a0020907a36b515cb6dd1e29a91e949437a1732d19f333d54736a527ab",
+      "size": 10529
+    },
+    {
+      "path": "src/anka_app/bootstrap/early_record.py",
+      "sha256": "06736f00cd6653e9d7595c5e5d62bfe91965bbb33bc06e9169a27e390ab39fd6",
+      "size": 859
+    },
+    {
+      "path": "src/anka_app/capture_bound_admission_offline.py",
+      "sha256": "2041f4b5b869af3a13a9ef22f09dec5e98031bc7bdf42d606c85fe81df0d48b9",
+      "size": 8409
+    },
+    {
+      "path": "src/anka_app/capture_bound_admission_smoke.py",
+      "sha256": "b32a5c2e2ad039559444d5722a01e4a5a81fcca69af0d5228a83cb186bea86b1",
+      "size": 3129
+    },
+    {
+      "path": "src/anka_app/capture_loss_smoke.py",
+      "sha256": "6c45ebb3e395f6c3bb221e00e942753d35c2568fbb0bdc5503f464e9037f7785",
+      "size": 1533
+    },
+    {
+      "path": "src/anka_app/cell_transition_evidence.py",
+      "sha256": "459386bde8fec1d8d9c483fc7c174655bc583d2b0dd71e5a16d7812c342ef063",
+      "size": 1853
+    },
+    {
+      "path": "src/anka_app/cli.py",
+      "sha256": "b41a7692ebe57ea2be5389c6f234617e1d088529acf5a6999bdebf35c46190bc",
+      "size": 55374
+    },
+    {
+      "path": "src/anka_app/composition.py",
+      "sha256": "453c841e8cd70c6c268d870561d6334bc68634443445b85cbe0d3b1a846ac3d6",
+      "size": 1838
+    },
+    {
+      "path": "src/anka_app/configuration.py",
+      "sha256": "28992fa265a10a7e4847da1c29cfbb09e9c685e640a910d6c8bcae4c11b9341d",
+      "size": 5187
+    },
+    {
+      "path": "src/anka_app/coordination_offline.py",
+      "sha256": "ded395209b2c4ec8c5ab0b306d43b4ffaf449e14774d92f59840f192460f1c60",
+      "size": 3319
+    },
+    {
+      "path": "src/anka_app/decision_offline.py",
+      "sha256": "106ce72d66a4e2465980faa83c6f85c0df3a1cfa7c4f5f926390b66501f7044c",
+      "size": 4728
+    },
+    {
+      "path": "src/anka_app/effect_reconciliation_offline.py",
+      "sha256": "d0e7437e5ec9eecbb48c97431e7c2d0f005e15377c79c617e8b235fe40d5d51b",
+      "size": 10748
+    },
+    {
+      "path": "src/anka_app/evidence_recording_smoke.py",
+      "sha256": "a61341bf510ea78fa46d9b86ae914b11cae9495048dc632c63d2ecc179a6d322",
+      "size": 5240
+    },
+    {
+      "path": "src/anka_app/execution_offline.py",
+      "sha256": "9ed8851200fb2873bd9a27000b3b955bcbc6aa451c169d7284cdff7e0c1529c4",
+      "size": 5784
+    },
+    {
+      "path": "src/anka_app/execution_simulation.py",
+      "sha256": "4b64630fbf877f3d040ad5e50b0e6e235f5ef8bb19f36d343da4153090186573",
+      "size": 6943
+    },
+    {
+      "path": "src/anka_app/fight_offline.py",
+      "sha256": "4f10315e70c136de75c9ceef18ffdf72b71a9f18ddcea685e999a942e5e4ce98",
+      "size": 5724
+    },
+    {
+      "path": "src/anka_app/historical_actor_continuity_offline.py",
+      "sha256": "0a1064ae04b0185a4ca817b7b6b06fa537303efd8ef2bbe2f49a3a8482f322e7",
+      "size": 6412
+    },
+    {
+      "path": "src/anka_app/historical_identity_offline.py",
+      "sha256": "6be79893d46fe91f5735cd074133a9bc5147db5631858509e85e7818af7a0756",
+      "size": 4138
+    },
+    {
+      "path": "src/anka_app/historical_pcapng_bridge.py",
+      "sha256": "7bdf257f799bd8d2a6a761ede124e0529a8be8ee86bd78dc47f887936075bc5c",
+      "size": 5532
+    },
+    {
+      "path": "src/anka_app/historical_pcapng_inventory.py",
+      "sha256": "6c6c998c8331c31f23b37048b01ea60ec50f8ab8168abaeb3450e171662cee77",
+      "size": 10168
+    },
+    {
+      "path": "src/anka_app/historical_pcapng_inventory_offline.py",
+      "sha256": "cc0a03ca59ff1297018d4dda694b27958c2e516850fbbcf4e463ca5df9189452",
+      "size": 2217
+    },
+    {
+      "path": "src/anka_app/historical_pcapng_offline.py",
+      "sha256": "cacbb5c074c262300ae86db9642d56e9ddf1054e2585677a613804edce1bd44d",
+      "size": 3492
+    },
+    {
+      "path": "src/anka_app/historical_stream_offline.py",
+      "sha256": "14adad5b4c54bdde1739f380eb64cbecdaa597b3daa06b49cea18f0d35882441",
+      "size": 2429
+    },
+    {
+      "path": "src/anka_app/historical_transport_bridge.py",
+      "sha256": "72b1379c5e17dfa3606fba6fe41933313a8e2584f345b7c331bc9acf096a0085",
+      "size": 9842
+    },
+    {
+      "path": "src/anka_app/historical_transport_offline.py",
+      "sha256": "d95776a8c33c66197995645dd69c22f3b480a10938b795484e4f8f2fbccd6624",
+      "size": 2655
+    },
+    {
+      "path": "src/anka_app/host_readiness.py",
+      "sha256": "e686e2db782577daa8cfeaa598a1315f36bf593258ed849eb7ed76d2b3f99c06",
+      "size": 10286
+    },
+    {
+      "path": "src/anka_app/ingress_readiness.py",
+      "sha256": "da09ca0dd0fe4177075ed08cbf723ecd792486c9358f7443dfd0a9f99df46689",
+      "size": 41775
+    },
+    {
+      "path": "src/anka_app/integrated_offline.py",
+      "sha256": "3ced428b3d4ea81377549045ee226f6a6f3951b8de1f038b959ac84ed2a95594",
+      "size": 13354
+    },
+    {
+      "path": "src/anka_app/ipv6_fragment_smoke.py",
+      "sha256": "d05f80ff42cd9773e3d460b2c594dbdb76210efd41d4016d79a39834e31de61c",
+      "size": 1930
+    },
+    {
+      "path": "src/anka_app/map_research_offline.py",
+      "sha256": "8c079a33fe53325fc9c0e832daa2ccde0acbf822a05613de49e1a4416057943f",
+      "size": 3213
+    },
+    {
+      "path": "src/anka_app/packet_provenance_smoke.py",
+      "sha256": "c0629db8676184f784480740f32ba5e56a10ee338211082c28076094ae5e9353",
+      "size": 3812
+    },
+    {
+      "path": "src/anka_app/pcapng_section_smoke.py",
+      "sha256": "c0cebf98b73542947fd36db22b491d042d28c5b2f4e701e6846d1e7487cf2a28",
+      "size": 1437
+    },
+    {
+      "path": "src/anka_app/protocol_evidence_compare.py",
+      "sha256": "7faea17ffaba0380350e7c0d483dcc2ac0c97a3517c47fd9c45c3736b42f6cb0",
+      "size": 17087
+    },
+    {
+      "path": "src/anka_app/protocol_offline.py",
+      "sha256": "744310a6e6ddc39d3a2b67ccf7a9da5a2f0b399ea7d3e541f68fd3009d0be8e9",
+      "size": 1718
+    },
+    {
+      "path": "src/anka_app/protocol_qualification.py",
+      "sha256": "c3a10b097f783f37e5887ebc1fdaada913809ad46c3c1b49f6fae481287890f1",
+      "size": 1866
+    },
+    {
+      "path": "src/anka_app/protocol_updates.py",
+      "sha256": "a3cf3250930b22da192dd25e34eba203857d299688483fba0144046cbaaf9ef9",
+      "size": 3037
+    },
+    {
+      "path": "src/anka_app/quality_offline.py",
+      "sha256": "c05d2228512f411ba84e4ffac33826840193f7d4c16aeb96d1bdf39f99f865c7",
+      "size": 4173
+    },
+    {
+      "path": "src/anka_app/readiness.py",
+      "sha256": "3ff62d4769017fbaa8884f5f00cd876720b3747df0b9f9524401eb8109f2d44c",
+      "size": 1667
+    },
+    {
+      "path": "src/anka_app/reconstruction_gaps_offline.py",
+      "sha256": "24acc95bbfc986a98b58a29085778faaf8193e6eec79c6c4c7eb3d5be2882dfa",
+      "size": 9143
+    },
+    {
+      "path": "src/anka_app/release_integrity.py",
+      "sha256": "88855b69d4bd7435ac8fb9fc4d37543ee3e966928aa35468467e2ea22fab701a",
+      "size": 6182
+    },
+    {
+      "path": "src/anka_app/run_authority.py",
+      "sha256": "f47ea49f616a082a9a44f7bf6d48b17c6b3958c1b92c966245850405ed069a86",
+      "size": 3089
+    },
+    {
+      "path": "src/anka_app/scoring_offline.py",
+      "sha256": "ea05f84382b1729373698029182e18a6be3852a31ba010bd31bc86f94a8d8663",
+      "size": 1912
+    },
+    {
+      "path": "src/anka_app/semantic_offline.py",
+      "sha256": "c02871976b8adf84267fe6ee61c4580e512668f945986c4a495b454e59ebe06f",
+      "size": 9730
+    },
+    {
+      "path": "src/anka_app/sequence_offline.py",
+      "sha256": "b7f4bb2e500ba9793c6112aff2cd56b433e1edb673e98a7afcc65d273d774ddf",
+      "size": 1624
+    },
+    {
+      "path": "src/anka_app/shadow_replay_offline.py",
+      "sha256": "5598c121577cc500bb0611987ae5b39efc0213fe3e301f2782f5aa2a59e35f2e",
+      "size": 3974
+    },
+    {
+      "path": "src/anka_app/source_link_audit.py",
+      "sha256": "78d7782cfd49707691735db817cea6d51ebac072fcaf117b2eeb6e7e10c7bfd3",
+      "size": 6129
+    },
+    {
+      "path": "src/anka_app/startup_acceptance.py",
+      "sha256": "43b4e7423a2d3e77d0c30edd459da7c0f2e1681bc1d043f543a6c3554f2e3ea3",
+      "size": 9726
+    },
+    {
+      "path": "src/anka_app/state_offline.py",
+      "sha256": "3a2d06b8488dc3dacaff4e2cb136b1f60fff6cf6f641849d50295f18c46b1466",
+      "size": 8462
+    },
+    {
+      "path": "src/anka_app/tactical_offline.py",
+      "sha256": "7ef925962f4c2616fee98de1583ee77b80070bc2b549cfe71579a07e15dc823f",
+      "size": 1587
+    },
+    {
+      "path": "src/anka_app/target_effect_research_offline.py",
+      "sha256": "d4ab674b9c1e7941583a30e380b4ffdee6d0adf9d3a383f8e4a16e401f137d2b",
+      "size": 13749
+    },
+    {
+      "path": "src/anka_app/verification_runner.py",
+      "sha256": "f06612eb1e8d49a1a974a5aa6ce39c4ab5c292341abc68ee10b2ffa843102e0d",
+      "size": 16829
+    },
+    {
+      "path": "src/anka_app/zero_input_integration.py",
+      "sha256": "18a0c2d3cc3538563490e3dc8e283a4fb9d732a39b5a0537931f5ed7ceea0147",
+      "size": 35599
+    },
+    {
+      "path": "src/anka_canonical/README.md",
+      "sha256": "59e277aefca490192c8638a5e8fd5eb32eaf0671fc4790ed961fc87983b5982a",
+      "size": 1646
+    },
+    {
+      "path": "src/anka_canonical/__init__.py",
+      "sha256": "3ea544cbe5ef0febc7a0068a3fb643662ddbf1337df6e43c49f42428a1114992",
+      "size": 62
+    },
+    {
+      "path": "src/anka_canonical/admission_review.py",
+      "sha256": "5fc6f09b3ff80e4de7e5e621f2ac95743b4ba14e439cbfec4ba38400b953f18e",
+      "size": 6736
+    },
+    {
+      "path": "src/anka_canonical/journal.py",
+      "sha256": "e6148433e4fc0786cc7f7c9f2c318f39f92159846afaa6a8104ae5bca2c31873",
+      "size": 32312
+    },
+    {
+      "path": "src/anka_canonical/qualification.py",
+      "sha256": "3e731c3ce55d4b3c0714472f36aa18a27c92b5be8dbb1fc344ea726347a716a0",
+      "size": 5339
+    },
+    {
+      "path": "src/anka_canonical/research_timeline.py",
+      "sha256": "4567f056c42b45c13270cc6c4c2ce25527551e78ce8e977c858acb1c963a67ec",
+      "size": 4258
+    },
+    {
+      "path": "src/anka_canonical/shadow_bridge.py",
+      "sha256": "d4fafb2161610941e9ab75e8870837086c7eac1718d866c750ca951ec6f97408",
+      "size": 5850
+    },
+    {
+      "path": "src/anka_canonical/staging.py",
+      "sha256": "94575fba9fd3d8b496bc64e792978adc462f0ecdf350de28bffe117a578717d5",
+      "size": 2547
+    },
+    {
+      "path": "src/anka_canonical/writer.py",
+      "sha256": "9b1063d13d0c4c97655008a3f731f44056d044906b650263e5d389b4df8364bc",
+      "size": 21442
+    },
+    {
+      "path": "src/anka_capture/README.md",
+      "sha256": "1ef12032e3bbd65ccec85059bf0eabec3bb09c3de2561a1c9d976342d2bfc563",
+      "size": 1861
+    },
+    {
+      "path": "src/anka_capture/__init__.py",
+      "sha256": "cec4e9fa3f40e1e72b17424c6e52251369f85967ec4c29dc544685a70385249e",
+      "size": 52
+    },
+    {
+      "path": "src/anka_capture/api.py",
+      "sha256": "b8656015d67bdcd7ea7c5fb02a83f08a5898ebf630c6461a1f7f7525eb7033cf",
+      "size": 5733
+    },
+    {
+      "path": "src/anka_capture/evidence_recording.py",
+      "sha256": "4294260879bf27a4c8b52112e15d19fded03960dc6e5d0fef10164625ac81613",
+      "size": 6507
+    },
+    {
+      "path": "src/anka_capture/live.py",
+      "sha256": "d9b193fcdbe576feeaf7d258c176bf1c64ff49a39f70f2f0df06180e2466dcd8",
+      "size": 6429
+    },
+    {
+      "path": "src/anka_capture/pcapng.py",
+      "sha256": "27e4ab7a61383e653d80cd7cd6acb53b4c94e34289521b09fad58abca419e3e7",
+      "size": 19757
+    },
+    {
+      "path": "src/anka_capture/replay.py",
+      "sha256": "7858b2a86da1b428b00d90588f7cd15ae6ef95ade3bb95d372159a771338b915",
+      "size": 719
+    },
+    {
+      "path": "src/anka_capture/stream.py",
+      "sha256": "abded50de093dc79673d42d2733b4d4cbe9fe3d41cdc9b00727a89baebe5301b",
+      "size": 9148
+    },
+    {
+      "path": "src/anka_capture/transport.py",
+      "sha256": "99be0ed17ce050750c725a80251b50542bb9a2fc40a0f69fcb8b0408285a7ae2",
+      "size": 7542
+    },
+    {
+      "path": "src/anka_capture/windows_backend.py",
+      "sha256": "2a423b016786bb59a0a5b9e8a9cba0d9053640e30ae8b1d868cf7c2fd3b0d4c2",
+      "size": 1627
+    },
+    {
+      "path": "src/anka_capture/windows_flows.py",
+      "sha256": "4447a2509b0ec544be8b103f20745f0e5c1fca2f1adc1dd48fb6335790d22b95",
+      "size": 4286
+    },
+    {
+      "path": "src/anka_capture/windows_live.py",
+      "sha256": "f6551c4c220ede51f4bb2367e2f6f16763a52588d02140af67ae7d6926ed9220",
+      "size": 22002
+    },
+    {
+      "path": "src/anka_capture/windows_scope.py",
+      "sha256": "a2c0b84e635a5771d9ba930421648172a844b166666016e9e0cb4664fe13dd60",
+      "size": 7026
+    },
+    {
+      "path": "src/anka_client/README.md",
+      "sha256": "0e0a0c168e5f520dce5587ab1d6671a2318a4ed3327b413bb672501a64a2b62f",
+      "size": 1244
+    },
+    {
+      "path": "src/anka_client/__init__.py",
+      "sha256": "212ac9f8a712f945e795f2aeffd0828108376ee4579e9f542b5d8a68fad98698",
+      "size": 60
+    },
+    {
+      "path": "src/anka_client/api.py",
+      "sha256": "877f0014bf1827fa9975467ef921bd951e33f09418e042c38239d63c37ad3139",
+      "size": 2519
+    },
+    {
+      "path": "src/anka_client/bridge_discovery.py",
+      "sha256": "4d094962741f609fc2363f3293316a645dabb33827d8c044196bbc7003679e81",
+      "size": 3933
+    },
+    {
+      "path": "src/anka_client/bridge_source.py",
+      "sha256": "6a6429f97a6928e6a016a3b4c9358109d27e3c6381badd8632bdd011d2f6421f",
+      "size": 2261
+    },
+    {
+      "path": "src/anka_client/calibration.py",
+      "sha256": "baee22f059923f059a3fea58ef69800d115283656ae11df386af15ffdbd438d1",
+      "size": 2675
+    },
+    {
+      "path": "src/anka_client/context.py",
+      "sha256": "427fc4df013b0b8f032df1aa941c97f5235c1ae89b8444a796cd4caf2dbeeea7",
+      "size": 6386
+    },
+    {
+      "path": "src/anka_client/discovery.py",
+      "sha256": "539ca6066d122eca5f508298981df63ea6b91985d7b7919c461f9c990b106850",
+      "size": 6156
+    },
+    {
+      "path": "src/anka_client/geometry.py",
+      "sha256": "aef66ce4088d0e047a9bb30edd3279d5319ac6bdf2f877d8d4e44df9cdd911c5",
+      "size": 953
+    },
+    {
+      "path": "src/anka_client/projection.py",
+      "sha256": "4e210c189c4f9d732840115ff39ba9d82a5ae6ac6021846e85605a19917a5631",
+      "size": 3197
+    },
+    {
+      "path": "src/anka_client/reference_assets.py",
+      "sha256": "fae76ff07474c4705803d3ca151d28552f0217bf720bc55c1e33d394f2812989",
+      "size": 1294
+    },
+    {
+      "path": "src/anka_client/unity_bridge.py",
+      "sha256": "6b87abfc3869bb4c4d5476c0c949a424cfbbdaad0023c93a4be879753e5dc9de",
+      "size": 11275
+    },
+    {
+      "path": "src/anka_client/win32_inventory.py",
+      "sha256": "e03b8e1de879c469481cc5089ddbced0007795da988893298915443e309654f5",
+      "size": 9198
+    },
+    {
+      "path": "src/anka_contracts/__init__.py",
+      "sha256": "5391800c0bfc625d3343c44b9648e51062b25c058187f50a311d49dbd803d365",
+      "size": 45
+    },
+    {
+      "path": "src/anka_contracts/action.py",
+      "sha256": "2ab5798d1c0e0936edbfc9a29cd889d2b883afca0fcb44cf4d5e9d81afbd14a7",
+      "size": 7114
+    },
+    {
+      "path": "src/anka_contracts/admission.py",
+      "sha256": "b1adcb4c0e9e48282681ddbf089419a1ad9c690525b142434e17a8427c69a643",
+      "size": 4557
+    },
+    {
+      "path": "src/anka_contracts/bridge.py",
+      "sha256": "fda389c42daa084f6d6418081fe270e42de7510b375db5b62862a7fe47bf2192",
+      "size": 1456
+    },
+    {
+      "path": "src/anka_contracts/canonical.py",
+      "sha256": "65dcfee3254e1235d9b8711c517e3dbd025ceb74e183de5b3de0768c82a113eb",
+      "size": 10894
+    },
+    {
+      "path": "src/anka_contracts/capture.py",
+      "sha256": "0b29b235b509bb965adc4d40a5c1a1e14ec68cbf7864d4b59b1cb1248c7789e1",
+      "size": 5683
+    },
+    {
+      "path": "src/anka_contracts/causal_evidence.py",
+      "sha256": "eb2b7acf1a6bb70b9b6c3440dfb1e7ad829ac9f7a62deece6954378330f83f0f",
+      "size": 1961
+    },
+    {
+      "path": "src/anka_contracts/client.py",
+      "sha256": "6b17dcc69c43be647aa654cfd3164faf9298cd6ccad9278541fd6070cd80d661",
+      "size": 10582
+    },
+    {
+      "path": "src/anka_contracts/coordination.py",
+      "sha256": "6064cc0f9485dd74ec4ec60ea8899c62982740df72fdfcf23397e8d545f3fa0e",
+      "size": 11311
+    },
+    {
+      "path": "src/anka_contracts/coordination_flow.py",
+      "sha256": "4f4284152711fda828683256c2e908e8afe188459ce3cddcd6d9782156b0edbc",
+      "size": 4063
+    },
+    {
+      "path": "src/anka_contracts/decision.py",
+      "sha256": "1540ceece9185d61871f76bd8d58f370c2152565ec42b898ba58115366d67cb1",
+      "size": 10174
+    },
+    {
+      "path": "src/anka_contracts/diagnostics.py",
+      "sha256": "07e52a032f6f5be92551eec1c0249996d6741828a977c02f359236a526af06f5",
+      "size": 6495
+    },
+    {
+      "path": "src/anka_contracts/effect_reconciliation.py",
+      "sha256": "13dbff5f74e6e816b5a56c30f232801733df491a0817a818f5b29fb075b31c61",
+      "size": 4440
+    },
+    {
+      "path": "src/anka_contracts/errors.py",
+      "sha256": "e6f44122cc0fa57d7cc392ada76327e707d703e77a78ddc1603195c8e2fc0b23",
+      "size": 2077
+    },
+    {
+      "path": "src/anka_contracts/evidence.py",
+      "sha256": "ad3a9ebccf87b1ef071468449c96525d7b7407686aad6e139e73bd1e921bb240",
+      "size": 1839
+    },
+    {
+      "path": "src/anka_contracts/execution.py",
+      "sha256": "b0cecb44068788ae3b754e918954ddcafc07be1dcf818eed62b6c7105e37e50d",
+      "size": 9230
+    },
+    {
+      "path": "src/anka_contracts/execution_flow.py",
+      "sha256": "71493b0ed71cd066fba80e39be649a3488044dbed60d93de56fd4da13803725d",
+      "size": 4070
+    },
+    {
+      "path": "src/anka_contracts/execution_simulation.py",
+      "sha256": "76445d1617e3c23861eebca22a256ae87362510253fe4f2d077dd11778ab4d61",
+      "size": 3305
+    },
+    {
+      "path": "src/anka_contracts/fight_audit.py",
+      "sha256": "830e0b4fd78e0fc287638c440c51ca67d25f6bf980925cd8013534d12535e434",
+      "size": 1796
+    },
+    {
+      "path": "src/anka_contracts/fight_semantic.py",
+      "sha256": "e28d720bc500334854456cb7552714c18b2e01cf24cd97746c2e16c0cb17b0d7",
+      "size": 3896
+    },
+    {
+      "path": "src/anka_contracts/health.py",
+      "sha256": "e8678b3923f6c3818da5df1be436bb1eebe10491ca7605cb1f05c46c35161678",
+      "size": 207
+    },
+    {
+      "path": "src/anka_contracts/historical_combat.py",
+      "sha256": "b3d5e27060cd51d73f773342dd938432f45e0cf3a10f75e751e69258b76e6e7d",
+      "size": 4448
+    },
+    {
+      "path": "src/anka_contracts/historical_identity.py",
+      "sha256": "d76a0b0bb3616d891639c125159e2e16e58fa1ec2e593f7b56592f948e2431e0",
+      "size": 4144
+    },
+    {
+      "path": "src/anka_contracts/historical_lifecycle.py",
+      "sha256": "75384318c678a24508a46cb5973d030c800c6fdc007ad13594acaecaff4fca98",
+      "size": 4648
+    },
+    {
+      "path": "src/anka_contracts/ids.py",
+      "sha256": "5b831c260a30196a5440410d83cafbc4f1a2e432606306b8bdd03c23f412767d",
+      "size": 2153
+    },
+    {
+      "path": "src/anka_contracts/map_research.py",
+      "sha256": "17de8298b883471a743b6da6a151234aa9ce90a3ac8130bac77821675d296f4e",
+      "size": 2566
+    },
+    {
+      "path": "src/anka_contracts/mechanics.py",
+      "sha256": "7299eaae50853f7d45df9f20c87001ee259c4fc074c75cbd4f3bd3b1ace539d9",
+      "size": 768
+    },
+    {
+      "path": "src/anka_contracts/ports/__init__.py",
+      "sha256": "df0c9eca0e35e8c86cb5c5684c3c9ee3b1963b71604764f2b6e89e6fe6423a7d",
+      "size": 84
+    },
+    {
+      "path": "src/anka_contracts/ports/action_executor.py",
+      "sha256": "a424a3e6f1d4b5ad6a214a26f0836b07ccaa305c00f49d6db9abf17467bbbe37",
+      "size": 190
+    },
+    {
+      "path": "src/anka_contracts/ports/candidate_batch_admission.py",
+      "sha256": "be969d0feb14e18e915a14754eb37ed2d2bb1f71c0d1a8d40ae4441ef0254e48",
+      "size": 258
+    },
+    {
+      "path": "src/anka_contracts/ports/canonical_admission.py",
+      "sha256": "db92caeeffb397d8a78595d6f745e6e1426f3ea246a433563b33d40261e1ba1b",
+      "size": 208
+    },
+    {
+      "path": "src/anka_contracts/ports/client_projection.py",
+      "sha256": "1fe94ff8bf058accdfa81fbb7218e12973ee635a34dc82aee3d9e72a451c2bac",
+      "size": 304
+    },
+    {
+      "path": "src/anka_contracts/ports/committed_event_reader.py",
+      "sha256": "bf3b1312c86032f9cd8e8d75e0d75a9b0e9b68aa973455d3d9c969445e1858cb",
+      "size": 237
+    },
+    {
+      "path": "src/anka_contracts/ports/control_commands.py",
+      "sha256": "88b4d08bb1f95c4d0967516310625d96b34c5552c84b65aa421490489e53c6a4",
+      "size": 179
+    },
+    {
+      "path": "src/anka_contracts/ports/decision_planner.py",
+      "sha256": "fffd157bffa80e4ea590b48bf5b77f32c6234682151f04003e5e33150c02af54",
+      "size": 189
+    },
+    {
+      "path": "src/anka_contracts/ports/diagnostics_sink.py",
+      "sha256": "27e1d4afcba812f055faf7a330259774e1d9b158f178429fead382f6bd573f87",
+      "size": 332
+    },
+    {
+      "path": "src/anka_contracts/ports/execution_runtime.py",
+      "sha256": "4db5d07455db10e944e56dd9936c92d83b580b4c890e047d3d06e2c00ea5d41d",
+      "size": 1121
+    },
+    {
+      "path": "src/anka_contracts/ports/kernel_queries.py",
+      "sha256": "d4c4fb891adb7b0336d470b2bd4c53889f2b39779b7a63890dd53f73509ff947",
+      "size": 515
+    },
+    {
+      "path": "src/anka_contracts/ports/live_state_projector.py",
+      "sha256": "599056b62d57b0ebc3e97da5cd6e8126eedcab5d18af0705c3ed18fed51fbe75",
+      "size": 379
+    },
+    {
+      "path": "src/anka_contracts/ports/party_coordinator.py",
+      "sha256": "390e791abb3b55fffbd4161e0abdda26c946ef8696ff17f94938b673b94c92e1",
+      "size": 385
+    },
+    {
+      "path": "src/anka_contracts/ports/state_projector.py",
+      "sha256": "5941d8837ab1aa1a445040ce079043a88ffd398135c68291e4ad4ac3d2deb0f5",
+      "size": 314
+    },
+    {
+      "path": "src/anka_contracts/ports/state_reader.py",
+      "sha256": "8d9b7985a00a597de06b2c16053d8858e3de16b4f4e90d02b152396c6a50e575",
+      "size": 190
+    },
+    {
+      "path": "src/anka_contracts/ports/wire_sink.py",
+      "sha256": "c0f1f0eaa0ccb5acfb061307c6ad041c0c2cac845f44e3eed682a8f51375fe5e",
+      "size": 157
+    },
+    {
+      "path": "src/anka_contracts/ports/workflow_runtime.py",
+      "sha256": "977fec1d908d4411318fab0c08a6cf924b0c88ff0098f5d67388c35e75c5ced0",
+      "size": 275
+    },
+    {
+      "path": "src/anka_contracts/protocol.py",
+      "sha256": "687ab9cebe132815cbf570f13df697e798af78ea0b0b595fe50ac2168ced50eb",
+      "size": 11224
+    },
+    {
+      "path": "src/anka_contracts/reconstruction_gaps.py",
+      "sha256": "1d9e4d38dd40ea3ce7fb3a3e6f26d23d8a95558786837aed073d42e4cf5b6b9c",
+      "size": 4176
+    },
+    {
+      "path": "src/anka_contracts/semantic.py",
+      "sha256": "83a725dc298e35a02a5b2446db5625c5ffcc8c17c0abfcc619bc46a563cfb7a2",
+      "size": 877
+    },
+    {
+      "path": "src/anka_contracts/sequence_research.py",
+      "sha256": "b88f9f849d8a4cbe934f03ff8476ff7b9c8aa24b6abd0d418ab2b022bef2d1f2",
+      "size": 4196
+    },
+    {
+      "path": "src/anka_contracts/shadow_replay.py",
+      "sha256": "43ac93bbc1f5cc823ceae04a413cef6065b5bc64eb42fbfa5a211e023553eec4",
+      "size": 4103
+    },
+    {
+      "path": "src/anka_contracts/state.py",
+      "sha256": "c78eef5cdbd959235a7b6525749f5370c320a5a8dedddc384eb8a6904e3785f3",
+      "size": 11024
+    },
+    {
+      "path": "src/anka_contracts/tactical_research.py",
+      "sha256": "41888ca31bd7a164fb9a83e1d083cae084a7609f890f0010c7c48049c8e7a660",
+      "size": 3673
+    },
+    {
+      "path": "src/anka_contracts/tactical_scoring.py",
+      "sha256": "e90c0c5301c470ceefcc69849cec49998993994c92c3e531a32910ad8bbaac32",
+      "size": 3984
+    },
+    {
+      "path": "src/anka_contracts/target_effect_research.py",
+      "sha256": "4e02c94a158c06bbae3c910c69e4a2da99b0a3ea71fccbe9dd6917949510156c",
+      "size": 4791
+    },
+    {
+      "path": "src/anka_contracts/verification.py",
+      "sha256": "b921880af7ba84910fd767fb9d584cb8b2397df203f8635bde6bf33ac1528b57",
+      "size": 9804
+    },
+    {
+      "path": "src/anka_contracts/versions.py",
+      "sha256": "13754b9dd34f7d66087db4fbe2b45fb5191b80f341c50bd2f800e01d703fc63a",
+      "size": 1880
+    },
+    {
+      "path": "src/anka_contracts/wire.py",
+      "sha256": "609e0ff3c468bacae42c65cadac6a5008548e8329c0f3c62fe351181f134cef5",
+      "size": 3173
+    },
+    {
+      "path": "src/anka_contracts/workflow.py",
+      "sha256": "e2d0d7bac35db5890f68cf9ad0194f7874620b1eebab04c3568073a916170c15",
+      "size": 11208
+    },
+    {
+      "path": "src/anka_contracts/workflow_flow.py",
+      "sha256": "2527172bc8e2982851ad24f6b0a6af136aa5f88426fb58d69519d806b1102333",
+      "size": 1560
+    },
+    {
+      "path": "src/anka_coordination/README.md",
+      "sha256": "263b9853a7f3a94007d7f62f519489769252000cb5a5a717b01cf1a97831539f",
+      "size": 737
+    },
+    {
+      "path": "src/anka_coordination/__init__.py",
+      "sha256": "cc827c516db8da2879218b5c2e73c1985d2ce29c35e8796a7486f1ec9397af82",
+      "size": 55
+    },
+    {
+      "path": "src/anka_coordination/coordinator.py",
+      "sha256": "25ba3e898663e43efa7b842ce44cc6943ca98316c892932b02e077ce6fa84382",
+      "size": 22639
+    },
+    {
+      "path": "src/anka_coordination/fight_audit.py",
+      "sha256": "3b217d62f527f4a4140d9465f9023de9426e0087383b6aa1b1fe40d2b9e54a3a",
+      "size": 5660
+    },
+    {
+      "path": "src/anka_coordination/party_lifecycle.py",
+      "sha256": "a04d8a73c5876166bb15f054be5a9c7d75cd018f3f25c97e469f1e4d40b856b1",
+      "size": 7188
+    },
+    {
+      "path": "src/anka_decision/README.md",
+      "sha256": "e4815718de830421a84de7857d54708ab12ec6f8d850a405160bae5652622d53",
+      "size": 1924
+    },
+    {
+      "path": "src/anka_decision/__init__.py",
+      "sha256": "d96f3ecacd21553f69f3df34c133cec4b4e3debe43476163eefa4113855354c4",
+      "size": 85
+    },
+    {
+      "path": "src/anka_decision/map_research.py",
+      "sha256": "ae3c25a3afab91da6c4059ff652850eca959e3c1929ad54f779fb80471bb46a0",
+      "size": 7931
+    },
+    {
+      "path": "src/anka_decision/planner.py",
+      "sha256": "31e6b1354944bded4cfdf4fda22635974b11f261635aa4739a132bb8b2aa4f2e",
+      "size": 11603
+    },
+    {
+      "path": "src/anka_decision/policies.py",
+      "sha256": "4e9700f62b6994957f462d74de04cafbff3a08b7879707360e1f5488d6b22485",
+      "size": 1618
+    },
+    {
+      "path": "src/anka_decision/probe.py",
+      "sha256": "f352946a881561cd79c419a154fcaf450eda105f137eba134c75fbd21ba8b96f",
+      "size": 7424
+    },
+    {
+      "path": "src/anka_decision/sequence_research.py",
+      "sha256": "ed80994ab35259d8a6a751e91167cdbd101b2b39d64487431194422ee9cfd635",
+      "size": 7979
+    },
+    {
+      "path": "src/anka_decision/tactical_research.py",
+      "sha256": "f0a2418e4132e0851c5fae99dbbd78797a6637c61a66203c9e38752953ef81e4",
+      "size": 8445
+    },
+    {
+      "path": "src/anka_decision/tactical_scoring.py",
+      "sha256": "38dfc9747ef3632d5cc2f560596efdc24621bf2d1d14718468b5f7deefed9c36",
+      "size": 5145
+    },
+    {
+      "path": "src/anka_execution/README.md",
+      "sha256": "790eb294aa542d4b9d60ea6700be65d95f59fecc8dace2800476bf10a045fef5",
+      "size": 710
+    },
+    {
+      "path": "src/anka_execution/__init__.py",
+      "sha256": "43f810ed323064cf7a060c03393bf504c1ac163d70310fae16f686ace92ba341",
+      "size": 242
+    },
+    {
+      "path": "src/anka_execution/arbiter.py",
+      "sha256": "c4a61c03f379e7dc9e515f3a1b898e0bc3d07eb446cea6f0fe2f6918d559e3c4",
+      "size": 1305
+    },
+    {
+      "path": "src/anka_execution/definitive_ledger.py",
+      "sha256": "8c814d090681bcb1d33a4fe36b8e71de1e83052dac752b6d038cd3ce4e62b198",
+      "size": 14979
+    },
+    {
+      "path": "src/anka_execution/drivers/__init__.py",
+      "sha256": "3bc24c808b14eeb1cfa7d022ebff904b964e509c305400c8a5e5a8b3344b316f",
+      "size": 70
+    },
+    {
+      "path": "src/anka_execution/drivers/fake_input.py",
+      "sha256": "540132df526513312ddc715e324488c06841d0e01aca7ec7e9f3b7a172ac15d7",
+      "size": 1857
+    },
+    {
+      "path": "src/anka_execution/drivers/windows_input.py",
+      "sha256": "9e80506e9d0b4739f5b797af66677bdd3b31aa9b4c432799f66c67c6f9ff67d4",
+      "size": 8223
+    },
+    {
+      "path": "src/anka_execution/fake_input.py",
+      "sha256": "d6522e7a545eaad499eee4e376b7f96e8d040bad81ecf9dd087ae4f77e12b7b6",
+      "size": 2513
+    },
+    {
+      "path": "src/anka_execution/ledger.py",
+      "sha256": "b547ac63203ac7c029fcda520285680030e2a5df0e6b18a711cc8520c7be8497",
+      "size": 15897
+    },
+    {
+      "path": "src/anka_execution/offline_dispatch.py",
+      "sha256": "0cac75a0c3b33ec2373aa6001a0d57e4628d00e7f4c2a7bfea654d6af314be57",
+      "size": 5536
+    },
+    {
+      "path": "src/anka_execution/outcomes.py",
+      "sha256": "c66b3c26d39d8e8df8803e8afe9bea65da7a23b0aa9605fae100cda9301f14e8",
+      "size": 4908
+    },
+    {
+      "path": "src/anka_execution/service.py",
+      "sha256": "e1777fd767e4a1e929da6df3ff9bc6a548a440b0ce8d732bec5b2912520f1efa",
+      "size": 23955
+    },
+    {
+      "path": "src/anka_execution/settlement.py",
+      "sha256": "4fb6906d5cd56d7b36c8c7294e049b061b8f7501d249b29dcc036e6b50a184a7",
+      "size": 1152
+    },
+    {
+      "path": "src/anka_game_kernel/__init__.py",
+      "sha256": "cbf939dc7ca930d13757af8d1355a56c4542c3c29fbb7cde62e25d0ab359bbf2",
+      "size": 651
+    },
+    {
+      "path": "src/anka_game_kernel/api/__init__.py",
+      "sha256": "20d341d41073bad502ec06cbaf3c8aed2ae0b4638e3091c1a6b232d40396d0b8",
+      "size": 136
+    },
+    {
+      "path": "src/anka_game_kernel/api/kernel.py",
+      "sha256": "e0cc4fcb5daae040458026a2307a28e3dfcf9c19ed2146f4750974723e9a7126",
+      "size": 12217
+    },
+    {
+      "path": "src/anka_game_kernel/config.py",
+      "sha256": "72c3801b4c420d9fdf3eb94e25cc958f0284a1ab65a6332f5b1aba2caec8a9c0",
+      "size": 4258
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/__init__.py",
+      "sha256": "605e108af368c296c88bea1b0178515c3b14e31065e025003d8d78d282a00c09",
+      "size": 192
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/effect_stacks.py",
+      "sha256": "abd9e40baf040b9ba05be30b8875708e5e17d31d3583edce1df6d70e20f1d291",
+      "size": 1413
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/fight.py",
+      "sha256": "bf3fedd3e6deed46ea720484164d3630863367b6bd19cc2dd12b66dc282b837a",
+      "size": 12054
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/per_mp_modifiers.py",
+      "sha256": "acaa863de247cff81bb16eb4c6d04fcd60334ce459c4ac0e45253a47f8f500cb",
+      "size": 2377
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/projection.py",
+      "sha256": "dc762625152a09c9262ad0f814679364209b2c244efb5a9f5685cdbb70e26eef",
+      "size": 4373
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/spell_sequences.py",
+      "sha256": "d50c5a14446391ca775359351928c982520f968d9c06e1261a5afee555df2749",
+      "size": 1506
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/turn_history.py",
+      "sha256": "df524ae6e8ead079ea67ce3cac2ecb00c8904d8c33b04c1c90e25a728d283430",
+      "size": 4432
+    },
+    {
+      "path": "src/anka_game_kernel/contexts/world.py",
+      "sha256": "7bfdd39abb86b178e5fb776e41de032ff0c93fa98c57c1a4de1ea5738b033087",
+      "size": 1554
+    },
+    {
+      "path": "src/anka_game_kernel/data/spell_mechanics/verified_spells.json",
+      "sha256": "f799f71000c9a8d7afb0918e40dfda09a2747d2e9e2a5954f9bce3c146467b0d",
+      "size": 177614
+    },
+    {
+      "path": "src/anka_game_kernel/domain/__init__.py",
+      "sha256": "b8ce1c53478c652bd67ad3251966407e71d1d2be436ba2e1e7172378f77dfa37",
+      "size": 1105
+    },
+    {
+      "path": "src/anka_game_kernel/domain/actor_taxonomy.py",
+      "sha256": "3a8ac4699f09e4f97374593a8aca742deb18a0659459f1044a5d9b70236955a7",
+      "size": 348
+    },
+    {
+      "path": "src/anka_game_kernel/domain/actors.py",
+      "sha256": "a2437220d1ff120781c4fb34b16ec2923daf81c26078ee0c57729356edcb1594",
+      "size": 10883
+    },
+    {
+      "path": "src/anka_game_kernel/domain/certainty.py",
+      "sha256": "5bc0cc46414fbee39bd7a63d061d3e65808f0222981c514398e67099e2613bf4",
+      "size": 257
+    },
+    {
+      "path": "src/anka_game_kernel/domain/characteristics.py",
+      "sha256": "b3346d556b131d2ba35026919e6c6450897e7d025347c4d562e35116d9a48498",
+      "size": 2490
+    },
+    {
+      "path": "src/anka_game_kernel/domain/classes.py",
+      "sha256": "1d79eb56380bee87ff6f34352cf6ee4d6607028400edc807c050fc8f9744a1a8",
+      "size": 2075
+    },
+    {
+      "path": "src/anka_game_kernel/domain/combat_stats.py",
+      "sha256": "6b3a5ebf212addc9a7be996c19578fd06e0ac638be80b60f85dd3ec4651c82ee",
+      "size": 4408
+    },
+    {
+      "path": "src/anka_game_kernel/domain/companions.py",
+      "sha256": "9dcbe8270c720bbfd722feddc53c7d1ab62c992f31bc23870e7e1bd23347f2b7",
+      "size": 2063
+    },
+    {
+      "path": "src/anka_game_kernel/domain/effect_conditions.py",
+      "sha256": "0b6cef2d035b6e7ff2762e5d7dfbbd5c0f360d2af9455fd3bd4a5eafc52a70bd",
+      "size": 10256
+    },
+    {
+      "path": "src/anka_game_kernel/domain/effects.py",
+      "sha256": "a491e10aad20a343ddb5e98a9f9b7aac0b9b80aed24baea29625f4e9ee4da6d6",
+      "size": 636
+    },
+    {
+      "path": "src/anka_game_kernel/domain/ids.py",
+      "sha256": "b1eab3c0e534efae3a1ce55fb7f8589badc58c27b81fa6840f5123ef97db2798",
+      "size": 3500
+    },
+    {
+      "path": "src/anka_game_kernel/domain/live_requirements.py",
+      "sha256": "3f9774862e9f04493837d8e8d7c019ef2f31a59801fc2ab88bcf54ecab67cc8d",
+      "size": 1943
+    },
+    {
+      "path": "src/anka_game_kernel/domain/map_locations.py",
+      "sha256": "24fbb98ba9a48e8cb01b3b3ce2dde693d399ffae6e7a2d25f1bc338e91c40617",
+      "size": 1908
+    },
+    {
+      "path": "src/anka_game_kernel/domain/maps.py",
+      "sha256": "af3405d571aeca3d740a83a4241a8bc2ef10b1ae73b1753d32422f1391b0a42d",
+      "size": 860
+    },
+    {
+      "path": "src/anka_game_kernel/domain/mechanics.py",
+      "sha256": "73b13eb08ffb5c620d21e9684312a2d0b0147e3eee593a918a5636e2a78bc8fa",
+      "size": 1255
+    },
+    {
+      "path": "src/anka_game_kernel/domain/monster_taxonomy.py",
+      "sha256": "4122129470f37b404af7df60ae18c499df35c05903735278eb2de16fbf9dda1f",
+      "size": 1017
+    },
+    {
+      "path": "src/anka_game_kernel/domain/monsters.py",
+      "sha256": "a9462f57604e64f762abca3e48359c09882c9a4ce57d53d21ac8412befaf3d4c",
+      "size": 1350
+    },
+    {
+      "path": "src/anka_game_kernel/domain/provenance.py",
+      "sha256": "fceb6a047700e3313dc07d3423d53afa4e511b9e43cf9cced0afe04eb6f3453b",
+      "size": 1134
+    },
+    {
+      "path": "src/anka_game_kernel/domain/spell_effects.py",
+      "sha256": "30ac6b08b11361081a34739674abb852ecf25ec7f6244e1c5fe098cd0a8c7057",
+      "size": 30571
+    },
+    {
+      "path": "src/anka_game_kernel/domain/spell_modifiers.py",
+      "sha256": "f6789e484d63afa8758ce43d9cdaa6c66cdb790389610a91876ad0ca40e8397a",
+      "size": 2899
+    },
+    {
+      "path": "src/anka_game_kernel/domain/spell_variants.py",
+      "sha256": "9ea5a226f123e7f1fee33e64b3d21fc82d546d7049e4d9bc9321bc3971e15ce3",
+      "size": 660
+    },
+    {
+      "path": "src/anka_game_kernel/domain/spells.py",
+      "sha256": "9154ad849a546cef887a339cc8ec319cecbee707d851f3a5651d0974220d9bce",
+      "size": 2796
+    },
+    {
+      "path": "src/anka_game_kernel/domain/state_criteria.py",
+      "sha256": "c97dfff27c9833b9eb48863fe3f86b991f3609ac6145a7ccb81fdd03dcecb0d5",
+      "size": 1706
+    },
+    {
+      "path": "src/anka_game_kernel/domain/states.py",
+      "sha256": "184d4b32cb6ad4f206fed44d3f53c45e75df2f71323041bb7384785df7f668fe",
+      "size": 545
+    },
+    {
+      "path": "src/anka_game_kernel/domain/statuses.py",
+      "sha256": "e6a7c717eef2249890856bb6e6a35b3c961be42318124f54318609a95ec8c798",
+      "size": 2696
+    },
+    {
+      "path": "src/anka_game_kernel/domain/values.py",
+      "sha256": "aac1c8ea5ccdfa6318f8b9386e11451aa0a2912ed4b91ab2e7bb8b75b0b3d562",
+      "size": 3455
+    },
+    {
+      "path": "src/anka_game_kernel/domain/world.py",
+      "sha256": "282f0296f092e92e065153071aa6b5967c317bc158a48cb04e696c20165a2078",
+      "size": 1427
+    },
+    {
+      "path": "src/anka_game_kernel/errors.py",
+      "sha256": "d90059cdc06588ce432a7322d9780ee0d4c99b00005ea69d10f5b814f8917783",
+      "size": 587
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/__init__.py",
+      "sha256": "c1018c3810f5bc66f4add77ef78fc6b432ecc2d510bd10ba54f520671f1c1638",
+      "size": 491
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/effect_source_audit.py",
+      "sha256": "29fd8d2478eefd52e517788f9bf1726b480b7a4d969c36058c977c86b5894059",
+      "size": 8999
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/effect_source_discovery.py",
+      "sha256": "b6ab0f376d659a84c89b038472e9062e692a504ab2ea86358103f4daa64cb150",
+      "size": 12010
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/mapuse.py",
+      "sha256": "62dd66fc590cb4ee8be63f1809ff5c4503d47cc9654490d557cef0d5ef8a0c28",
+      "size": 5857
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/pack.py",
+      "sha256": "716d7314a654b9dd88c3f7f5f6aa8d19eadd321c32f372e42bd71c49b46b57f8",
+      "size": 13974
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/spell_mechanics.py",
+      "sha256": "9bdc6e6ea23854318a94f2b57e61fb996c2e5dc019649e50d6f473967d6b568c",
+      "size": 31137
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/spell_overlay.py",
+      "sha256": "8e9dbf87e395fe88b0e8bceec0ae55a4a4f8d0faf2e9405b6dc0f578760e8d1a",
+      "size": 9124
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/spell_readiness.py",
+      "sha256": "d2f7c71783c3c04d9cee646ef4667a0944a1f563605feaa51225893d07aea5cf",
+      "size": 10621
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_catalog.py",
+      "sha256": "99bb7ebc8662264c9878ab2ed2c57321bc15471b068d481c1083ec004f038f4d",
+      "size": 6205
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_classes.py",
+      "sha256": "406da4b27d0b1fdce84173d99a1306027612807270f1cd38f9d55a775b440bb6",
+      "size": 3181
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_companions.py",
+      "sha256": "2c3e9381a27e7833eddabbf62ed910a48ea21ac15c163486d1d6d93744fe8ab0",
+      "size": 6597
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_map_locations.py",
+      "sha256": "44597521babc5912b52a6b69f40606b3bbf851e052ec49b04de10e02a794a8f1",
+      "size": 5850
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_monster_taxonomy.py",
+      "sha256": "162ef45cec05980ef6740bbb413e77c5b51c08e83f3ea64eee4a9b0f2a3f5a29",
+      "size": 3812
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_monsters.py",
+      "sha256": "532fe961a7252095230414f747253ecabcd683ac0dff0e1b83083506a3ca3215",
+      "size": 2510
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_spells.py",
+      "sha256": "ccf8f11dda9312a015d2e65070a28228e1b904b4b91c912c0448b6ba2f9b28c1",
+      "size": 8154
+    },
+    {
+      "path": "src/anka_game_kernel/knowledge/static_world.py",
+      "sha256": "cb4a2d123eea350be39a0b384abc58eec2836c8a9bf8a137a3bfb0cbc8d1c875",
+      "size": 4789
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/__init__.py",
+      "sha256": "f8df78a6d66b1ea3ad5e39f3aebc938d846efd21901ba4eda8460a1b71e1543f",
+      "size": 44
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/actor_queries/__init__.py",
+      "sha256": "29162f63545c7facf044969560dde6b1eb825a12b8e44c1fe4aef82889e2cf08",
+      "size": 112
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/actor_queries/service.py",
+      "sha256": "6386dff8126115b83205389f8e6cb5c6bacca0b28f21691c87360c48a105e6b8",
+      "size": 7672
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/aoe/__init__.py",
+      "sha256": "43675b2bac62466eefff10419a7c9b648b200a9cf17e88290b39625e4f743ae4",
+      "size": 301
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/aoe/model.py",
+      "sha256": "530f8de42f76683906596713e8aacb67805b0ea8d66f79f2666dd864c42efe78",
+      "size": 867
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/aoe/service.py",
+      "sha256": "dbc50d979a4030934f19b067387da64e90c8cd679747471081ab955effcf3349",
+      "size": 11328
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/casting/__init__.py",
+      "sha256": "a82c5d6c9f539bbfb3c38cbb8981e223ee528d022654ddaf1362c4cf2752ffbc",
+      "size": 475
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/casting/model.py",
+      "sha256": "2b7735ac52b6032569cf438c001d2bb71e737df5080000e2f9ca694204cf7a0e",
+      "size": 2563
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/casting/service.py",
+      "sha256": "f8c3c898b109ad3e6735954a527e21cbd0f881255bba2f79a0efca2365db9118",
+      "size": 5955
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/collision/__init__.py",
+      "sha256": "a5a67bcb1f5a06a04a3c4788bb7cc0f6a8ea5b119c0a8f19c24f3d885cd1eb0a",
+      "size": 188
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/collision/service.py",
+      "sha256": "ab276efd0555d6319505136199808bdb5972dea07cf27eca63540492e30bd29e",
+      "size": 3118
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/displacement/__init__.py",
+      "sha256": "4d86fcd55a0faf8713e9b84e69c5a9e19f89580d898ba184b03c0c53d28606e1",
+      "size": 396
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/displacement/model.py",
+      "sha256": "79fe9ed2b7086dfeb78dc014c6bc2b4a54502a3d5ef2b79d024a9677cd52ad3f",
+      "size": 271
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/displacement/service.py",
+      "sha256": "18f145e9d90dcd2a253297ca350f9cfe410b09660fd0d3024a725b36d29228c7",
+      "size": 11853
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/effect_conditions/__init__.py",
+      "sha256": "7854ed9ec61f1868cfb10bb15542af690f22b452ea16bdedf7b2ce9a7c31d5e5",
+      "size": 126
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/effect_conditions/service.py",
+      "sha256": "58a70a841d081478965a43ca5afedfe11c685fcd49402b335138233b10112f50",
+      "size": 11655
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/effect_resolution/__init__.py",
+      "sha256": "0d79ec78f736545cce7130d56bb48882d6ca35e7d0b8cbf390873243d330885c",
+      "size": 128
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/effect_resolution/service.py",
+      "sha256": "82c3184386bd080ca6d0549a6b83e264f5a32b0d0ce1f092db979b9696716128",
+      "size": 93651
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight/__init__.py",
+      "sha256": "05bc4c4e2fb770265aca4d4ff55b47963d521164c8b66bd185f7df002e6cf280",
+      "size": 612
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight/compiler.py",
+      "sha256": "2151b80240dfe7029b259cdfcf51c48ff3bcbed35efd0cc002d407eb21178d14",
+      "size": 3326
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight/model.py",
+      "sha256": "68c85082771a26a4b808d2d18acdd7d2b74dd7be61f1e1a19cc29d216b89849a",
+      "size": 1337
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight/projection.py",
+      "sha256": "1a2911dd4f19c5a1c21dfbff9d886a6e13b61d875bddd68898ee419ca281175a",
+      "size": 10799
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight/service.py",
+      "sha256": "d749e740e07d0a2b6c7bcfad47694e5adaf8ef2171a08aac30778f54d9a65869",
+      "size": 11575
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/__init__.py",
+      "sha256": "8b83acb3b5bdf056f8e2d998e717eaf003fe6e1806e394322d0da482e383bd46",
+      "size": 259
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/service.py",
+      "sha256": "7a66497358f1d268cbf200762e0b6a932f98bee7fcfdbcb9f32372f62cab84eb",
+      "size": 16199
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/fight_queries/spell_decisions.py",
+      "sha256": "649c747c43134eb204820defb254e435d410716e528cc2af9f49d529cabb251c",
+      "size": 8041
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/geometry/__init__.py",
+      "sha256": "eb7f2341a3ad605d5119638ff6871a6d99be60144957d9e2005690c0f0bf0498",
+      "size": 873
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/geometry/directions.py",
+      "sha256": "e15c5771d73564d6d0fe5e6dbd4d2868f9b24865c6b91886ec1b1c3a68fa5c1d",
+      "size": 236
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/geometry/grid.py",
+      "sha256": "7fd60f4e9bbaad9f356dbab475f37aa6f60dbde83a477d62e18dfc0b2d1c9e84",
+      "size": 5848
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/geometry/service.py",
+      "sha256": "0e3aa88925fa513bf6f835325e56fe28f577a00e92fb8518f0a3d4a1724c0b9b",
+      "size": 1974
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/los/__init__.py",
+      "sha256": "bbcb45eeaa31a33d818ac53840468fa3614051e3af242637cdfbdbbe69eeed61",
+      "size": 230
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/los/service.py",
+      "sha256": "88764f31efd062613b98752e7addfa04e681dc507a133747bab206a4fabcebe8",
+      "size": 4936
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/movement/__init__.py",
+      "sha256": "45c2267ae22f52496e607fae0a55e4c7cdc40b860834a9fe67d469e6b419edf9",
+      "size": 441
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/movement/model.py",
+      "sha256": "0def9da3b0e15c22e42a5339a9f4e21dd2999e28a70f80226557bc5b29aef044",
+      "size": 822
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/movement/projection.py",
+      "sha256": "9b2555f4c189aec47f9069ce209c70b2704ed9efe894ff17fe3526b05fb2a0c5",
+      "size": 9500
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/movement/service.py",
+      "sha256": "d0cf2e5add75afdf35cd347ed6b6f1a1e6b1540f28879f0cb4e0b9fdf645eff5",
+      "size": 8924
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/projection/__init__.py",
+      "sha256": "7d1b5efb27e20eca50f37453557e22db23dccd9e531fac1ca66dad0fda9a1719",
+      "size": 119
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/projection/service.py",
+      "sha256": "9bc5e09a92cba4993c9ff192d565ba104112d7d00d74f949e1b67959c8f67ab1",
+      "size": 24978
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/range/__init__.py",
+      "sha256": "04fd0ecc91b49453c9636f222204a129d896c504568c118f65ffbc364a9931b8",
+      "size": 332
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/range/model.py",
+      "sha256": "a2fb33a1648a552f02a0eb9b3a66d118c3a6df96ceead92732072f37761e790c",
+      "size": 735
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/range/service.py",
+      "sha256": "f1116a3711f2abdcd506a464d0fb0f65bf42862257dbf9f46544904dae334001",
+      "size": 3859
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/registry.py",
+      "sha256": "9763bcf82324af245629f2579d94006ed40d80446c9d0a9bec1b584e6b32bb9d",
+      "size": 1226
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/relocation/__init__.py",
+      "sha256": "3bdb582f3a10a72d07d74341affd1da6adbe3adf0cdd5ed987fd6d8b92f3a634",
+      "size": 417
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/relocation/model.py",
+      "sha256": "5d778d44e5bf2fd2b1825811609c2646c0be49e72acb9744512635264128b281",
+      "size": 497
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/relocation/service.py",
+      "sha256": "749b5360163e82291b17a40e42b24b2218986c534126c71a44dbe2ad317a6c46",
+      "size": 5916
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/states/__init__.py",
+      "sha256": "5bbb466316ee677094cc1ff1b4652961db89769e7c78ee5a4e60a2e2efd41e8d",
+      "size": 281
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/states/model.py",
+      "sha256": "2b581cecc8fb622676d89a483b434c566e8fa38ff04cd4aca8c17b38d3d68243",
+      "size": 804
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/states/service.py",
+      "sha256": "63da39fbdaa23eb5b6c0041173c1e896fc1600ad65e3b465837168b21a0ba13e",
+      "size": 1379
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/status_queries/__init__.py",
+      "sha256": "60a3d9c931f22e93bb1b5fd1c681386b3ab52fa21c3642108f9380855afcae60",
+      "size": 115
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/status_queries/service.py",
+      "sha256": "495e5466bea1065aefcbc73ebd8c40a0d844db53cbddcf94aab6149fdc10b9f8",
+      "size": 9313
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/targeting/__init__.py",
+      "sha256": "02967b391e43d7f4378d185bc081c42ae72afea4039c0ba324c9ac8ac35a504c",
+      "size": 679
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/targeting/model.py",
+      "sha256": "dfe413b85bda1ddb42e39522e07e9663e53023ff6057aca8034c40cf6355baf9",
+      "size": 3399
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/targeting/service.py",
+      "sha256": "21487f07436771cf53f7f469e2a4d1cbed085b7301fce8f6b1e2d2aa27e3fa38",
+      "size": 12819
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/world/__init__.py",
+      "sha256": "bdb91f925497d33f4855c3e8178191dfd0f07f1dd9566bba97f7f6fa8d712210",
+      "size": 190
+    },
+    {
+      "path": "src/anka_game_kernel/mechanics/world/service.py",
+      "sha256": "5dea73ad6ac44523b3a4969e3b013ec9628ab47904d67ea77513c2956d2d3cc5",
+      "size": 3285
+    },
+    {
+      "path": "src/anka_game_kernel/normalization/__init__.py",
+      "sha256": "7bc77eda383e5ab39558d6165c094e98b932dedfbfd0048e676b888e20c4dc4c",
+      "size": 72
+    },
+    {
+      "path": "src/anka_game_kernel/normalization/state_criteria.py",
+      "sha256": "cb98f5cab22d063382042e2952e8ecd038bf404d1921b456fe222d91439edfbf",
+      "size": 3812
+    },
+    {
+      "path": "src/anka_game_kernel/registries/__init__.py",
+      "sha256": "a0df254d911d30b9f5b7565a0c89065b52857a0aad1fb055b8cf466f8b8ea287",
+      "size": 148
+    },
+    {
+      "path": "src/anka_game_kernel/registries/base.py",
+      "sha256": "1cf36bb5bb3bb7c85a4e7def60c4881b25212fc8db52bcc94bb9945904386c14",
+      "size": 1772
+    },
+    {
+      "path": "src/anka_game_kernel/results/__init__.py",
+      "sha256": "9f875ce8c8279d4ba982e5888e784c44703d4827b8d3d22f8969911a04a9416c",
+      "size": 53
+    },
+    {
+      "path": "src/anka_game_kernel/results/action_projection.py",
+      "sha256": "2d2fb5992909d40e0edcca22b759b34e6184b6b48b32555eb67f26f53bc43932",
+      "size": 801
+    },
+    {
+      "path": "src/anka_game_kernel/results/actor_queries.py",
+      "sha256": "f6ac62eaab288c5c12199a7e988daeae4f405aecc8b4d243d9fb00e4f2e222c0",
+      "size": 6108
+    },
+    {
+      "path": "src/anka_game_kernel/results/aoe.py",
+      "sha256": "fb1bc3c487d8cc1d465458478a996510cbaa8b3eb1cb475f3a954eff00aa9f4a",
+      "size": 604
+    },
+    {
+      "path": "src/anka_game_kernel/results/base.py",
+      "sha256": "5f690ee86050b0e7d092553dddd0e4a3a7394b2433ebaf4cdded064eea08ac7e",
+      "size": 485
+    },
+    {
+      "path": "src/anka_game_kernel/results/casting.py",
+      "sha256": "78976ef5e0395b3313385b264c7db536205bb53217e6dfcad86769d65374f216",
+      "size": 1648
+    },
+    {
+      "path": "src/anka_game_kernel/results/collision.py",
+      "sha256": "544b9941ced34ddb1915eaeb41fe002232646f5f7a39b6467eca46585167ef21",
+      "size": 1618
+    },
+    {
+      "path": "src/anka_game_kernel/results/displacement.py",
+      "sha256": "b280f5451f31bf987f4d9476a0b80d1794bb58900ea124a2d251b72485c794a0",
+      "size": 2995
+    },
+    {
+      "path": "src/anka_game_kernel/results/effect_conditions.py",
+      "sha256": "fd455372e028756868c09ff1f4691cb8ecd579bdde2d1650d870eacf9c82f048",
+      "size": 243
+    },
+    {
+      "path": "src/anka_game_kernel/results/effect_resolution.py",
+      "sha256": "bb9818b349fa78db03a8c64391299dbf70d1980e903f47c7a86026083f2c696d",
+      "size": 1165
+    },
+    {
+      "path": "src/anka_game_kernel/results/fight.py",
+      "sha256": "3cb03aa01a4de75c59017d18e23417e8dfac5e00bed14c666154084738d27690",
+      "size": 3832
+    },
+    {
+      "path": "src/anka_game_kernel/results/fight_queries.py",
+      "sha256": "227915b907bcd53b5f55ac8622e4823e7bc668d7271c72e85efba8f3716bdaf6",
+      "size": 1424
+    },
+    {
+      "path": "src/anka_game_kernel/results/los.py",
+      "sha256": "41b77be9a82db4bfdd83662ad8bf623cdd77923993561f65fe459e04a6d4ee56",
+      "size": 1797
+    },
+    {
+      "path": "src/anka_game_kernel/results/movement.py",
+      "sha256": "2d9cd672e7f9b4d23f534c9b802637e03dd10eeaa7cf7fac71ec81a6d5fd02af",
+      "size": 2601
+    },
+    {
+      "path": "src/anka_game_kernel/results/movement_projection.py",
+      "sha256": "6cb3bd115434eb769011a162c8567535055cd5e8da9ea502080c393b42e40538",
+      "size": 503
+    },
+    {
+      "path": "src/anka_game_kernel/results/range.py",
+      "sha256": "debdb0fad6fac1f4bf459204f983d76c47904f93809a2a6c50ed88142415531d",
+      "size": 1005
+    },
+    {
+      "path": "src/anka_game_kernel/results/relocation.py",
+      "sha256": "eac0dfad7b9b83fab80693f15e5482c1cbfc00907fa2eebce5ad7732ec3fa9e4",
+      "size": 2529
+    },
+    {
+      "path": "src/anka_game_kernel/results/spell_readiness.py",
+      "sha256": "e983acf5ddbaa4aa3e16874497d49c5a29b4a4bcfdf57a72041c8d3abf8a2dba",
+      "size": 1773
+    },
+    {
+      "path": "src/anka_game_kernel/results/states.py",
+      "sha256": "0f1839867674519dc52b7cf8f47aa0aa3cfc03ffdf88a603b11e8590f09925a6",
+      "size": 1362
+    },
+    {
+      "path": "src/anka_game_kernel/results/status_queries.py",
+      "sha256": "f215b48ce9dec60135735fd77209470f14e66d6cacc168d3468519f9d9985b62",
+      "size": 5146
+    },
+    {
+      "path": "src/anka_game_kernel/results/targeting.py",
+      "sha256": "05fa74275830307472dfc47779c379092d450b3196ffe0bee985c53450cc781d",
+      "size": 2919
+    },
+    {
+      "path": "src/anka_live_state/README.md",
+      "sha256": "45c98b778640d62d43bcfb113cd2155168d80b730c6f2da3614852b0a51e89ee",
+      "size": 946
+    },
+    {
+      "path": "src/anka_live_state/__init__.py",
+      "sha256": "de65b8d4f2f0da4f0dd4836b3549d3b3734866589a9a27b79881e25de02b5379",
+      "size": 55
+    },
+    {
+      "path": "src/anka_live_state/fight_trace.py",
+      "sha256": "b910048d512f7a2fa081c6e7f0024551cf32df0011a00082728d78a541753185",
+      "size": 3093
+    },
+    {
+      "path": "src/anka_live_state/projector.py",
+      "sha256": "25ee29b938b700b066a49ca80620a944670262c54dba54a695666c9d494d2a22",
+      "size": 14472
+    },
+    {
+      "path": "src/anka_live_state/quality.py",
+      "sha256": "bb4c69ef24373e1d5721e1eba4d8e1ec1755de85b7329191a515c678de736bdc",
+      "size": 3816
+    },
+    {
+      "path": "src/anka_live_state/reducer.py",
+      "sha256": "05fedea3bce75ea8d05074b11427d7361b2aae02c01a6dcfb2cdb4ea0f8cc705",
+      "size": 4348
+    },
+    {
+      "path": "src/anka_observability/__init__.py",
+      "sha256": "883d30bf99b5b1760c6fc837c8bbdd55115393febbb1c82c52a7ee09a83c3f21",
+      "size": 44
+    },
+    {
+      "path": "src/anka_observability/api.py",
+      "sha256": "345750b3dad2504eef9b0d3343cb26fbd590a6c93919c9da5e13a02e5ec9f435",
+      "size": 30262
+    },
+    {
+      "path": "src/anka_observability/bundle.py",
+      "sha256": "74dc019d4deb10069404ead7de2fef4b9fd3f95852361c0b4038c643d8949408",
+      "size": 77357
+    },
+    {
+      "path": "src/anka_observability/forensics.py",
+      "sha256": "89d28ec367e8238f69893096992343d4412b455b7922e9fac86e23493c553762",
+      "size": 45567
+    },
+    {
+      "path": "src/anka_observability/recovery.py",
+      "sha256": "7d80c535d0177f9d9814378dbd8a1b409b416213c180ada2ca9be58de1db8775",
+      "size": 8410
+    },
+    {
+      "path": "src/anka_observability/redaction.py",
+      "sha256": "fe3e112d055d37b92517b7325acbdc26396e1ae9220c2775eb22165df84b080e",
+      "size": 5688
+    },
+    {
+      "path": "src/anka_protocol/README.md",
+      "sha256": "a16b697562cd849bb3bc228a7c686913dcb7223441ba030d97e94802750a9da5",
+      "size": 2159
+    },
+    {
+      "path": "src/anka_protocol/__init__.py",
+      "sha256": "822d88802e803020797fde7ec08859320873b95b2659e4135503d4d20b6882ec",
+      "size": 54
+    },
+    {
+      "path": "src/anka_protocol/adapters/__init__.py",
+      "sha256": "4f73b909d935188892b8a06a4654c295559a3e681fb096c8e6866956cf0af5cb",
+      "size": 96
+    },
+    {
+      "path": "src/anka_protocol/adapters/declarative.py",
+      "sha256": "848d100d27b941de0ba2b97482241c3d346289347985c76623054ea5ef70d13f",
+      "size": 12702
+    },
+    {
+      "path": "src/anka_protocol/adapters/dofus_3_7_10_10/__init__.py",
+      "sha256": "e9c48d1f806a84a5911903f56c60cd5ce9e038b9cd842171dbee5f1aa3c1cffc",
+      "size": 127
+    },
+    {
+      "path": "src/anka_protocol/adapters/dofus_3_7_10_10/adapter.py",
+      "sha256": "41e1673a4e6e0c3debed21a4004b517e8277127cc02581b7078894c3b37d31d2",
+      "size": 11317
+    },
+    {
+      "path": "src/anka_protocol/adapters/dofus_3_7_10_10/manifest.py",
+      "sha256": "47282ad7a78870e6f2e304d30d36769678a065c3648fcdd3542694ca25b85d9e",
+      "size": 844
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical.py",
+      "sha256": "44ba3ffb12f0cfb6bb75759169d20b341726b5a6640ea621644c1ade3019564b",
+      "size": 2724
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical_combat.py",
+      "sha256": "e48c85a7140c392326b2c753b5bd164210b301227971ceaf934809174356da12",
+      "size": 4863
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical_identity.py",
+      "sha256": "4c77fe839874223ecdc60f67c3fd0cffc120a1e0a7312e7d0aee7f27748dbafe",
+      "size": 5259
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical_lifecycle.py",
+      "sha256": "a16dfa0b4bf92fb714cbdb06ffa0556519de234880934f84baa57c353cd0838e",
+      "size": 3510
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical_semantic.py",
+      "sha256": "adc8083b40654098bf3429383f72d85b95de112fddb60a9f1b76b3ffe69b4c0d",
+      "size": 6325
+    },
+    {
+      "path": "src/anka_protocol/api.py",
+      "sha256": "d26ea9fc74ef32f8a0e71b3cd6d2562bf02e90cc55e914557d6a9e0cc10bb01c",
+      "size": 11212
+    },
+    {
+      "path": "src/anka_protocol/capability_matrix.py",
+      "sha256": "d8991017cbe676c207f405e752a6314919185137fe5f9ae6bfdf338fec09b7fc",
+      "size": 9012
+    },
+    {
+      "path": "src/anka_protocol/certification/__init__.py",
+      "sha256": "043aeebd5fccbd7ad25225a50a30028b011714e9e51e2b345446ecd29b809bfd",
+      "size": 123
+    },
+    {
+      "path": "src/anka_protocol/certification/impact.py",
+      "sha256": "2467a46f85ce9d56b4bdc2b09e3688248edc044aa4fdf54578faa817f7ef7073",
+      "size": 2053
+    },
+    {
+      "path": "src/anka_protocol/evidence_intake.py",
+      "sha256": "3adffb5fcfbdc214d7c62e340a4f5eb3f8b623c28a76dd18a101692dd6c29d59",
+      "size": 19600
+    },
+    {
+      "path": "src/anka_protocol/historical_actor_continuity.py",
+      "sha256": "ffd5e39556324de98f81a35bb85fdc46f0aaa3bebeccce125740f1d677fdc6a8",
+      "size": 7827
+    },
+    {
+      "path": "src/anka_protocol/historical_combat_audit.py",
+      "sha256": "96ec78d71a3d4fe10f165d0d91d7f59b634cdd860c266002d88e9fd6125a329c",
+      "size": 2808
+    },
+    {
+      "path": "src/anka_protocol/historical_combined_audit.py",
+      "sha256": "06594f0578ff5201657a404c32b973a0492a1794d82219caa4242ea3446600d3",
+      "size": 4364
+    },
+    {
+      "path": "src/anka_protocol/historical_identity_lineage.py",
+      "sha256": "b3707266b18eaf4fc8b847fce5b7adc98ec7b0ed0d8eabeae50d0fe40f2735d6",
+      "size": 3345
+    },
+    {
+      "path": "src/anka_protocol/historical_lineage.py",
+      "sha256": "d24aaf783402031d22d20a6d86f00233baf58713738630b40ab5a21ab7f6c544",
+      "size": 3715
+    },
+    {
+      "path": "src/anka_protocol/historical_stream_replay.py",
+      "sha256": "fe98db01b78f9f51fe07e9e880aed2ce4de2e3c65c37feb9433e20bb3f8e1af5",
+      "size": 8697
+    },
+    {
+      "path": "src/anka_protocol/historical_timeline.py",
+      "sha256": "7de6c1a6374e1cbcad1efe5c2cde28fd8b71954f88a1155991e67c7dff9d4aeb",
+      "size": 3276
+    },
+    {
+      "path": "src/anka_protocol/qualification.py",
+      "sha256": "b094e56cc612705780f60bf5f8f040caafc1a804382c97aa29d5b56b078cafcf",
+      "size": 10906
+    },
+    {
+      "path": "src/anka_protocol/registry/__init__.py",
+      "sha256": "f291bb96b53368bd20786b28e438fa5d39f24a8e04c4ebdd30f2586740d22a65",
+      "size": 215
+    },
+    {
+      "path": "src/anka_protocol/registry/registry.py",
+      "sha256": "9b41749de166887b18b5ad7d08966091da6090e5d5f5f4c3feb5c97ea90580ef",
+      "size": 5080
+    },
+    {
+      "path": "src/anka_protocol/sdk/__init__.py",
+      "sha256": "f1a84ddf4a0dd83fddad9e4ccf241d54177f22b3fb8909b7d2d3b5dbce6326c4",
+      "size": 379
+    },
+    {
+      "path": "src/anka_protocol/sdk/opaque.py",
+      "sha256": "12fc7b8b1427d9eeb3bbe9791df7e0541d61e172e1915cda070e8e66cd82f6c9",
+      "size": 1895
+    },
+    {
+      "path": "src/anka_protocol/sdk/runtime.py",
+      "sha256": "509a8868910dab14b23ed56f654faf490e9ebb62794ffded2fbde2f9cb6bed63",
+      "size": 14495
+    },
+    {
+      "path": "src/anka_protocol/upgrade/__init__.py",
+      "sha256": "db8e3c15b32c1bc0f01fb08c6f3722ab43d47bf3a6383ab187026d46f4782255",
+      "size": 119
+    },
+    {
+      "path": "src/anka_protocol/upgrade/intake.py",
+      "sha256": "4c4da3f3be57b438395446e006c745a71fa810afbb111d6d378fb4005ed9bea7",
+      "size": 1193
+    },
+    {
+      "path": "src/anka_protocol/wire.py",
+      "sha256": "fedced3dde71c71040925f48d5f88f138995833881be4862a2347f5fbb1d8357",
+      "size": 4960
+    },
+    {
+      "path": "src/anka_workflow/README.md",
+      "sha256": "7dd1ba149878636d251061d928f6f346a64171ca29d2d0d241db7c73905c688a",
+      "size": 943
+    },
+    {
+      "path": "src/anka_workflow/__init__.py",
+      "sha256": "7b1326819f36f3cb9adc18207a720ef8ef0692c97b8f5133b1ca8961e18fbf2c",
+      "size": 49
+    },
+    {
+      "path": "src/anka_workflow/compiler.py",
+      "sha256": "adb4f6bc7c8becbd02161fb1df50d9d7ca4ef873e53889193ccc99af85ee0b8b",
+      "size": 2907
+    },
+    {
+      "path": "src/anka_workflow/engine.py",
+      "sha256": "04f44d226cf226a4ec873f51ee1a66600e01df02daef76596a964b390117466b",
+      "size": 24068
+    },
+    {
+      "path": "src/anka_workflow/integration.py",
+      "sha256": "0ceb6aac89a8a6d8609303c3a456005dd42bdc1f83e99d6ed1f1a621549110d5",
+      "size": 7129
+    },
+    {
+      "path": "src/anka_workflow/mission_research.py",
+      "sha256": "d78a5adbd30ec5c6fae671222ef627d5982f1333241d451477c3eb9a87586ed1",
+      "size": 2613
+    },
+    {
+      "path": "start.bat",
+      "sha256": "d5528ec5ea0f84f77b3fb33e7815326412db9d93dd417f80e9cfba0a9178b014",
+      "size": 77
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "99bb23aa81d3d514132c397cbda8d7a92e2e6ec37c0b5913cb16f9e85494ad85",
+      "size": 29
+    },
+    {
+      "path": "tests/capture_fixtures.py",
+      "sha256": "5f80b1106d366910c109f7f469a8d388eb8ae64ddcaa1830d70f2bcf8c2ebd23",
+      "size": 1742
+    },
+    {
+      "path": "tests/lab/__init__.py",
+      "sha256": "99678a6b0f8eff50cf890e07d93cc3fbb65c16b2686c94e18bf747aa4566c88c",
+      "size": 57
+    },
+    {
+      "path": "tests/lab/fakes.py",
+      "sha256": "80fb114c3d3b5ca818defec7e5acca325d7290891e8344c9d161b76ec951480f",
+      "size": 3155
+    },
+    {
+      "path": "tests/lab/zero_input_stack.py",
+      "sha256": "d4d63cc11971c99c9962e7460ef926db5b6364b3477d85cbb2273825b910619a",
+      "size": 2821
+    },
+    {
+      "path": "tests/test_bootstrap.py",
+      "sha256": "e04f27ed0075be92a0e7b68777d3ae03ce33343469ed0dd0cece15b334c17730",
+      "size": 825
+    },
+    {
+      "path": "tests/test_capture_architecture.py",
+      "sha256": "baf93d99172b2633812cd0b7c2b57e08211fe58e6c876eebd99bd4ae17368b8f",
+      "size": 1167
+    },
+    {
+      "path": "tests/test_capture_cli.py",
+      "sha256": "0e2e0a9861fc4ca3bbb756de155447341e7a55c0c3478c1766660e107dca043c",
+      "size": 1342
+    },
+    {
+      "path": "tests/test_capture_integration.py",
+      "sha256": "ac90b5046d32da56bdcf6131691ce02b2dcdb9ed7bd46871a2ec493449cd0380",
+      "size": 4017
+    },
+    {
+      "path": "tests/test_capture_live.py",
+      "sha256": "2fc872bada13d911dfbbe6f8bea908b50c6a7ddfc6d8696ae4d80cc0da9ab037",
+      "size": 11140
+    },
+    {
+      "path": "tests/test_capture_parser.py",
+      "sha256": "18334647f0f26eba69928766b1a02c945cf32c5e80c45eba54df019b51c5f3c7",
+      "size": 5322
+    },
+    {
+      "path": "tests/test_capture_transport.py",
+      "sha256": "5c66554c0ef33703750858ee67f99345fbbaf669851e2b44db4d8f2b120bc67d",
+      "size": 4472
+    },
+    {
+      "path": "tests/test_client_discovery.py",
+      "sha256": "b9dcb12746f958df40c4c0618b22158b454c56654322c18d46c56ad377c91843",
+      "size": 6115
+    },
+    {
+      "path": "tests/test_client_geometry.py",
+      "sha256": "e5e3b70e73c4f906c771d09432162c7d50d635151706fb59c414885a71a25f7e",
+      "size": 1166
+    },
+    {
+      "path": "tests/test_client_integration.py",
+      "sha256": "fab63b40aedceceae664044813b86d0240179c185b0255695fe72584ed5e2f8e",
+      "size": 3128
+    },
+    {
+      "path": "tests/test_configuration.py",
+      "sha256": "4086311ab23527c9bf82f012bae87fbca7423dcc4f519104009815b8afd720cb",
+      "size": 2994
+    },
+    {
+      "path": "tests/test_diagnostics.py",
+      "sha256": "7544c6d96f47cb5c9271bb461d07bdc6b7d33b93f4953cb5fccdd78c844979ea",
+      "size": 8206
+    },
+    {
+      "path": "tests/test_foundation.py",
+      "sha256": "379969120372d7f251f65daea5257aaa8fb8073f3097176bf743c48afee84e42",
+      "size": 3458
+    },
+    {
+      "path": "tests/test_invariants.py",
+      "sha256": "c66f8ae78dd569c986b573806e7345e80714d1ab504da989fe7c78e73e872440",
+      "size": 2705
+    },
+    {
+      "path": "tests/test_kernel_reuse.py",
+      "sha256": "5f6e8c390a3b526bb548132ab0d2183d7c1b4403d1148a01f2cf315a74b15ca1",
+      "size": 1483
+    },
+    {
+      "path": "tests/test_m0_baseline.py",
+      "sha256": "73837ef58ee03a059930c2d12c6e28c345bb9e72a447efe907b4c40b40f3aca2",
+      "size": 4711
+    },
+    {
+      "path": "tests/test_m11_execution.py",
+      "sha256": "500a368170d9520603755a7d7dee1957698026b3842aa4a090f7028ae98420dc",
+      "size": 24431
+    },
+    {
+      "path": "tests/test_m11_fault_matrix.py",
+      "sha256": "767502b56bc75aacae3641060fe45e211bcc0e9deb6ddde8bf1f4192a694628b",
+      "size": 5641
+    },
+    {
+      "path": "tests/test_m11_mutation_safety.py",
+      "sha256": "94703b034f38273ec4b5f3ce354cb319430d1731badc576cd51cfd74cfad9f2f",
+      "size": 2434
+    },
+    {
+      "path": "tests/test_m12_002_systemic_hardening.py",
+      "sha256": "50cec022e6bd350f2b83d27ed71eeacfc157af10e9d4e291b803c442b7e86184",
+      "size": 25211
+    },
+    {
+      "path": "tests/test_m12_003_live_readiness_hardening.py",
+      "sha256": "66fd18b491e000ea21d5106cfff9a0e63e5a1a783975b764f7bc392476466ce9",
+      "size": 27542
+    },
+    {
+      "path": "tests/test_m12_004_evidence_integrity_hardening.py",
+      "sha256": "486058e65f33c394cec2c3838310fcf09bc245af5e7388e3a25a8505b9b4aecf",
+      "size": 16068
+    },
+    {
+      "path": "tests/test_m12_005_release_truth_and_observer_isolation.py",
+      "sha256": "38ccc00c18166a6819dd723edc66647a984d4f07ad8089561ba87a3e5ab86e21",
+      "size": 26134
+    },
+    {
+      "path": "tests/test_m12_006_diagnostic_flight_recorder.py",
+      "sha256": "141d2d7a0e21ac6d4fafe1ac581de5db70be13f57e78b18b2c2ce63aaedb8266",
+      "size": 108904
+    },
+    {
+      "path": "tests/test_m12_006_phase_authority_and_full_chain.py",
+      "sha256": "a39ba7a0a84912196fe87691187d44af0b1def85d53daec7272a8703730b0a2e",
+      "size": 16619
+    },
+    {
+      "path": "tests/test_m12_composition_packaging.py",
+      "sha256": "a720c8c9fb6feb32971f4ca1f6795e8c9771c8dabfed60eb00a51b21bddfd451",
+      "size": 7647
+    },
+    {
+      "path": "tests/test_m1_architecture_gate.py",
+      "sha256": "4db7c8f92e810418f1eabbab94d0b11e73c06a5f455b0900b0b6b89b710bfb87",
+      "size": 3809
+    },
+    {
+      "path": "tests/test_m1_contracts_lab.py",
+      "sha256": "7ca0cc7da778d27e726763237a74cf14a78e49c8723c34efa8d54ad732e98136",
+      "size": 11146
+    },
+    {
+      "path": "tests/test_m2_kernel_adapter.py",
+      "sha256": "0782f544bcbc58f17b93a4eb8b28c13c38f4659c88e00fd85c18b38763dc602e",
+      "size": 4053
+    },
+    {
+      "path": "tests/test_m3_client_foundation.py",
+      "sha256": "1391186a3f8bfd1d8203854a3e7e3332a00d7342cd2a09613282bb05f3579d4f",
+      "size": 9817
+    },
+    {
+      "path": "tests/test_m4_wire_envelopes.py",
+      "sha256": "f7ab07477b52bf01a381520a1013f6602ef670381f6daae0fc5eb54db0e65421",
+      "size": 6570
+    },
+    {
+      "path": "tests/test_m5_protocol_sdk.py",
+      "sha256": "09ce2a17a1d4567c95af6433d6ee95ed35b9b4fe34708560678445c3d2024b86",
+      "size": 9762
+    },
+    {
+      "path": "tests/test_m6_m7_canonical_state.py",
+      "sha256": "bbf42d8599d48e813ca57466e8de5d689ea4dc43f22ae427a6d1ac71c13eb28d",
+      "size": 13586
+    },
+    {
+      "path": "tests/test_m6_m7_protocol_canonical_integration.py",
+      "sha256": "2ae0df1762978087c8c565268a30cd02a52f8d9851b7875dd2b85bf87436575a",
+      "size": 11178
+    },
+    {
+      "path": "tests/test_m8_decision_planner.py",
+      "sha256": "b7db71de47e5fc8c7853a52348f1efef9cbc0212a55ef14e8fa296b3540e20df",
+      "size": 6844
+    },
+    {
+      "path": "tests/test_m9_m10_generated.py",
+      "sha256": "c9cad111506b4256e6c199ad2ec17d8f8c3e276703a3048ca14bf1afc151cb12",
+      "size": 6361
+    },
+    {
+      "path": "tests/test_m9_m10_q6.py",
+      "sha256": "c884b63b4919eebd5cd259ae8f37bf075dd220ea436bbe8c39ab7d01f97286c6",
+      "size": 24245
+    },
+    {
+      "path": "tests/test_p10_protocol_qualification.py",
+      "sha256": "3df48d4630b8279b8fdf41ac14c6d235d769f87d4ab3e74d45ce0d463759f357",
+      "size": 12573
+    },
+    {
+      "path": "tests/test_p11_fight_evidence.py",
+      "sha256": "556f67afb29092599cc3b9875e33dc2921c9d5bb082f8d454d0a1935324c53d3",
+      "size": 21059
+    },
+    {
+      "path": "tests/test_p12_decision_probe.py",
+      "sha256": "f2ad843ed5a43a74cbb26a12b5560d6c953df42b9349f35fd0381ef6010221a1",
+      "size": 13425
+    },
+    {
+      "path": "tests/test_p13_map_research.py",
+      "sha256": "a047994758803198a0b47298ab2fc95b25958b81529646587521ba846b288a92",
+      "size": 11538
+    },
+    {
+      "path": "tests/test_p14_tactical_research.py",
+      "sha256": "4293cdc0d23f42b4557904e6188eaffb2256fe2035a1727128bd582991c5405b",
+      "size": 9753
+    },
+    {
+      "path": "tests/test_p15_tactical_scoring.py",
+      "sha256": "10f39a47c53d0fd291ec70969234ae350bbc54cfc07e19361e5e69a0e93bc9f9",
+      "size": 11908
+    },
+    {
+      "path": "tests/test_p16_sequence_research.py",
+      "sha256": "a657aa69c808ef58a56dea787ea6ab511c373e942e022f1d03ae40b1764a9c27",
+      "size": 15025
+    },
+    {
+      "path": "tests/test_p17_coordination_workflow.py",
+      "sha256": "4c480e843681f3301010ab10f25d1ad7d22bb845002703e7ffc9c930421c9793",
+      "size": 12312
+    },
+    {
+      "path": "tests/test_p18_execution_settlement.py",
+      "sha256": "e9d7db89cb40266c50399cc63a8566a8b8afc63fb023f1bf0c4aeef7729aee1d",
+      "size": 21824
+    },
+    {
+      "path": "tests/test_p19_offline_fake_driver.py",
+      "sha256": "fe65f677a283ac6e6acb93a225d4d64b313f3404f94a0881572e037190ae6679",
+      "size": 20213
+    },
+    {
+      "path": "tests/test_p20_cross_system_replay.py",
+      "sha256": "9a8913013782884733cd1ed3fbd194ded4f52614e3ffee9a8687200bebb8ab9d",
+      "size": 7690
+    },
+    {
+      "path": "tests/test_p21_architecture_readiness.py",
+      "sha256": "ef3052c82a8e317a946f2850578d6b93a63f9a6d380188128c51e3f634baac41",
+      "size": 8704
+    },
+    {
+      "path": "tests/test_p22_causal_linkage.py",
+      "sha256": "a89432dd098e378718a6f6cf1912dba5a7d61311a1d6ffb52b4159153302beb0",
+      "size": 7068
+    },
+    {
+      "path": "tests/test_p23_semantic_transport_finality.py",
+      "sha256": "8352181334ce61ed45bc36dc03da903808b1501400e0d2d4a88e8494aa03ca86",
+      "size": 11605
+    },
+    {
+      "path": "tests/test_p24_verification_runner.py",
+      "sha256": "1c27b44f89d84d1671d8da7068da80adae34e76fb948d20b8f464f9db39379ca",
+      "size": 7349
+    },
+    {
+      "path": "tests/test_p25_host_readiness.py",
+      "sha256": "96819d0a95c3bd4784dbaa1f64b4cf3895191ec2fff08e75e53362250b3d937e",
+      "size": 7633
+    },
+    {
+      "path": "tests/test_p26_passive_ingress.py",
+      "sha256": "ade2d5b7a644b57faba4f5e0cd2599c6a7e1393937a61862a04d2f726f6deac1",
+      "size": 16193
+    },
+    {
+      "path": "tests/test_p27_live_wire_observation.py",
+      "sha256": "db720d877c9c3a26b691820b1a4b45e10142cea1bc1ba0269bc86f914d452032",
+      "size": 13978
+    },
+    {
+      "path": "tests/test_p28_protocol_evidence_intake.py",
+      "sha256": "9cf355b914534ae41f4f481bdfa478d1be5a08d6f1baebfdcdfc02e65474f06b",
+      "size": 12513
+    },
+    {
+      "path": "tests/test_p29_protocol_evidence_comparison.py",
+      "sha256": "eb30a9ad1efe6628bf6dc87261d4ae045ad83b72667f9e8e6af6e676ec5b78e6",
+      "size": 10537
+    },
+    {
+      "path": "tests/test_p30_declarative_research_adapter.py",
+      "sha256": "2f592f88d2c8f0d66d2a01d64e77bf6d6d20c82d7f6d371df25b1a0298399fba",
+      "size": 14688
+    },
+    {
+      "path": "tests/test_p31_fight_event_research.py",
+      "sha256": "abc7011b53538b05ff2ed1a1dbaa309eae5067b48eda809059ece653dfadc5a4",
+      "size": 15348
+    },
+    {
+      "path": "tests/test_p32_protocol_capability_assessment.py",
+      "sha256": "a53ea93ca6fba70c158d1de7d58584b47cf3b30c91ad5edf781a869a370971b2",
+      "size": 13000
+    },
+    {
+      "path": "tests/test_p33_shadow_projection_bridge.py",
+      "sha256": "df56a104bbd293b1c85e0681df8c085e53c50487afad214f4af8c8a6d5f2dc23",
+      "size": 10836
+    },
+    {
+      "path": "tests/test_p34_reconstruction_gap_audit.py",
+      "sha256": "4dc112605f8d5740fd57ba0bef43a8df8be6bf3f71ea214a03a59962a30b3ad9",
+      "size": 13165
+    },
+    {
+      "path": "tests/test_p35_effect_reconciliation.py",
+      "sha256": "2fcfaa70a7bf3452dade24e5d7676ef47dd6f3c68f6256221401e5bcf1ef5136",
+      "size": 11955
+    },
+    {
+      "path": "tests/test_p36_module_isolation.py",
+      "sha256": "fe26f726e977ca2c4e3447b84aaa2f83a92cb0c27b1e3936d4c928b347f96886",
+      "size": 2158
+    },
+    {
+      "path": "tests/test_p36_target_effect_research.py",
+      "sha256": "f2ad57f814840f2fd0b509bec1d56800aa6a3805ecc8a6b207ae491da2cfb295",
+      "size": 10540
+    },
+    {
+      "path": "tests/test_p37_checkpointed_verification.py",
+      "sha256": "9150e2ee667b823be2e4afbd27ddf079ccc9574eba5de56c84fc63422b985146",
+      "size": 10116
+    },
+    {
+      "path": "tests/test_p38_causal_window_confounders.py",
+      "sha256": "fd6669b5c7adfe6ac77c6748f96ba248cb9d58a31096d53633dfe2928ee46f80",
+      "size": 9297
+    },
+    {
+      "path": "tests/test_p39_target_context_integrity.py",
+      "sha256": "adcabb3827b3917714d767deee0b2a0f54cee5945982e5ceba2e0cfe83aa813d",
+      "size": 7418
+    },
+    {
+      "path": "tests/test_p40_evidence_source_independence.py",
+      "sha256": "bee6c8605911d65d882df5dd6b7f5c6b1b8d5fbe098fa15068a26d22b45cf081",
+      "size": 7829
+    },
+    {
+      "path": "tests/test_p41_cell_transition_evidence.py",
+      "sha256": "e8fa80fad97945b22565becad8790f5c52d7a0833cbe4d02b8d4c820219c8343",
+      "size": 6537
+    },
+    {
+      "path": "tests/test_p41_packet_claim_uniqueness.py",
+      "sha256": "a34fbde17510c456f824a94f57eac459eaa939a5bd01ba5dc5eba2c9b51d092e",
+      "size": 3885
+    },
+    {
+      "path": "tests/test_p42_comparison_provenance_binding.py",
+      "sha256": "02f941fdf831df88e6842dbc70d541d3f5958f33181bab02263a28138baf78d6",
+      "size": 5819
+    },
+    {
+      "path": "tests/test_p43_case_level_comparison_integrity.py",
+      "sha256": "843460b658f39e2b5f895745d6a7639c3263cc227b868bf868d4383bff1f1836",
+      "size": 4679
+    },
+    {
+      "path": "tests/test_p44_native_source_audit.py",
+      "sha256": "eab29034972b2c1a356719e7237a6d972d73d58b8b74a6a6009c3127c2b1476e",
+      "size": 2636
+    },
+    {
+      "path": "tests/test_p44_unity_bridge_readonly.py",
+      "sha256": "bead9a4763c4e6dd06fd9102ecb4127d5f5ab7ef67ffdfe8d35b044eabdab277",
+      "size": 11051
+    },
+    {
+      "path": "tests/test_p45_historical_handler_lineage.py",
+      "sha256": "3d74ad70a37b01046069011b234d3457f5a175987c2be1824fd96bf3a81a16a6",
+      "size": 2852
+    },
+    {
+      "path": "tests/test_p45_historical_lifecycle_research.py",
+      "sha256": "07bd20716f93c835f77cccfb0118bf46d6c8ec068bf5acc86cb02fd7cc77583f",
+      "size": 7740
+    },
+    {
+      "path": "tests/test_p46_combined_lifecycle_combat_research.py",
+      "sha256": "3b7155d4ee99633335392a0cffd920b163b5b8a1a6ec100c60d762da24915637",
+      "size": 4843
+    },
+    {
+      "path": "tests/test_p46_historical_combat_effect_research.py",
+      "sha256": "662c3103fa38966780c7a5fd4661398008b53998219f6217f0a87c575702db83",
+      "size": 12139
+    },
+    {
+      "path": "tests/test_p47_historical_stream_replay.py",
+      "sha256": "e96e678f914c2075a4e0df565cde519c5ecff8ee02d06ba698c9a05793f54f9f",
+      "size": 10568
+    },
+    {
+      "path": "tests/test_p47_historical_stream_setup_smoke.py",
+      "sha256": "8bffd97a65afa0cab75326f2c6824906063fe69e3a42af6b47adbcca7fd6592d",
+      "size": 1780
+    },
+    {
+      "path": "tests/test_p48_capture_to_historical_research.py",
+      "sha256": "653d02480b9780f3461f3801b56c11803ad80513690083d59a065bad6183e3bd",
+      "size": 8907
+    },
+    {
+      "path": "tests/test_p48_historical_transport_setup_smoke.py",
+      "sha256": "ab9f2fdcb814a0c620f249d5f1cc54fef1a4ae1274315798e3e853d45d05e329",
+      "size": 924
+    },
+    {
+      "path": "tests/test_p49_pcapng_capture_research.py",
+      "sha256": "2d7f2d43d8103bad281e56d877e242489491ce4437122c041c347e0ca3818346",
+      "size": 7449
+    },
+    {
+      "path": "tests/test_p49_pcapng_setup_smoke.py",
+      "sha256": "d18259e75bfb83e9c32f609395abb2b45830554b360c35c93fa6abf8a37a9e3f",
+      "size": 683
+    },
+    {
+      "path": "tests/test_p50_flow_inventory.py",
+      "sha256": "85016f2b4b5a68790a6408fdaa30503469550c45573a536bca7b2c76cca4c9d9",
+      "size": 10268
+    },
+    {
+      "path": "tests/test_p50_flow_setup_smoke.py",
+      "sha256": "6e00876b87362e85e1843e9c1859042ed3f944e650574d3e9ff4b5de46887429",
+      "size": 821
+    },
+    {
+      "path": "tests/test_p51_setup_flow_stability.py",
+      "sha256": "a30cdd931b1b9e2744447f07863fa6765bd5fb00a62401637477a16faa2833af",
+      "size": 1172
+    },
+    {
+      "path": "tests/test_p51_windows_flow_owner_stability.py",
+      "sha256": "ce0b1419246ca84122b2e3271c6dd6b1bd604da1fef83891b9a72a393f1cc854",
+      "size": 6651
+    },
+    {
+      "path": "tests/test_p52_multi_account_topology.py",
+      "sha256": "64ac6764c9c4d7ec49478d28fbb9b9e01831a1b9a37e97c359c328e8938f6957",
+      "size": 7229
+    },
+    {
+      "path": "tests/test_p53_historical_character_identity.py",
+      "sha256": "5787af28f07fbf6e62d966144d977d104690425362a4f73b1932a7c16c33cd24",
+      "size": 11965
+    },
+    {
+      "path": "tests/test_p53_historical_identity_lineage.py",
+      "sha256": "ccd7ab53e7c119b6bd3252ac78bb51b13e8cbfdcbbefb5f132b02ad503d761b1",
+      "size": 2359
+    },
+    {
+      "path": "tests/test_p54_historical_actor_continuity.py",
+      "sha256": "5d8c86efe3a393893fade8f339999811070eefab035c81967d243f1315eccc13",
+      "size": 13051
+    },
+    {
+      "path": "tests/test_p55_transactional_fixture_journal.py",
+      "sha256": "c91fff52e4bad77bbeca0a4112b3f1a5049153079acf29855c3100e4beeec237",
+      "size": 11391
+    },
+    {
+      "path": "tests/test_p56_source_bound_batch_receipts.py",
+      "sha256": "333f81b1f807c298ef5502a1782e21f2c0333cb6bd7c4f8557034a760c5a6d77",
+      "size": 10386
+    },
+    {
+      "path": "tests/test_p57_atomic_schema_bootstrap.py",
+      "sha256": "f77b7df931ec7e08c8d31baffc1150d3659955defea00842827d813b1571069f",
+      "size": 9409
+    },
+    {
+      "path": "tests/test_p58_untrusted_admission_boundary.py",
+      "sha256": "ca39d9eb944bb943b76b367f0c320d59976e2a653caa903dfcda7aa2aadc52b6",
+      "size": 10525
+    },
+    {
+      "path": "tests/test_p59_capture_bound_admission.py",
+      "sha256": "c202e25fbbebd8e931a60b544e492b910223880acb47a24e88b9af339e78c451",
+      "size": 9496
+    },
+    {
+      "path": "tests/test_p60_packet_local_wire_provenance.py",
+      "sha256": "8780e6a015525a4b61432c5b31eb93ab2d890a1199ea3d4ddb7e94a0ce2e5a98",
+      "size": 6283
+    },
+    {
+      "path": "tests/test_p61_ipv6_fragment_evidence_integrity.py",
+      "sha256": "e37555832680a880b92152d62cc8a93d9d11e34192a8ea08a857d778b0d43bf3",
+      "size": 5465
+    },
+    {
+      "path": "tests/test_p62_capture_loss_metadata.py",
+      "sha256": "a69fdf86cdfe1231534c6c5c86841d14e1fccf5ffbc9cebac5472dfc4156ce8f",
+      "size": 6303
+    },
+    {
+      "path": "tests/test_p63_pcapng_section_integrity.py",
+      "sha256": "3ea60625354258bca820aedf97b8ea6d2e4a5047f87ec9bf47283db148e0e692",
+      "size": 4038
+    },
+    {
+      "path": "tests/test_p64_consented_passive_evidence.py",
+      "sha256": "26f1d174f5c350acedacb255c5eab8a398e14341563edadaad550b90697b277f",
+      "size": 10977
+    },
+    {
+      "path": "tests/test_p65_capture_abort_integrity.py",
+      "sha256": "c14a34d632cb76931317341dc46b92b9315ca2c055c8d04818f52baddda919fe",
+      "size": 5303
+    },
+    {
+      "path": "tests/test_p66_post_stop_drain_sealing.py",
+      "sha256": "a934800f86a5d35e53b9bb8bf4fc30c238ca5225b53787a40526bf2d67d2fa16",
+      "size": 5744
+    },
+    {
+      "path": "tests/test_p8_integration.py",
+      "sha256": "b6d5b45fe0ede6983505efe25428e096185a6ee70619e62921d469e084884370",
+      "size": 2675
+    },
+    {
+      "path": "tests/test_p8_state_journal.py",
+      "sha256": "ef708164f8044481ad976c26f9a061ab7a77c49218f43b08129fc91c6fa7eae2",
+      "size": 12836
+    },
+    {
+      "path": "tests/test_p9_quality.py",
+      "sha256": "afd164610df0f0ee00e2b32c18e06dd6fe2c150226ff7c1ed93df5e08b9171c5",
+      "size": 15278
+    },
+    {
+      "path": "tests/test_protocol_architecture.py",
+      "sha256": "875811b2e427ce35e702b86647930f84fb5735560793a6eef8e3110574c890a9",
+      "size": 2514
+    },
+    {
+      "path": "tests/test_protocol_integration.py",
+      "sha256": "c3ccf6126cc644265ec3f73d6d87d69b6f2c398f78085ad55d846ab75ff0f815",
+      "size": 9027
+    },
+    {
+      "path": "tests/test_protocol_wire.py",
+      "sha256": "00137a356c58130f93d0e80d2184c7a242f010575684927ef15e0c992b19bcca",
+      "size": 3374
+    },
+    {
+      "path": "tests/test_q8_diagnostics_forensics.py",
+      "sha256": "23c7871656fa765c7fa0a912bbdfbdc59095f87acb9cd1543c8ca9d4b8676285",
+      "size": 13208
+    },
+    {
+      "path": "tests/test_q9_zero_input_integration.py",
+      "sha256": "549c27095f779ed4ad6010db262d4f6808cdb00e09e71756360452de74dd65ae",
+      "size": 7172
+    },
+    {
+      "path": "tests/test_reference_assets.py",
+      "sha256": "381977169c53ffea611c23ce8fae9923dc1c2d6b1c705c333c7309a8fc89b8ed",
+      "size": 1746
+    },
+    {
+      "path": "tests/test_semantic_p7.py",
+      "sha256": "e42d82f8f516fb410ea371f301e8f0e2c92818b1f5ea672047e41fc85a3b0e3b",
+      "size": 8685
+    },
+    {
+      "path": "tests/test_semantic_p7_architecture.py",
+      "sha256": "058ff010e1ca1ab23c6cb200f119210c9195cb5c46df1dee8b7e68e02e38d4fe",
+      "size": 1334
+    },
+    {
+      "path": "tests/test_semantic_p7_cli.py",
+      "sha256": "93a38309ac8f7e6c1bd2d16f85d0c8fe55c3edf7a2ed612772e2de364cf923dd",
+      "size": 4838
+    },
+    {
+      "path": "tools/bootstrap_failure.py",
+      "sha256": "370683fd4c1ff93d004dfbfe81ce56b9714a1d240fb3e9234bf975cd0e4f0511",
+      "size": 2743
+    },
+    {
+      "path": "tools/bootstrap_release_integrity.py",
+      "sha256": "bbbe39759ec9c29c25bce1f97812a39167ebbbd5729956f7b56381e50dc92537",
+      "size": 695
+    },
+    {
+      "path": "tools/build_release.py",
+      "sha256": "c6c7b72b3186896033cab33170d3240bf202ef9ccbd2fbc64f2e22036616e8ef",
+      "size": 5371
+    },
+    {
+      "path": "tools/diagnose_run.py",
+      "sha256": "f963f9e8a4e4054486fa41bb1c95b1059419f543430396441ff05a2b4242456c",
+      "size": 452
+    },
+    {
+      "path": "tools/verification_common.py",
+      "sha256": "3290b297b074b11d62f374f5c912a7de4d9dd0bf4f3d660cafb28258870d5612",
+      "size": 3105
+    },
+    {
+      "path": "tools/verify_m0.py",
+      "sha256": "178bb28baf2a554dc16feaecae040029fdc2b831207ba50b10f1a845ded671b9",
+      "size": 15046
+    },
+    {
+      "path": "tools/verify_m1.py",
+      "sha256": "eec14b94e826e90fd19a14e614ef5ab95c0268069e83d259737aa83ef964ff74",
+      "size": 9431
+    },
+    {
+      "path": "tools/verify_m11.py",
+      "sha256": "b42e9c740ebb87cd1f594f070462d6e063f1056e0d8dd74f31e0750f68e9d647",
+      "size": 7914
+    },
+    {
+      "path": "tools/verify_m12.py",
+      "sha256": "07921f0c0890dd6b7cf02f3b39ec65fb43e6ae45265299547bc877e93f3e915d",
+      "size": 7830
+    },
+    {
+      "path": "tools/verify_m2.py",
+      "sha256": "347a4e5f6c37c5070ec2ef8d1d9a94a6f4df95820cd79087567bd3875d2d94a8",
+      "size": 6826
+    },
+    {
+      "path": "tools/verify_m3.py",
+      "sha256": "238581ae2704b97c3d15464ca2c7bcc64bacb74433ac40ae4e94101ccce8ae3a",
+      "size": 5053
+    },
+    {
+      "path": "tools/verify_m4_m5.py",
+      "sha256": "02e412ca20e4727f42fc783949ff4cbd0ba4e85fe5b05b8c01082eb49d1d21d1",
+      "size": 10838
+    },
+    {
+      "path": "tools/verify_m6_m7.py",
+      "sha256": "7e848b8dd8e624a9d5e41d66d567d3e93d5a51aeb3b82eca90da30d70c3340d0",
+      "size": 6769
+    },
+    {
+      "path": "tools/verify_m8_m10.py",
+      "sha256": "c93a4d0a0b9a8f7c253d366b8c9cb5b0e88e97e8b1bba3b92eab9c727afeb44f",
+      "size": 12007
+    },
+    {
+      "path": "tools/verify_q8.py",
+      "sha256": "9a44211681cd43967edc4757f404c6825a446c75ebb6fac142dd8ad8965be3e1",
+      "size": 7588
+    },
+    {
+      "path": "tools/verify_q9.py",
+      "sha256": "618192880d17a3136c2e76a5cfe5cde39b71315e12c6f9f01d547d384d0dee7a",
+      "size": 8835
+    },
+    {
+      "path": "tools/verify_release_offline.py",
+      "sha256": "07dfba4c5c798e3512cec5500853ffbe79441fe93cfebf0b999a15d8c4317f40",
+      "size": 5992
+    },
+    {
+      "path": "tools/windows/_entry.bat",
+      "sha256": "22a9ec57e828463b27fd8bdacc14e0970ab6fa66220561162701e2b54c6775d2",
+      "size": 5443
+    },
+    {
+      "path": "tools/windows_bridge_setup.py",
+      "sha256": "26101e9ecf3dc5836f4371df916b71629e8aecc9099a26be03c53603cba2d337",
+      "size": 7003
+    },
+    {
+      "path": "tools/windows_capture_prereq.py",
+      "sha256": "73de08a2b4bc993bc495b479ff63f7ccdec637319b9ab97fdf6e3ec42c88a904",
+      "size": 895
+    },
+    {
+      "path": "verification/M12_offline_release_receipt.json",
+      "sha256": "56ee8d10c2b4ed1862ffddc70adf071ff4c05c4530231e2eaba965ef0e0dc327",
+      "size": 3445
+    },
+    {
+      "path": "verification/M3_client_offline_receipt.json",
+      "sha256": "737c19e6a6d25c124a8662a06d702ec96865707bf91022bfb1ce80ee8c1839ed",
+      "size": 2220
+    },
+    {
+      "path": "verification/P10_offline_acceptance_receipt.json",
+      "sha256": "06b2f971dae46b2817481d60c1f5f811b4309a46d9a533ff8dd22ccec1a94d45",
+      "size": 1379
+    },
+    {
+      "path": "verification/P11_offline_acceptance_receipt.json",
+      "sha256": "8a279a3b0e462dfb2e1b863e2afbc5a11c54f99f2beb98eafa6fa5c2b0fba82e",
+      "size": 2737
+    },
+    {
+      "path": "verification/P12_offline_acceptance_receipt.json",
+      "sha256": "fe020c77b5fd741fa2808a08ef3cd6163e340c05eaaa69a1f4fe0624a0a44030",
+      "size": 3080
+    },
+    {
+      "path": "verification/P13_offline_acceptance_receipt.json",
+      "sha256": "9e9fd895857081a06acab666926fbf8bb4b46ae70f9fc2e8d24bdbf440d3c347",
+      "size": 2596
+    },
+    {
+      "path": "verification/P14_offline_acceptance_receipt.json",
+      "sha256": "974a576ac5375ad03339d0f2c5451b9cfecc41696c3664ad68eb2972fb3a673f",
+      "size": 3014
+    },
+    {
+      "path": "verification/P15_offline_acceptance_receipt.json",
+      "sha256": "dc7748bb5ab3547218bf016ae869e04c879d5353c649ebb91ec9d060ed4ce4e3",
+      "size": 2791
+    },
+    {
+      "path": "verification/P16_offline_acceptance_receipt.json",
+      "sha256": "d28312fe487b54442edae3751e67e7110c51fb8e0ee83bb7fa5e54eb3899ef0e",
+      "size": 2981
+    },
+    {
+      "path": "verification/P17_offline_acceptance_receipt.json",
+      "sha256": "5453db6aac1fc3a5513c50edb33908a337daa3e97c33366326f3d8311422138a",
+      "size": 1848
+    },
+    {
+      "path": "verification/P18_offline_acceptance_receipt.json",
+      "sha256": "89a56d64bba22a4bf0f78317535c317350ddccec356dd5562ad16741bc808f75",
+      "size": 2468
+    },
+    {
+      "path": "verification/P19_offline_acceptance_receipt.json",
+      "sha256": "ee2bb852812dfaf54e072b173e92815ce5e057cd24847e493a910b02d5d9b9ec",
+      "size": 3135
+    },
+    {
+      "path": "verification/P1_acceptance_receipt.json",
+      "sha256": "f9133af5d2ea48d42477fcc7b2597ee226fe9727c7c2d93e06ccaed64aedd05d",
+      "size": 470
+    },
+    {
+      "path": "verification/P20_RELEASE_RECEIPT.json",
+      "sha256": "361613dc0248a80cd71c769f59c1784ae10a4ebfd4e0ea711ba77c01bbe06966",
+      "size": 1548
+    },
+    {
+      "path": "verification/P21_offline_acceptance_receipt.json",
+      "sha256": "edbd5ab15add0a409b4af6d93a6f6dfb7ccaf281ffbb59eeee27f68808c7e29f",
+      "size": 1208
+    },
+    {
+      "path": "verification/P22_offline_acceptance_receipt.json",
+      "sha256": "89fbfafadcfe4490951ddb779cd0545f707c5714303da4910279dcc7e8387379",
+      "size": 4479
+    },
+    {
+      "path": "verification/P23_offline_acceptance_receipt.json",
+      "sha256": "8813335550335f7ad7cf576cf2b8915e4b54db91cd2dfd3deda80bfe640e4d8a",
+      "size": 1954
+    },
+    {
+      "path": "verification/P24_offline_acceptance_receipt.json",
+      "sha256": "074b5aed755495c95055b5992d7ab886c1b2c597a3cb279aebd4de957914fb4f",
+      "size": 2719
+    },
+    {
+      "path": "verification/P25_offline_acceptance_receipt.json",
+      "sha256": "0fb19055d6e90d1132dc85cf3b66c95112a7c005db499b8484e3f016f2888b59",
+      "size": 1892
+    },
+    {
+      "path": "verification/P26_offline_acceptance_receipt.json",
+      "sha256": "8a4bb780bd57b85cf2e969727ccb089b4505da416a81701637f1058d67b7155d",
+      "size": 4658
+    },
+    {
+      "path": "verification/P27_offline_acceptance_receipt.json",
+      "sha256": "034f078e94c9cdab7ba225d0ac7132db1ac0e5c433d93fc7b0ff379496eb0d68",
+      "size": 1567
+    },
+    {
+      "path": "verification/P28_offline_acceptance_receipt.json",
+      "sha256": "0296ac1055577ceeb5157ff79f554a297051368b21be7f95a1499883735d2973",
+      "size": 3611
+    },
+    {
+      "path": "verification/P29_offline_acceptance_receipt.json",
+      "sha256": "456167e6864aa0667330f2c4d987f1b694026eb4c0b22fda6413e6ec110d239a",
+      "size": 2787
+    },
+    {
+      "path": "verification/P30_offline_acceptance_receipt.json",
+      "sha256": "a5a61b040505484588b4c4636ad74021245b82a8126d5acc237f1e45430d0338",
+      "size": 3244
+    },
+    {
+      "path": "verification/P31_offline_acceptance_receipt.json",
+      "sha256": "093231803799117777cf1e7001674755be913b124809bf9eef69fe48eb1757b4",
+      "size": 2833
+    },
+    {
+      "path": "verification/P32_offline_acceptance_receipt.json",
+      "sha256": "b5a7d50d258a27bd76613615152da2483af9374c6d1a2ab02288e663d0c10f0b",
+      "size": 2328
+    },
+    {
+      "path": "verification/P33_offline_acceptance_receipt.json",
+      "sha256": "ed13a941947dec951f868acf8df3dfdaa214843fb46b7b3418259cede9367d70",
+      "size": 2122
+    },
+    {
+      "path": "verification/P34_offline_acceptance_receipt.json",
+      "sha256": "d7c963b18098339a1d3b294cb8c3a1939f1dcbec618fefd0caa5162dde4b8c3b",
+      "size": 2048
+    },
+    {
+      "path": "verification/P35_offline_acceptance_receipt.json",
+      "sha256": "8d0d62e23e9dbfb49f6e01f43f34d3becc3e00367b9028beb36d2eedb3b70c50",
+      "size": 2298
+    },
+    {
+      "path": "verification/P36_offline_acceptance_receipt.json",
+      "sha256": "88d49d4efc26ba05177c08095296c1b6f2946e4cd7521e59abc22257e581654c",
+      "size": 3569
+    },
+    {
+      "path": "verification/P37_offline_acceptance_receipt.json",
+      "sha256": "31eea0bd4ecf155d98eb0041440236a2be683c309196ed58dfba752248e0cac6",
+      "size": 3164
+    },
+    {
+      "path": "verification/P38_offline_acceptance_receipt.json",
+      "sha256": "1f177287e9c9d11c69b922e267cac630e8ebc2b3d31949b6c88271b0fc891cf9",
+      "size": 3241
+    },
+    {
+      "path": "verification/P39_offline_acceptance_receipt.json",
+      "sha256": "f6c481ca8a101df09d4501ea7bff9abe27a9ed008a180abd4740a73818a11e65",
+      "size": 3499
+    },
+    {
+      "path": "verification/P3_offline_acceptance_receipt.json",
+      "sha256": "cbeb9fd1130700198afd7ef254fa10040c07fb5471f224976b04777cf32d4ff7",
+      "size": 1382
+    },
+    {
+      "path": "verification/P40_offline_acceptance_receipt.json",
+      "sha256": "32069503ce7ac08083a4e140658be56688fa9e208f1c5fe2420d931f5762f5f1",
+      "size": 3023
+    },
+    {
+      "path": "verification/P41_offline_acceptance_receipt.json",
+      "sha256": "a8a83d47e68087d280163a20905d72109739f2d133cbff072688bb4d5662c18e",
+      "size": 3136
+    },
+    {
+      "path": "verification/P42_offline_acceptance_receipt.json",
+      "sha256": "a4b0a1854d70f7476e0cc016194d73361a258c8049d8e894c3440a00a3245fee",
+      "size": 3229
+    },
+    {
+      "path": "verification/P43_offline_acceptance_receipt.json",
+      "sha256": "2f69a592014511a6960613f8b6e7212e7f442d24472705209e8566d9cb5ed662",
+      "size": 3537
+    },
+    {
+      "path": "verification/P44_offline_acceptance_receipt.json",
+      "sha256": "1d2d70158ed578f1ada496965da445018bfdb14930f1c85e523bea4026c61860",
+      "size": 2584
+    },
+    {
+      "path": "verification/P45_offline_acceptance_receipt.json",
+      "sha256": "88fc619bf4128e8d5634183b1ffe5b09d2febe4387f18f2a1a09e59bbec1b51c",
+      "size": 3450
+    },
+    {
+      "path": "verification/P46_offline_acceptance_receipt.json",
+      "sha256": "944ac47a6e4babcd5a8f74f32f6c16d028e3e94f6fce4d1dafb5ecce1dc2e7c2",
+      "size": 4519
+    },
+    {
+      "path": "verification/P47_offline_acceptance_receipt.json",
+      "sha256": "74de82178e09e95ceb4c18e5db74a083df5a49ddd69c4a32b748fafa60c3704e",
+      "size": 3525
+    },
+    {
+      "path": "verification/P48_offline_acceptance_receipt.json",
+      "sha256": "a1edf5918d130211418d9ef01d5571446cc26a58872cca45739525c860cad3e1",
+      "size": 3404
+    },
+    {
+      "path": "verification/P49_offline_acceptance_receipt.json",
+      "sha256": "aebca91640da32ba8a1c522acc14980de3da6a2f46fb996ff57cfd4a0f88f073",
+      "size": 3681
+    },
+    {
+      "path": "verification/P4_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "78a4d0d8a9727762f3ed6c37dddf01914c75ff3349af863373c04dcaa7b49129",
+      "size": 880
+    },
+    {
+      "path": "verification/P50_offline_acceptance_receipt.json",
+      "sha256": "35eab98e1da0a7e137712d5a47b04344adbd40361a56f0436d96d4601e03faf3",
+      "size": 3277
+    },
+    {
+      "path": "verification/P51_offline_acceptance_receipt.json",
+      "sha256": "fa9783488d066a7a48c4681be8d4f89484a2a336776f331df2f5d98cc18f6a59",
+      "size": 3222
+    },
+    {
+      "path": "verification/P52_offline_acceptance_receipt.json",
+      "sha256": "562a94ccb3716252ab296f40374bfb8544ae53f3c83eafc53d59091b640e62f4",
+      "size": 3062
+    },
+    {
+      "path": "verification/P53_offline_acceptance_receipt.json",
+      "sha256": "7513216b09dcdcf107090d389a3dc2dde3df3a771ccac866ed4002c83ad9294b",
+      "size": 2033
+    },
+    {
+      "path": "verification/P54_offline_acceptance_receipt.json",
+      "sha256": "568b8dbb5ee7205db05d26f747131511ed22275159c9be946c715d03b382a6bb",
+      "size": 2137
+    },
+    {
+      "path": "verification/P55_offline_acceptance_receipt.json",
+      "sha256": "044a1d1dd928c10fadfcf9cedf1fae832535d9607cbf5ec09eefe708b4c9de7d",
+      "size": 1565
+    },
+    {
+      "path": "verification/P56_offline_acceptance_receipt.json",
+      "sha256": "287fd2ca6049027b625921f06592b0d81bd559736e03d2e00acd9a991b39f3c8",
+      "size": 1683
+    },
+    {
+      "path": "verification/P57_offline_acceptance_receipt.json",
+      "sha256": "0b1e563cd4828b919d1bf5cf69cc10cc86c906b38e18b9433591c27e91d488fa",
+      "size": 1973
+    },
+    {
+      "path": "verification/P58_offline_acceptance_receipt.json",
+      "sha256": "08cd0c752cd365616b3ff65d8bc95cb4e31df9b7b016d83f7b4537276fc289f8",
+      "size": 2313
+    },
+    {
+      "path": "verification/P59_offline_acceptance_receipt.json",
+      "sha256": "7a2dd7247363ed15e5b89e50409d583318b132173d9fd7349304eb8dbf36e565",
+      "size": 2253
+    },
+    {
+      "path": "verification/P5_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "b6fda0b6a3245b6721e41f5d500c7373ff37324d51d0d182bcd217c65a544ca8",
+      "size": 2037
+    },
+    {
+      "path": "verification/P60_offline_acceptance_receipt.json",
+      "sha256": "116df80b2d63fab403ef0aa48e6f77bf8cabfedb9f6f23416009654b33fc44ea",
+      "size": 1900
+    },
+    {
+      "path": "verification/P61_offline_acceptance_receipt.json",
+      "sha256": "7379754f87639408f7d0d5c564f9c81cee71cc58c3fe12e1e4518f754c3f4f22",
+      "size": 2182
+    },
+    {
+      "path": "verification/P62_offline_acceptance_receipt.json",
+      "sha256": "52b424a1a07e6ef4f078834c2e1c0c95c4161460f5143c96139feb860aaad062",
+      "size": 2182
+    },
+    {
+      "path": "verification/P63_offline_acceptance_receipt.json",
+      "sha256": "baebf0a46c68436700bb5b6a85531c49bceadd1afcd233817ed3e53c6a82c8fd",
+      "size": 2113
+    },
+    {
+      "path": "verification/P64_offline_acceptance_receipt.json",
+      "sha256": "c6e98e6791693c27996e8e3dc4168ffa0cdf535bf459c032d6ca8c07210a0e0f",
+      "size": 2249
+    },
+    {
+      "path": "verification/P65_offline_acceptance_receipt.json",
+      "sha256": "7b19cf4137f434b1e17b378125f45455a6237c7524c7846180a4b17000eaa50a",
+      "size": 1988
+    },
+    {
+      "path": "verification/P66_offline_acceptance_receipt.json",
+      "sha256": "aa134c80f2c2b6c605c656621ef22e577b7a3f29a4e853d666b403bdee83b314",
+      "size": 2272
+    },
+    {
+      "path": "verification/P6_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "17341841061ab28432336308d6890a1ff01604236a61b06cb244e33584fa03fd",
+      "size": 1550
+    },
+    {
+      "path": "verification/P7_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "29896881e206c8c7e78ea74ee0d2c07b3f1685379c8a63c9d9974885ed2733ec",
+      "size": 1662
+    },
+    {
+      "path": "verification/P8_offline_acceptance_receipt.json",
+      "sha256": "a84748d2b644e9a198a14b79672b4af772f72fa4dd4f574f51eba0211abbc978",
+      "size": 1230
+    },
+    {
+      "path": "verification/P9_offline_acceptance_receipt.json",
+      "sha256": "1699e13fe22de6909d2475c556af386e852cfd09666188a0e7630ae6c3b88a00",
+      "size": 1801
+    },
+    {
+      "path": "verification/Q0_baseline_receipt.json",
+      "sha256": "b61ffb44e90dab97bf801a474c8ff7c2053f03ba8bb9726abb62e940e4757bf9",
+      "size": 6204
+    },
+    {
+      "path": "verification/Q1_architecture_receipt.json",
+      "sha256": "8c4bc5e99a52f8fd69bcb1b06faf43848cee280d43595aedd188de3da3ee9fa1",
+      "size": 2675
+    },
+    {
+      "path": "verification/Q2_contracts_receipt.json",
+      "sha256": "e8cdb7c60468a814e41a2cbcb8ed3f82cbe9565cfc654c5901c55aa16b80d705",
+      "size": 2811
+    },
+    {
+      "path": "verification/Q3_kernel_data_receipt.json",
+      "sha256": "9bc7f5d3a0f2d4a68980e7f77e47e354be4f26476a0b264d2387e9ae3f7ba273",
+      "size": 3388
+    },
+    {
+      "path": "verification/Q4_capture_protocol_receipt.json",
+      "sha256": "997de816ee701536dd16cff5cdfda61ffbf8ce6e5ea28b6e463764f93bee9844",
+      "size": 4122
+    },
+    {
+      "path": "verification/Q5_canonical_live_state_receipt.json",
+      "sha256": "23abcceb3feaf89809e1bef72120a6b5e373cbaf7cb1cacf7cb9447bc725501f",
+      "size": 3248
+    },
+    {
+      "path": "verification/Q6_planning_coordination_workflow_receipt.json",
+      "sha256": "66b2e3974ef44df6577b0b1875924f40246e79defd8de42181c6bde3b9a47ceb",
+      "size": 5019
+    },
+    {
+      "path": "verification/Q7_execution_safety_receipt.json",
+      "sha256": "f79d3dc7002ca4893291a34919153f29fdb98ca1f0bc51d2a504ad92095977b8",
+      "size": 3651
+    },
+    {
+      "path": "verification/Q8_diagnostics_receipt.json",
+      "sha256": "6f3bd0c3b7cf9d54e22e6d683ebde044f901dff79ffe89415a9e0ce775e22a51",
+      "size": 3454
+    },
+    {
+      "path": "verification/Q9_zero_input_integration_receipt.json",
+      "sha256": "02d76cccfac20b3502433ff0bf27ebcf3617c1e4232a18bab61a15360508a826",
+      "size": 4199
+    }
+  ],
+  "kernel_tree_reference": "Q3 receipt",
+  "known_limitations": [
+    "Q10 Windows clean-host acceptance has not been performed in this environment.",
+    "Q11 current-build observe-only evidence is missing.",
+    "Q12 physical action scopes and Q13 live mission are not accepted.",
+    "Windows Npcap/Scapy backend acceptance requires Q10 evidence on the target host."
+  ],
+  "live_action_ready": false,
+  "live_mission_status": "BLOCKED_MISSING_EVIDENCE",
+  "operator_config_example_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "physical_input_default": "DISABLED",
+  "protocol_current_build_status": "BLOCKED_MISSING_EVIDENCE",
+  "python_requirement": ">=3.13,<3.14",
+  "quality_gates": {
+    "Q0": {
+      "path": "verification/Q0_baseline_receipt.json",
+      "sha256": "b61ffb44e90dab97bf801a474c8ff7c2053f03ba8bb9726abb62e940e4757bf9",
+      "status": "PASS"
+    },
+    "Q1": {
+      "path": "verification/Q1_architecture_receipt.json",
+      "sha256": "8c4bc5e99a52f8fd69bcb1b06faf43848cee280d43595aedd188de3da3ee9fa1",
+      "status": "PASS"
+    },
+    "Q2": {
+      "path": "verification/Q2_contracts_receipt.json",
+      "sha256": "e8cdb7c60468a814e41a2cbcb8ed3f82cbe9565cfc654c5901c55aa16b80d705",
+      "status": "PASS"
+    },
+    "Q3": {
+      "path": "verification/Q3_kernel_data_receipt.json",
+      "sha256": "9bc7f5d3a0f2d4a68980e7f77e47e354be4f26476a0b264d2387e9ae3f7ba273",
+      "status": "PASS"
+    },
+    "Q4": {
+      "path": "verification/Q4_capture_protocol_receipt.json",
+      "sha256": "997de816ee701536dd16cff5cdfda61ffbf8ce6e5ea28b6e463764f93bee9844",
+      "status": "PASS"
+    },
+    "Q5": {
+      "path": "verification/Q5_canonical_live_state_receipt.json",
+      "sha256": "23abcceb3feaf89809e1bef72120a6b5e373cbaf7cb1cacf7cb9447bc725501f",
+      "status": "PASS"
+    },
+    "Q6": {
+      "path": "verification/Q6_planning_coordination_workflow_receipt.json",
+      "sha256": "66b2e3974ef44df6577b0b1875924f40246e79defd8de42181c6bde3b9a47ceb",
+      "status": "PASS"
+    },
+    "Q7": {
+      "path": "verification/Q7_execution_safety_receipt.json",
+      "sha256": "f79d3dc7002ca4893291a34919153f29fdb98ca1f0bc51d2a504ad92095977b8",
+      "status": "PASS"
+    },
+    "Q8": {
+      "path": "verification/Q8_diagnostics_receipt.json",
+      "sha256": "6f3bd0c3b7cf9d54e22e6d683ebde044f901dff79ffe89415a9e0ce775e22a51",
+      "status": "PASS"
+    },
+    "Q9": {
+      "path": "verification/Q9_zero_input_integration_receipt.json",
+      "sha256": "02d76cccfac20b3502433ff0bf27ebcf3617c1e4232a18bab61a15360508a826",
+      "status": "PASS"
+    }
+  },
+  "release_content_sha256": "67389e67736cabb7f25f842871b8f76550b136e27b3b65cd8b60e2ec416a08a6",
+  "release_file_count": 812,
+  "release_id": "ANKA_NEXT_M12_006",
+  "schema_version": 1,
+  "windows_acceptance_status": "BLOCKED_MISSING_EVIDENCE"
+}

@@ -1,0 +1,74 @@
+{
+  "milestone": "P19",
+  "date": "2026-10-20",
+  "implementation": "SYNTHETIC_OFFLINE_ONLY",
+  "title": "Fake-only input driver integration, durable dispatch ordering and multi-account fault injection",
+  "previous_baseline_tests": 612,
+  "new_tests": 35,
+  "target_total_tests": 647,
+  "working_tree_tests": {
+    "status": "PASS",
+    "tests_run": 647,
+    "reported_seconds": 62.762,
+    "runner": "PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -v"
+  },
+  "clean_extraction_tests": {
+    "status": "PASS",
+    "tests_run": 647,
+    "reported_seconds": 64.654,
+    "runner": "PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -v"
+  },
+  "new_commands": [
+    "execution_sim_demo.bat"
+  ],
+  "new_packages": {
+    "contracts": [
+      "src/anka_contracts/execution_simulation.py"
+    ],
+    "execution": [
+      "src/anka_execution/fake_input.py",
+      "src/anka_execution/offline_dispatch.py"
+    ],
+    "composition": [
+      "src/anka_app/execution_simulation.py"
+    ]
+  },
+  "safety_invariants": [
+    "Strict offline-only fake driver: no Windows mouse/keyboard imports or physical input APIs",
+    "SQLite dispatch-uncertain boundary committed before fake-only attempt",
+    "Focus, account, window generation, character identity and calibration re-attested with two observations",
+    "Missing second attestation remains uncertain, not silently treated as valid",
+    "Cross-account busy gate cancels only the second PREPARED action without clearing previous uncertainty",
+    "Fake driver receipt cannot prove outcome; only independently supplied exact-scoped synthetic evidence may settle",
+    "Crashes and exceptions never cause blind retries or success classification",
+    "Incident ZIP includes first observed boundary, explicit failure reason, action status and checksum verification"
+  ],
+  "cli_smoke": {
+    "check": "PASS_EXIT_0",
+    "confirmed_synthetic_fixture": "RESEARCH_ONLY_EXIT_0",
+    "focus_loss": "BLOCKED_UNCERTAIN_EXIT_0",
+    "restart_no_retry": "BLOCKED_UNCERTAIN_EXIT_0",
+    "live_start": "BLOCKED_EXIT_40"
+  },
+  "archive_previous_retention": "ALL_P18_FILE_PATHS_PRESERVED",
+  "limitations": [
+    "Current-build game protocol remains uncertified",
+    "Windows live window identity/focus and hardware calibration unverified",
+    "No real mouse, keyboard or game input enabled",
+    "Simulated outcome settlement is not server confirmation",
+    "Potential physical dispatch after sudden power loss not tested",
+    "Historic intermittent verification delays and SQLite ResourceWarnings remain open"
+  ],
+  "live_start": "BLOCKED_BY_DESIGN",
+  "physical_input_sent": false,
+  "integrated_live_fight_acceptance": "NOT_PERFORMED",
+  "estimated_roadmap_progress_pct": 71,
+  "note": "Progress is an approximate weighted roadmap estimate, not a reliability or quality measurement.",
+  "incident_export": "PASS_CHECKSUM_VERIFIED_FOCUS_FAILURE_REASON_PRESENT",
+  "archive_integrity": "PASS_ALL_P18_FILES_RETAINED",
+  "fresh_extract_cli": {
+    "check": "EXIT_0",
+    "focus_loss": "BLOCKED_UNCERTAIN_EXIT_0",
+    "start": "LIVE_RUNTIME_NOT_IMPLEMENTED_EXIT_40"
+  }
+}

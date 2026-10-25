@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "max_recent_events": 1000,
+  "max_observation_bytes": 2048,
+  "max_bundle_bytes": 1048576,
+  "max_journal_bytes": 2097152,
+  "allow_raw_packets": false,
+  "allow_external_upload": false
+}

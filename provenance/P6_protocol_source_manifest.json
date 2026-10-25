@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "source": "ANKA_NEXT_P6",
+  "reference_source": "R5.198 archive wire catalog",
+  "p6_source_files": [
+    {
+      "path": "src/anka_app/protocol_offline.py",
+      "sha256": "744310a6e6ddc39d3a2b67ccf7a9da5a2f0b399ea7d3e541f68fd3009d0be8e9"
+    },
+    {
+      "path": "src/anka_contracts/protocol.py",
+      "sha256": "a02cd730960dabb5d168eae9737d443f7a86d8b711d69adee2f09d178c5a92e7"
+    },
+    {
+      "path": "src/anka_protocol/__init__.py",
+      "sha256": "822d88802e803020797fde7ec08859320873b95b2659e4135503d4d20b6882ec"
+    },
+    {
+      "path": "src/anka_protocol/adapters/__init__.py",
+      "sha256": "4f73b909d935188892b8a06a4654c295559a3e681fb096c8e6866956cf0af5cb"
+    },
+    {
+      "path": "src/anka_protocol/adapters/historical.py",
+      "sha256": "f6814881fe1f6a977eae08835c9f53e00d47e34eba50fa86e443a616d280ff2f"
+    },
+    {
+      "path": "src/anka_protocol/api.py",
+      "sha256": "90d28a7ac1d808315797ec252a8655e32ef3c070660869df7d10791025fdb1d8"
+    },
+    {
+      "path": "src/anka_protocol/wire.py",
+      "sha256": "8f882a1a312cebe4e2c31e7681053cf0819d1eabb85d8eb3856e2c8b6c11b8bf"
+    }
+  ],
+  "reference_manifest_sha256": "5ab5e7485b646834f5d63b489891b8ee4a7a49a03a9147753c2c74c5da28f5f4",
+  "historical_semantics_reused": false,
+  "canonical_events_certified": false
+}

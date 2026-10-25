@@ -1,0 +1,2 @@
+# Windows observe-only capture dependency. Installed by setup.bat; Npcap itself is a host prerequisite.
+scapy==2.6.1

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "source_release": "R5.198",
+  "source_role": "HISTORICAL_REFERENCE_ONLY",
+  "files": {
+    "dofus_3_7_10_10_scenarios.json": {
+      "sha256": "ae0d197bbb040412daa461b48e66c8869f97c68b7c5c6a6966a8c2e539fd45b4",
+      "size": 2263
+    },
+    "dofus_3_7_10_10_wire_catalog.json": {
+      "sha256": "44b204bffa1888b2306714d89fd4693bb013720dd2c98f3ff7299b0f40651a92",
+      "size": 23883
+    }
+  },
+  "certifies_current_build": false
+}

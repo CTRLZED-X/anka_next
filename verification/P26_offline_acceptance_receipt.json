@@ -1,0 +1,189 @@
+{
+  "milestone": "P26",
+  "date": "2026-10-20",
+  "status": "PASS_OFFLINE_INDIVIDUAL_GROUPS_WINDOWS_PENDING",
+  "scope": "configured_passive_windows_start_capture_observations",
+  "environment": "Linux Python 3.13; native Windows and Npcap not executed",
+  "test_inventory": {
+    "files": 42,
+    "methods": 775,
+    "inherited_methods": 739,
+    "new_methods": 36,
+    "all_test_methods_passed": true,
+    "verification_method": "3 passing multi-module groups + 23 individually bounded module tests",
+    "multi_module_groups": [
+      {
+        "group": 1,
+        "status": "PASS",
+        "tests_passed": 98,
+        "mode": "multi_module"
+      },
+      {
+        "group": 2,
+        "status": "PASS",
+        "tests_passed": 97,
+        "mode": "multi_module"
+      },
+      {
+        "group": 3,
+        "status": "PASS",
+        "tests_passed": 97,
+        "mode": "multi_module"
+      }
+    ],
+    "individual_modules": [
+      {
+        "module": "test_capture_cli",
+        "tests_passed": 2,
+        "status": "PASS"
+      },
+      {
+        "module": "test_capture_live",
+        "tests_passed": 24,
+        "status": "PASS"
+      },
+      {
+        "module": "test_capture_parser",
+        "tests_passed": 16,
+        "status": "PASS"
+      },
+      {
+        "module": "test_client_integration",
+        "tests_passed": 5,
+        "status": "PASS"
+      },
+      {
+        "module": "test_configuration",
+        "tests_passed": 10,
+        "status": "PASS"
+      },
+      {
+        "module": "test_diagnostics",
+        "tests_passed": 11,
+        "status": "PASS"
+      },
+      {
+        "module": "test_invariants",
+        "tests_passed": 3,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p10_protocol_qualification",
+        "tests_passed": 33,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p11_fight_evidence",
+        "tests_passed": 37,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p12_decision_probe",
+        "tests_passed": 43,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p13_map_research",
+        "tests_passed": 31,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p15_tactical_scoring",
+        "tests_passed": 20,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p16_sequence_research",
+        "tests_passed": 29,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p19_offline_fake_driver",
+        "tests_passed": 35,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p21_architecture_readiness",
+        "tests_passed": 18,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p22_causal_linkage",
+        "tests_passed": 18,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p23_semantic_transport_finality",
+        "tests_passed": 18,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p25_host_readiness",
+        "tests_passed": 13,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p26_passive_ingress",
+        "tests_passed": 36,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p8_integration",
+        "tests_passed": 5,
+        "status": "PASS"
+      },
+      {
+        "module": "test_p8_state_journal",
+        "tests_passed": 32,
+        "status": "PASS"
+      },
+      {
+        "module": "test_reference_assets",
+        "tests_passed": 4,
+        "status": "PASS"
+      },
+      {
+        "module": "test_semantic_p7",
+        "tests_passed": 30,
+        "status": "PASS"
+      },
+      {
+        "module": "test_semantic_p7_architecture",
+        "tests_passed": 2,
+        "status": "PASS"
+      },
+      {
+        "module": "test_semantic_p7_cli",
+        "tests_passed": 8,
+        "status": "PASS"
+      }
+    ]
+  },
+  "combined_verifier_status": "UNRESOLVED_INTERMITTENT_STALL",
+  "two_operator_commands": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "privacy": {
+    "raw_payloads_persisted": false,
+    "endpoint_addresses_serialized": false,
+    "configured_names_in_capture_report": false
+  },
+  "live": {
+    "current_build_certified": false,
+    "windows_npcap_accepted": false,
+    "physical_input_enabled": false,
+    "end_to_end_acceptance_percent_complete": 0
+  },
+  "progress": {
+    "estimated_weighted_roadmap_percent": 77,
+    "is_measured_quality_percent": false
+  },
+  "known_limitations": [
+    "No real Windows/Npcap sampling exercised",
+    "No evidence of current Dofus protocol semantics",
+    "Sampling only observes transport metadata",
+    "The combined test runner occasionally stalls",
+    "No physical action execution or live-fight acceptance"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "milestone": "P37",
+  "date": "2026-10-21",
+  "title": "Resumable verification checkpoints and bounded subprocess trees",
+  "base_archive": "ANKA_NEXT_P36_TARGET_EFFECT_RESEARCH_AND_VERIFIER_ISOLATION_OFFLINE_VERIFIED.zip",
+  "base_archive_sha256": "8d14dcc5ba2f6e8200ecaa0a940623e8a75f3f76c99fbfc2fcad62ae3ec4ee71",
+  "project_version": "0.37.0",
+  "verification": {
+    "status": "FOCUSED_PASS_FULL_MODULE_INCOMPLETE",
+    "new_p37_tests_passed": 11,
+    "focused_plus_protocol_arch_tests_passed": 153,
+    "focused_modules": [
+      "test_p24_verification_runner",
+      "test_p33_shadow_projection_bridge",
+      "test_p34_reconstruction_gap_audit",
+      "test_p35_effect_reconciliation",
+      "test_p36_target_effect_research",
+      "test_p36_module_isolation",
+      "test_p37_checkpointed_verification",
+      "test_protocol_architecture"
+    ],
+    "full_test_modules_discovered": 54,
+    "full_module_attempt": "INCOMPLETE_OUTER_COMMAND_TIMEOUT",
+    "checkpoint_completed_before_outer_timeout": 10,
+    "separate_protocol_architecture_tests_passed": 4,
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "original_archive_integrity_not_rebuilt": true,
+    "architecture_packages": 13,
+    "architecture_modules": 247,
+    "assets_verified": 165,
+    "windows_tested": false,
+    "live_tested": false
+  },
+  "safety": {
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "physical_input_enabled": false,
+    "live_start_block": true,
+    "current_build_certified": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "src/anka_app/cli.py": "402c9767cfaeaaa830d714a7c1bf5d3bdd222da1a7b000ec30bd4e3bdce531fc",
+    "src/anka_app/verification_runner.py": "975f8e521f33cd392397c7abe99c0f9eff4c90e38d702dd30bd4902d60f03f33",
+    "tests/test_p37_checkpointed_verification.py": "0c64e94f6f75a8e6b5eb87b8548271ce60a510041a315467d09e6b85b1db66e2",
+    "docs/P37_CHECKPOINTED_RECOVERABLE_VERIFICATION.md": "ed273876589698e36109e2d0246f4bf9d3865e6a8bb1a151d8a4fe3398972f07",
+    "00_READ_FIRST_NEXT_CHAT.md": "b39778106734a9d9dce57e5d2f99d09faa65fb9760a0105e49bc354f3fb8a550",
+    "IMPLEMENTATION_STATUS.md": "f6253890fe5620ee246a48b45d169c9a54cdd91fd7cf50482b8de49672fd0628",
+    "README.md": "0dd66e73d03956b9aad5abce44f97ca27181b5e350899af83fa018a3007986fa",
+    "pyproject.toml": "c092e9ae7b27abb3f2be9930dd746c33507fdf238136e612d57a6faa7019b035"
+  },
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "roadmap_estimate_pct": 88,
+    "live_fight_acceptance_pct": 0,
+    "note": "Subjective scoped roadmap estimate; not measured quality or game readiness"
+  },
+  "blockers": [
+    "Real current-client CRA/ENU source and independent semantic witness evidence unavailable",
+    "Current-build protocol adapter, production Canonical admission, identity/calibration, physical input and server outcome acceptance not certified",
+    "Complete 54-module verifier not finished under outer execution limit",
+    "Windows process-tree termination not accepted on actual host"
+  ]
+}

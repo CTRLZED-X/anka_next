@@ -1,0 +1,185 @@
+{
+  "client_size": {
+    "height": 649,
+    "width": 1280
+  },
+  "controls": {
+    "JOIN_FIGHT": {
+      "source": "user_window_spy_scaled_1920x974_to_1280x649",
+      "verified": true,
+      "x": 91,
+      "y": 304
+    },
+    "PHASE_BUTTON": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 893,
+      "y": 606
+    }
+  },
+  "directions": {
+    "BOTTOM": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 859,
+      "y": 640
+    },
+    "LEFT": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 23,
+      "y": 286
+    },
+    "RIGHT": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 1249,
+      "y": 224
+    },
+    "TOP": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 591,
+      "y": 2
+    }
+  },
+  "note": "PHASE_BUTTON is shared between Ready and End Turn. Meaning must be verified from authoritative fight phase; slot-to-spell association is not certified.",
+  "schema_version": 1,
+  "source_filename": "reference/calibration/shared_ui_calibration_1280x649.yaml",
+  "source_sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
+  "spell_slots": {
+    "1": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 467,
+      "y": 583
+    },
+    "10": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 718,
+      "y": 586
+    },
+    "11": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 745,
+      "y": 584
+    },
+    "12": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 467,
+      "y": 611
+    },
+    "13": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 495,
+      "y": 611
+    },
+    "14": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 521,
+      "y": 611
+    },
+    "15": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 551,
+      "y": 611
+    },
+    "16": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 579,
+      "y": 612
+    },
+    "17": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 605,
+      "y": 610
+    },
+    "18": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 634,
+      "y": 609
+    },
+    "19": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 661,
+      "y": 610
+    },
+    "2": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 494,
+      "y": 584
+    },
+    "20": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 688,
+      "y": 610
+    },
+    "21": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 719,
+      "y": 610
+    },
+    "22": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 746,
+      "y": 610
+    },
+    "3": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 523,
+      "y": 584
+    },
+    "4": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 550,
+      "y": 586
+    },
+    "5": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 578,
+      "y": 582
+    },
+    "6": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 608,
+      "y": 582
+    },
+    "7": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 633,
+      "y": 583
+    },
+    "8": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 662,
+      "y": 583
+    },
+    "9": {
+      "source": "user_click_calibration",
+      "verified": true,
+      "x": 690,
+      "y": 583
+    }
+  },
+  "status": "HISTORICAL_COORDINATES_NOT_LIVE_CERTIFIED"
+}

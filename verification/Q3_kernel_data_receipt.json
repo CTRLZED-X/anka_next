@@ -1,0 +1,90 @@
+{
+  "artifacts": {
+    "docs/M2_GAME_KERNEL_AND_DATA.md": "021420fe2dd176abf14d7253b578eb27247e9b7434274da309f78d1d2ff1290f",
+    "reference/m2/KERNEL_SCOPE.json": "6d259120e0caa807f061c9ec6c6ea1dc7a494efeefa6ab7fa3bb2525377a99b2",
+    "reference/m2/game_data_provenance.json": "1a7570e232eec0e836b82f047b2e3d0393ec68b844a6a35613d979ec824f6e99",
+    "reference/m2/kernel_reuse_provenance.json": "7b5b991488108b59226a235e98bb8a3ea087ab46fbd9560659dca4cd00ef55b3",
+    "reference/m2/legacy_kernel_oracle_manifest.json": "e905c70e4dbb54cdbc7b03f2ec5fac6d26a3a1ae5993d8d72f3d420ef7cd4641"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 6,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "Q3_KERNEL_BYTE_PARITY",
+      "detail": "legacy/current Kernel files identical=137/137",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q3_GAME_DATA_BYTE_PARITY",
+      "detail": "legacy/current game-data files identical=27/27",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q3_KERNEL_INDEPENDENCE",
+      "detail": "forbidden external ANKA imports=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q3_SCOPE_EXPLICIT",
+      "detail": "Historical source versions, CRA/ENU scope, maps and non-certified boundaries are explicit.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q3_CURRENT_KERNEL_ADAPTER_TESTS",
+      "detail": "tests=8 pass=8 fail=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q3_LEGACY_KERNEL_ORACLE",
+      "detail": "legacy independent mechanics cases passed=206; selected files=11",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 5156,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "334902bb0f2067f221bbccc27abaa9970d57dd0a9c5308c73d877612a86ea177",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q3",
+  "generated_utc": "2026-10-24T23:24:10.921685+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "Game data is historical 3.6.10.10 and does not certify the current client build.",
+    "Q3 proves deterministic mechanics/data scope only; live resources, protocol truth, identity, projection and physical input are outside Kernel authority."
+  ],
+  "milestone": "M2",
+  "observed_client_build": null,
+  "physical_input_count": 0,
+  "physical_input_state": "DISABLED",
+  "protocol_adapter_release": null,
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 214,
+    "skipped": 0
+  }
+}

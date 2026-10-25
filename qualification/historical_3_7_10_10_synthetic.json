@@ -1,0 +1,309 @@
+{
+  "schema": 1,
+  "adapter_id": "dofus_3_7_10_10_historical_semantics_p7",
+  "historical_build": "Dofus 3.7.10.10",
+  "evidence_type": "SYNTHETIC_ONLY",
+  "cases": [
+    {
+      "id": "basic_ap_mp",
+      "scenario": "resource_absolute",
+      "name": "jtk",
+      "body_hex": "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "AP",
+          "value": 9,
+          "maximum": null,
+          "cooldowns": []
+        },
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "MP",
+          "value": 5,
+          "maximum": null,
+          "cooldowns": []
+        }
+      ],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 100,
+      "generation": 2,
+      "message_index": 0
+    },
+    {
+      "id": "spend_metadata_not_double",
+      "scenario": "resource_absolute",
+      "name": "jtk",
+      "body_hex": "0a16221410010a10080b10feffffffffffffffff0138b960108906",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "AP",
+          "value": 9,
+          "maximum": null,
+          "cooldowns": []
+        }
+      ],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 101,
+      "generation": 2,
+      "message_index": 1
+    },
+    {
+      "id": "cooldown_positive",
+      "scenario": "cooldown_snapshot",
+      "name": "jti",
+      "body_hex": "108906220418071002",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_COOLDOWN_SNAPSHOT",
+          "actor_id": 777,
+          "resource": null,
+          "value": null,
+          "maximum": null,
+          "cooldowns": [
+            [
+              7,
+              2
+            ]
+          ]
+        }
+      ],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 102,
+      "generation": 2,
+      "message_index": 2
+    },
+    {
+      "id": "hp_verified_context",
+      "scenario": "hp_with_identity",
+      "name": "kqo",
+      "body_hex": "08e80718bc05",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_HP_ABSOLUTE",
+          "actor_id": 777,
+          "resource": null,
+          "value": 700,
+          "maximum": 1000,
+          "cooldowns": []
+        }
+      ],
+      "context": {
+        "local_actor_id": 777,
+        "fight_active": true,
+        "identity_verified": true
+      },
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 103,
+      "generation": 2,
+      "message_index": 3
+    },
+    {
+      "id": "hp_no_identity",
+      "scenario": "hp_without_identity",
+      "name": "kqo",
+      "body_hex": "08e80718bc05",
+      "expected_status": "CONTEXT_MISSING",
+      "expected_failure": null,
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 104,
+      "generation": 2,
+      "message_index": 4
+    },
+    {
+      "id": "truncated_wire",
+      "scenario": "malformed_wire",
+      "name": "jtk",
+      "body_hex": "0aff",
+      "expected_status": "QUARANTINED",
+      "expected_failure": "PROTOBUF_SHAPE_INVALID",
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 105,
+      "generation": 2,
+      "message_index": 5
+    },
+    {
+      "id": "wrong_direction",
+      "scenario": "wrong_direction",
+      "name": "jtk",
+      "body_hex": "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906",
+      "expected_status": "QUARANTINED",
+      "expected_failure": "UNTRUSTED_MESSAGE_DIRECTION",
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "client_to_server",
+      "packet_number": 106,
+      "generation": 2,
+      "message_index": 6
+    },
+    {
+      "id": "unknown_wire",
+      "scenario": "unknown_wire",
+      "name": "brandnew",
+      "body_hex": "08f403",
+      "expected_status": "NO_SEMANTIC_MAPPING",
+      "expected_failure": null,
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 107,
+      "generation": 2,
+      "message_index": 7
+    },
+    {
+      "id": "version_drift",
+      "scenario": "build_mismatch",
+      "name": "jtk",
+      "body_hex": "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906",
+      "expected_status": "BUILD_MISMATCH",
+      "expected_failure": null,
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.11.11",
+      "direction": "server_to_client",
+      "packet_number": 108,
+      "generation": 2,
+      "message_index": 8
+    },
+    {
+      "id": "composition_drift",
+      "scenario": "branch_drift",
+      "name": "jtk",
+      "body_hex": "0a1322111001220d080b10feffffffffffffffff01108906",
+      "expected_status": "QUARANTINED",
+      "expected_failure": "CHARACTERISTIC_BRANCH_DRIFT",
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 109,
+      "generation": 2,
+      "message_index": 9
+    },
+    {
+      "id": "repeated_occurrence_a",
+      "scenario": "repeated_occurrence",
+      "name": "jtk",
+      "body_hex": "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "AP",
+          "value": 9,
+          "maximum": null,
+          "cooldowns": []
+        },
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "MP",
+          "value": 5,
+          "maximum": null,
+          "cooldowns": []
+        }
+      ],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 110,
+      "generation": 2,
+      "message_index": 10
+    },
+    {
+      "id": "repeated_occurrence_b",
+      "scenario": "repeated_occurrence",
+      "name": "jtk",
+      "body_hex": "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906",
+      "expected_status": "CANDIDATES_ONLY",
+      "expected_failure": null,
+      "expected_candidates": [
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "AP",
+          "value": 9,
+          "maximum": null,
+          "cooldowns": []
+        },
+        {
+          "kind": "ACTOR_RESOURCE_ABSOLUTE",
+          "actor_id": 777,
+          "resource": "MP",
+          "value": 5,
+          "maximum": null,
+          "cooldowns": []
+        }
+      ],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 111,
+      "generation": 2,
+      "message_index": 11
+    },
+    {
+      "id": "cooldown_duplicate",
+      "scenario": "cooldown_snapshot",
+      "name": "jti",
+      "body_hex": "108906220418071002220418071001",
+      "expected_status": "QUARANTINED",
+      "expected_failure": "CANONICAL_RANGE_OR_VALUE_INVALID",
+      "expected_candidates": [],
+      "context": null,
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 112,
+      "generation": 2,
+      "message_index": 12
+    },
+    {
+      "id": "hp_out_of_range",
+      "scenario": "hp_with_identity",
+      "name": "kqo",
+      "body_hex": "08e80718d00f",
+      "expected_status": "QUARANTINED",
+      "expected_failure": "CANONICAL_RANGE_OR_VALUE_INVALID",
+      "expected_candidates": [],
+      "context": {
+        "local_actor_id": 777,
+        "fight_active": true,
+        "identity_verified": true
+      },
+      "requested_build": "Dofus 3.7.10.10",
+      "direction": "server_to_client",
+      "packet_number": 113,
+      "generation": 2,
+      "message_index": 13
+    }
+  ]
+}

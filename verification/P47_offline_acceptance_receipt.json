@@ -1,0 +1,71 @@
+{
+  "added_file_paths": [
+    "src/anka_protocol/historical_stream_replay.py",
+    "src/anka_app/historical_stream_offline.py",
+    "tests/test_p47_historical_stream_replay.py",
+    "tests/test_p47_historical_stream_setup_smoke.py",
+    "docs/P47_HISTORICAL_WIRE_STREAM_REPLAY_AND_EVIDENCE_GAP_AUDIT.md",
+    "verification/P47_offline_acceptance_receipt.json"
+  ],
+  "baseline": "P46",
+  "baseline_archive_sha256": "07f004c5dc8314b2216bcb647b7760216cd40ae92af0915faa0006ce0ac830b9",
+  "baseline_preservation": "508 previous paths retained, 4 original files updated; others byte-for-byte unchanged",
+  "date": "2026-10-21",
+  "limitations": [
+    "No current client PCAP/witness or certified build",
+    "No current Windows BepInEx/Unity live acceptance",
+    "No authoritative Canonical admission or real input",
+    "P47 cannot prove capture completeness merely from selected WireMessage tuples",
+    "Uninterrupted full-suite not completed"
+  ],
+  "milestone": "P47",
+  "modified_baseline_file_paths": [
+    "src/anka_app/cli.py",
+    "00_READ_FIRST_NEXT_CHAT.md",
+    "IMPLEMENTATION_STATUS.md",
+    "README.md"
+  ],
+  "next_priority": "Exact-current-client independent packet/oracle evidence, Windows/process/flow attestation, and controlled authoritative admission only after certification",
+  "progress": {
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "not_quality_or_reliability_score": true,
+    "subjective_roadmap_scope_pct": 91
+  },
+  "safety": {
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "research_output_only": true,
+    "start_blocked": true
+  },
+  "scope": "OFFLINE HISTORICAL RESEARCH ONLY; NO LIVE GAMEPLAY AUTHORITY",
+  "source_sha256": {
+    "docs/P47_HISTORICAL_WIRE_STREAM_REPLAY_AND_EVIDENCE_GAP_AUDIT.md": "05b50b29d87983dea05565802b66427825ace0568cc965b8c99f2b3af16ada93",
+    "src/anka_app/historical_stream_offline.py": "14adad5b4c54bdde1739f380eb64cbecdaa597b3daa06b49cea18f0d35882441",
+    "src/anka_protocol/historical_stream_replay.py": "fe98db01b78f9f51fe07e9e880aed2ce4de2e3c65c37feb9433e20bb3f8e1af5",
+    "tests/test_p47_historical_stream_replay.py": "e96e678f914c2075a4e0df565cde519c5ecff8ee02d06ba698c9a05793f54f9f",
+    "tests/test_p47_historical_stream_setup_smoke.py": "8bffd97a65afa0cab75326f2c6824906063fe69e3a42af6b47adbcca7fd6592d"
+  },
+  "title": "One-flow historical server-wire replay with unknown/unsupported evidence visibility and chronology rejection",
+  "verification": {
+    "arch_status": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 261,
+    "check_exit_code": 0,
+    "combined_bridge_test_warning": "Nonfatal ConnectionResetError in pre-existing mock Unity HTTP server thread; unittest exited 0",
+    "diagnostic_incident_zip_integrity": "PASS",
+    "full_regression_inventory_completed_as_one_run": false,
+    "full_regression_inventory_total_modules": 69,
+    "historical_source_integrity": "PASS",
+    "late_protocol_state_and_bridge_combined_methods_passed": 326,
+    "new_p47_methods_passed": 28,
+    "p35_p36_p43_p47_related_methods_passed": 94,
+    "p45_p46_p47_related_methods_passed": 101,
+    "reused_assets_verified": 165,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_expected_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "verification_limitation": "Combined tactical/integration group timeout and interrupted isolated inventory; individual groups overlap. Do not sum passing counts or claim all 69 passed."
+  }
+}

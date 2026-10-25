@@ -1,0 +1,17 @@
+{
+  "accepted_capability": "LOCAL_ACTOR",
+  "accepted_identity_wire": "jnj",
+  "accepted_registry_declared": true,
+  "canonical_authority": false,
+  "current_client_certified": false,
+  "physical_input_permitted": false,
+  "protocol_build": "Dofus 3.7.10.10",
+  "reason": "R5.198 implementation performs name matching in both jnj and jns, but its 3.7.10.10 handler registry declares LOCAL_ACTOR only for jnj. P53 therefore admits historical identity observations from jnj only.",
+  "reference_only_registry_declared": false,
+  "reference_only_wire": "jns",
+  "schema_version": 1,
+  "source_role": "R5_198_HISTORICAL_REFERENCE_ONLY",
+  "source_sha256": "cfac4d7e451ea0b484d6d0d15c80742a81690aca7fdf58d93d283aba6104ad0a",
+  "source_size": 28083,
+  "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/world_identity.source.txt"
+}

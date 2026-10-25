@@ -1,0 +1,21 @@
+{
+  "milestone": "P4 offline capture transport slice",
+  "date": "2026-10-20",
+  "platform": "Linux Python 3.13.5",
+  "test_command": "PYTHONPATH=src python -m unittest discover -s tests -q",
+  "test_result": "113 passed",
+  "read_only_offline_capture": "PASS",
+  "config_fail_closed_ports_missing": "PASS",
+  "privacy_packet_body_not_in_incident": "PASS",
+  "source_to_parser_same_snapshot": "PASS",
+  "legacy_kernel_manifest_integrity": "PASS",
+  "synthetic_transport_sample": "PASS, not real protocol evidence",
+  "start_live": "BLOCKED, expected",
+  "windows_batch_acceptance": "NOT_TESTED",
+  "live_capture_provider": "NOT_IMPLEMENTED",
+  "account_flow_ownership": "NOT_IMPLEMENTED",
+  "protocol_decoder": "NOT_IMPLEMENTED",
+  "game_input": "NOT_IMPLEMENTED",
+  "live_ready": false,
+  "release_claim": "Offline transport reader only; not certified for live Dofus gameplay"
+}

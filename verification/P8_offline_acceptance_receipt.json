@@ -1,0 +1,25 @@
+{
+  "milestone": "P8",
+  "created_utc": "2026-10-20T12:16:38.082072+00:00",
+  "scope": "synthetic SQLite event+projection atomicity and deterministic live state reducer",
+  "baseline_tests": 218,
+  "added_tests": 37,
+  "all_tests": 255,
+  "full_python_unittest": "PASS",
+  "new_p8_integration": "PASS",
+  "state_demo": "PASS (7 synthetic events)",
+  "start_safety": "BLOCKED BY DESIGN / exit 40",
+  "historical_semantic_authority": "STILL QUARANTINED",
+  "live_ready": false,
+  "current_build_certified": false,
+  "windows_acceptance": false,
+  "physical_input_sent": false,
+  "source_sha256": {
+    "src/anka_contracts/state.py": "09e746965bccfa7c18e646e0348aa0609a7d87c025361525439dcfa914cc4faa",
+    "src/anka_live_state/reducer.py": "05fedea3bce75ea8d05074b11427d7361b2aae02c01a6dcfb2cdb4ea0f8cc705",
+    "src/anka_canonical/journal.py": "6f40742b9c0f4659deef033417b3978043c75af2001110dbadffbc286697c3f4",
+    "src/anka_app/state_offline.py": "986d91b865debb1c7fce68637d9c0f2f2a5456aab8debd1a86974432d1e75636",
+    "tests/test_p8_state_journal.py": "ef708164f8044481ad976c26f9a061ab7a77c49218f43b08129fc91c6fa7eae2",
+    "tests/test_p8_integration.py": "589b8fd8225443511679f63df05bd6f7ca59c99c1f5cce963048ddfe9ddb8f27"
+  }
+}

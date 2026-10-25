@@ -1,0 +1,55 @@
+{
+  "milestone": "P44",
+  "date": "2026-10-21",
+  "title": "Read-only Unity bridge recovery and reference projection evidence",
+  "baseline": "P43",
+  "baseline_archive_sha256": "162ebb7e285ef1bd284e0fba6e99f42bb9493d1976966d75347b80f9b757cc40",
+  "safety": {
+    "physical_input_enabled": false,
+    "production_canonical_admission": false,
+    "current_build_certified": false,
+    "native_compiled": false,
+    "native_installed": false,
+    "bridge_live_accepted": false
+  },
+  "changes": [
+    "14 legacy C#/.csproj/README assets retained with per-file hash provenance",
+    "Strict read-only localhost Unity bridge health/map 560-cell snapshot contract",
+    "Client/contract APIs, automatic setup source-integrity validation, fail-closed tests"
+  ],
+  "verification": {
+    "p44_unit_tests_passed": 20,
+    "p44_subtests_passed": 42,
+    "cross_system_focused_passed": 211,
+    "cross_system_subtests_passed": 127,
+    "cross_system_groups_overlap": true,
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_expected_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "full_suite": "INCOMPLETE_OUTER_TIMEOUT",
+    "full_suite_checkpointed_modules": 7,
+    "full_suite_checkpointed_tests": 135,
+    "full_suite_expected_modules": 63,
+    "previous_p43_1138_tests": "HISTORICAL_BASELINE_NOT_RERUN_AS_P44_FULL_SUITE"
+  },
+  "progress": {
+    "estimated_weighted_roadmap_pct": 89,
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "basis": "subjective roadmap coverage only, not code quality or production reliability"
+  },
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "next_priority": "P45 exact-build historical protocol decoder research compatibility adapter and independent golden fixtures; do not activate current-client protocol or physical input",
+  "source_file_sha256": {
+    "src/anka_contracts/bridge.py": "fda389c42daa084f6d6418081fe270e42de7510b375db5b62862a7fe47bf2192",
+    "src/anka_client/unity_bridge.py": "6b87abfc3869bb4c4d5476c0c949a424cfbbdaad0023c93a4be879753e5dc9de",
+    "src/anka_client/bridge_source.py": "6a6429f97a6928e6a016a3b4c9358109d27e3c6381badd8632bdd011d2f6421f",
+    "src/anka_client/api.py": "877f0014bf1827fa9975467ef921bd951e33f09418e042c38239d63c37ad3139",
+    "src/anka_app/cli.py": "feaa21eab52e30facac8187d77bb272088589a5ed2138e818789c31ed55b09ba",
+    "tests/test_p44_unity_bridge_readonly.py": "674fcc9d90abbf0d4ff0057d6c34ef99034b4061e3ec99a24cd50f1e70267319",
+    "tests/test_p44_native_source_audit.py": "eab29034972b2c1a356719e7237a6d972d73d58b8b74a6a6009c3127c2b1476e"
+  }
+}

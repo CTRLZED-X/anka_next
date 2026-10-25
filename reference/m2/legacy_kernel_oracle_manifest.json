@@ -1,0 +1,593 @@
+{
+  "schema_version": 1,
+  "milestone": "M2",
+  "preserved_in_archive": "reference/baselines/archives/R5_198_REFERENCE.zip",
+  "eligible_pure_kernel_test_files": 105,
+  "eligible_test_functions": 868,
+  "files": [
+    {
+      "path": "tests/test_action_projection.py",
+      "sha256": "c45469c5602f0df85fb0c12dc80c58630a804cbca59d19055d2abe1edae3134a",
+      "test_functions": 13
+    },
+    {
+      "path": "tests/test_actor_api.py",
+      "sha256": "1e1655b31c488ff070774b3aa07d181444f37e5fd894799db2638d1a71f1874c",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_actor_queries.py",
+      "sha256": "ba16aa12b056dfae26c40d8c4fc924f6afd315c7befa74f5f571a72519a09fda",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_actor_taxonomy.py",
+      "sha256": "32d2ea722e2b3647912128ca475883bde161a1d2a3b689e27f6b4fc532a10594",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_aoe.py",
+      "sha256": "d5e6d7ef8f7dfe9d9cfe78416b3f54e71d68d608259beb3f1a62b655d57bde29",
+      "test_functions": 18
+    },
+    {
+      "path": "tests/test_avarice_mechanics.py",
+      "sha256": "58d355356a06b42318b3deacc5e80ff75850601c517803851ded4116d8ef833c",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_beche_des_anciens_mechanics.py",
+      "sha256": "62e99e3f8b95b15abcbcf865ade1f3d25929177fb7e50847bb53b9d5198960aa",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_boite_de_pandore_mechanics.py",
+      "sha256": "09ad18b3864db46ec848edc4b481be4e2f1a732faea8978e5a9846c40607be7a",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_bundled_spell_mechanics.py",
+      "sha256": "c23fac569accf603e663fa5613f3931a43fbc788ecd157e771b767270e45bb15",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_carreaux_destructeurs_mechanics.py",
+      "sha256": "9c79d6f9b5d59f3aa719391859c1c4fb373580a4b2f5d738a6f4373b5a250db6",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_cast_area.py",
+      "sha256": "836492b7ce1e52b008f70e5854151170c882c1f39bf49c4f4b13df7e3d5d47ea",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_casting.py",
+      "sha256": "d2b48f6b0cc82e1358fffdc03a4691b34ec6907ea7c350c17456734ae0e7d045",
+      "test_functions": 34
+    },
+    {
+      "path": "tests/test_casting_state_criteria.py",
+      "sha256": "54b3c191eb90ec7907a739648eeadc8149a721cad8467d9d73256fd791d410c5",
+      "test_functions": 8
+    },
+    {
+      "path": "tests/test_characteristic_semantics.py",
+      "sha256": "5335087e76f4b681c5f23a1c14c4dc1d0f689e3acb0415eee0fb551203677e68",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_clef_du_tresor_mechanics.py",
+      "sha256": "422a26b3f55951a99a10a00cf380ba6700ea31be75cf6ceb281e8a3190090362",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_collision.py",
+      "sha256": "83e9f6fc9baed90064b1b33c43e56591ce6c5b5386423ad29ba40cc453bdc3f3",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_combat_stats.py",
+      "sha256": "b936f564273d21e6f07c331ba019065d4e484317fb3d17444d062f5ab1512e47",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_corruption_mechanics.py",
+      "sha256": "b2d95395e09a1c97db2cf21304c7f973b27970c4ebed80dbf0c485b3527db63d",
+      "test_functions": 8
+    },
+    {
+      "path": "tests/test_damage_area_falloff.py",
+      "sha256": "2b9be36931894c380c889b9ab4dc0c4b4ef8f59bfcf040674f45de7e2ff8700f",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_displacement.py",
+      "sha256": "555513579a6a15e1eae413b74c04f238aa30b6d30560b32487ab782388c78cd3",
+      "test_functions": 23
+    },
+    {
+      "path": "tests/test_domain_foundation.py",
+      "sha256": "abedf323b46f461ccd9a1d3af60fe56320c4bf3d61647d3a07acbef87237e65a",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_effect_conditions.py",
+      "sha256": "785bbb6beeb492ea13af368813017809ab085e28026d474704c9766d2caff19e",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_effect_resolution.py",
+      "sha256": "dd04db75b0874f0a0e5e13f8215b387a742501a2fa9e26b28346772a2a45e1e1",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_effect_resolution_conditions.py",
+      "sha256": "8b1f2f0517bd3a92afb14a7f70e4af762b2a7a5805b0475cb9b09d80a530182f",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_effect_resolution_live_authority.py",
+      "sha256": "8998d66ac73ad2e60f8ac0d0a82f26fdeea8b585806579249e6dca6fa8b01144",
+      "test_functions": 22
+    },
+    {
+      "path": "tests/test_effect_source_audit.py",
+      "sha256": "668538054596a2e708be0633f25b4874278c08ffa3607154e63d854bfca0e246",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_effect_source_discovery.py",
+      "sha256": "b92bc49e3512dc829000371488da881f9f594536d7c65229e2d55ae03bb4e360",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_fight_cast_evaluation.py",
+      "sha256": "f5cc088353dc726a64b29b2529fba040cf05fd1f5806f9a21c536c7a046189eb",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_fight_projection.py",
+      "sha256": "13c1f99d81a7e259f55a588884f59e7fe50b6ee304138b164c81474812b5d747",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_fight_queries.py",
+      "sha256": "5bc3a0a05b4513e96d85c480bad42cedb032ac5720233d45d047c3bef75a1875",
+      "test_functions": 23
+    },
+    {
+      "path": "tests/test_fight_wide_effect_scope.py",
+      "sha256": "e7a82633ad2148e24ce6378e91c0ea117096bf8ce91fcd737363ffaadf05aa19",
+      "test_functions": 2
+    },
+    {
+      "path": "tests/test_fleche_abolition_mechanics.py",
+      "sha256": "6825767c4f4fba4f32eccae2782747cdb649cb4c194f2b50628c7a0b8e34fedc",
+      "test_functions": 8
+    },
+    {
+      "path": "tests/test_fleche_assaillante_mechanics.py",
+      "sha256": "6a48e5fa5ff972438e609de4e9df664b8f83696d03ea86464542554f1b04620d",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_fleche_de_recul_mechanics.py",
+      "sha256": "a441ab3cea9cc58b4ee644c4449186a5148979e06f199c992ccb5131119fdfea",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_fleche_devorante_mechanics.py",
+      "sha256": "9fc4f8514724b0eda570cf4a8b4518aac04bd47226fbde96017f39b58dc20cf4",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_fleche_dispersion_mechanics.py",
+      "sha256": "19c79156dcb354153ec9164af010868c139e5888686261dc267991449cd10695",
+      "test_functions": 12
+    },
+    {
+      "path": "tests/test_fleche_expiation_mechanics.py",
+      "sha256": "c80ee05454f620f1b387555b9a4d94e84aa38644de1d777c56400ba4cde0e03e",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_fleche_glacee_mechanics.py",
+      "sha256": "a52951da6495e0207c1195f57798b19a84dddf1296059f80c0455fd767392ca8",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_fleche_immobilisation_mechanics.py",
+      "sha256": "edfbf819024e017312c2c807e6b68989dd54e0a31e48db2ebbd5356b3dad0506",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_fleche_massacrante_mechanics.py",
+      "sha256": "3e24843870b07320586f00446bff837679a32b4e1a9b3ca8c549bdff3f37f478",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_fleche_perforante_mechanics.py",
+      "sha256": "a8079eee45c3ade420a922a7bf02413b0b0efcb5d02728cbd1bc905de730b262",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_fleche_punitive_mechanics.py",
+      "sha256": "67cdcf479fec06e08e271f1bbed338bb91a5e5639b6ff583de23d01ff8722c79",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_fleche_ralentissante_mechanics.py",
+      "sha256": "001333412a58c56098421fb2501b9a3208ee6d4604c8b8a797670fa5b7c2f4d1",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_fleche_vagabonde_mechanics.py",
+      "sha256": "98d436416d46c2fcab3072e97b4e88b6b05659d0975b4c6da49072908439c9b9",
+      "test_functions": 10
+    },
+    {
+      "path": "tests/test_force_de_l_age_mechanics.py",
+      "sha256": "e426747e8db062d3287d7d91e5334797acb1238642135d3015576751bf72a029",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_geometry_grid.py",
+      "sha256": "c736bf5a491bc53f8a404918b64d7c8c6e36139f61096d06559d6f270072a890",
+      "test_functions": 13
+    },
+    {
+      "path": "tests/test_integrated_spell_v2_readiness.py",
+      "sha256": "e2fdb0c31e687c49f8623d43d718e52313422120486e9922c7022e87c2bab4fb",
+      "test_functions": 40
+    },
+    {
+      "path": "tests/test_knowledge_pack.py",
+      "sha256": "93aab0870b61b20c497f83820c4fce80a4417f280a470d952c9fbc7235e1ae82",
+      "test_functions": 23
+    },
+    {
+      "path": "tests/test_lancer_de_pelle_mechanics.py",
+      "sha256": "7452a73d63b2cf3b7833726ee57c2aa11437d3367695bf5c1c79d7abfac96c2d",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_lancer_de_pieces_mechanics.py",
+      "sha256": "80c38f7ac3275147057b9f095989363364d320fb601035e6badd5892c31e6eb7",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_live_requirements.py",
+      "sha256": "7df833929b884d12cb18c1148ea6be7a57e91df730cde72ee92171d891e1fd6b",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_los.py",
+      "sha256": "d9cf38a782219e85093d5d1a8913f9add193b7382ababec57ac78cb44a6705c4",
+      "test_functions": 12
+    },
+    {
+      "path": "tests/test_maladresse_mechanics.py",
+      "sha256": "d91fea1dc168cd340207ebff95b9bd3378ce620edede75abf3ff1bdfe80ac31d",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_malle_animee_mechanics.py",
+      "sha256": "28d825396393042fe43a745074b48239ab1cd9f8b0f303aba615bbdb4bc52d0e",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_mapuse.py",
+      "sha256": "04bcdba1777c5624e6402348562af5e31a418570c826ac5f8090e8fbbb9b3edf",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_mechanic_registry.py",
+      "sha256": "951cc7c0c93df320e6b25110c4cd4c4b39cc4d9457447800e3a8d9a60703744c",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_modifier_effect_specs.py",
+      "sha256": "5690563290f071ff2676c81108258d10f7594c710e5a4d2d00195e725221203d",
+      "test_functions": 3
+    },
+    {
+      "path": "tests/test_movement.py",
+      "sha256": "c28286e89a77af248f4d67f7c9b49b67284d74b893e9a5585e103126cc3804e4",
+      "test_functions": 16
+    },
+    {
+      "path": "tests/test_movement_projection.py",
+      "sha256": "d97b8afff4bdb1b7f4f3492da3801d0a01adb89d9fe6b2865002538c769caa9b",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_obsolescence_mechanics.py",
+      "sha256": "2c8e5f1893c587df5ca8646833a6b43608c82aeae59c1fb1945367afc628d682",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_oeil_de_taupe_mechanics.py",
+      "sha256": "f1edf637003ba30802d8776d2504ce59606fd6515b4ed84536dfd3a758e42d8a",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_oeil_pour_oeil_mechanics.py",
+      "sha256": "19441812b23fb1cbeff5612001d06ba4aed4e76cfc2033e53917dac24f9307e3",
+      "test_functions": 8
+    },
+    {
+      "path": "tests/test_opportunite_mechanics.py",
+      "sha256": "8c269cce2515d2d090a770e3e5d4994c8d5ae7249ca38901d367bba614597d0d",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_pelle_animee_mechanics.py",
+      "sha256": "6c0e38bba6fa92491c6a1b192d05a56dcb3774f389ffc34e858dcdd58d02ea64",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_pelle_aurifere_mechanics.py",
+      "sha256": "d021f6d45f19c98e3da9925c27542f3193ff64e44e426eccc2c8cf6625adec8f",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_pelle_des_anciens_mechanics.py",
+      "sha256": "9da697808348a3a118857fbb1bad5704b4aabfd47766e7f356f149460b8d722d",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_pelle_fantomatique_mechanics.py",
+      "sha256": "76ec37e6e7cf84bf985f3d3c8858c29c295190a2bc99e8a6efd141aec7c88dfc",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_probabilistic_readiness_consistency.py",
+      "sha256": "6993f459c3d77893389d82a458e21f7b375d08092de2ff5a309b255cea4874fe",
+      "test_functions": 2
+    },
+    {
+      "path": "tests/test_range.py",
+      "sha256": "0e72179e8cac8b27449c3f670c171a8dec5aefce09d1966d9b6ded9033bcda27",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_relocation.py",
+      "sha256": "ecfd897434752a5364582a38be1da068b2385ab55954d314fe0c1bfaaad9651d",
+      "test_functions": 10
+    },
+    {
+      "path": "tests/test_remblai_mechanics.py",
+      "sha256": "b3869367d313a182b1bf6ecec68755be2caf18c222a97a9c8b4a678221f8b271",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_represailles_mechanics.py",
+      "sha256": "258f451f1359cd5565149676ce181e2761524139f293b686573c50aad645ef3f",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_retraite_anticipee_mechanics.py",
+      "sha256": "50cdd99abf9c806fa4359c8aa61397ca19407ca459b0cabbd664fb99190cecfd",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_roulage_de_pelle_mechanics.py",
+      "sha256": "9c07fb6e3cfd8708d784a60ba701f3fd4d1a8020e83dca9e44c3d66bf6bc3aac",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_ruee_vers_l_or_mechanics.py",
+      "sha256": "82a4d2eaf4ca2a286f32752e7e5aff3b9c50e64fe201d2298df07480a6d0ea64",
+      "test_functions": 5
+    },
+    {
+      "path": "tests/test_runtime_contracts.py",
+      "sha256": "2e263522b5a13e39a2c3e5dd1ec79d52865218c752fad80cfb9dd55f86a70ab5",
+      "test_functions": 20
+    },
+    {
+      "path": "tests/test_sac_anime_mechanics.py",
+      "sha256": "40c0f9fa2a7eadf349f70ad4d7359a87c0163fa00bddd5a9c4bba0562f0dfa78",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_sentinelle_mechanics.py",
+      "sha256": "c55a3a4a80d16134643ccbcaa9ec79132884d2a8ef1f8ebafa28fba98891ab40",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_spell_base_damage_change.py",
+      "sha256": "1e84e90f96445961972198ce8738985991670d50e15c0753f8f2d6194e5020f3",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_spell_effect_occurrences.py",
+      "sha256": "bcc257ee5777ee60496ddfeb13eac0ec8ade37e93e16dfc3763e8d36b8116b7d",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_spell_effect_values.py",
+      "sha256": "206d1ba7939b91604f5fa697c9b341982011faf85604b2f1aab5cfe834cbf87f",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_spell_mechanics_api.py",
+      "sha256": "62881258e6b98bc4d7f19085f806fbb57254821877a66fd3d98753e9b51b57da",
+      "test_functions": 2
+    },
+    {
+      "path": "tests/test_spell_mechanics_overlay.py",
+      "sha256": "ca27e790eff6746215cfb16428c521999d1aeac3b6e53bc63516c030dc4ecd7d",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_spell_mechanics_pack.py",
+      "sha256": "23b8e59d0f0e9d528ec6a1907fd5a810b07c94a6f03fb11df33cb77bbf372ee6",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_spell_readiness.py",
+      "sha256": "b59eea875b85c698309fa9ada67dac7b0a17b211d6cfe5b057db3897991cd74d",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_spell_rule_compiler.py",
+      "sha256": "28e8805079c6e1341480d9123794f0b4f80a669f551578b8813d2f7b03520ba9",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_state_criteria.py",
+      "sha256": "c208f1592e0261b495e14a7454403e88edcf9ba48a1627eca4248acf63ea2dd7",
+      "test_functions": 10
+    },
+    {
+      "path": "tests/test_state_engine.py",
+      "sha256": "5ba4490de8704e904b5d36e1c0a930bd35c9c9947370072542553ca29bc3f417",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_static_catalog.py",
+      "sha256": "50ac09d4a0e28d1353214759a5dba603b3e530d4f15f1d489d203d5d1b6df5ec",
+      "test_functions": 3
+    },
+    {
+      "path": "tests/test_static_classes.py",
+      "sha256": "6fed872663376071f7b7188961600742193a9c6972a5faca366b2a763e81eba1",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_static_companions.py",
+      "sha256": "d7a31aee914388ebf1a69be561cb1dacf80cdefe1d579f3b4b06de143fb0cdf7",
+      "test_functions": 4
+    },
+    {
+      "path": "tests/test_static_map_locations.py",
+      "sha256": "4be2d4abb2029d91462c0002fedf5907a86e1a7be0464c860fc5550b16a22b65",
+      "test_functions": 2
+    },
+    {
+      "path": "tests/test_static_monster_taxonomy.py",
+      "sha256": "d0334747b200bff64fe5da13dcb91a308ab68c9e4dd7bd3471ade4b6c81494e4",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_static_monsters.py",
+      "sha256": "dd81459bde2507f24e2444df1419a137b5288c99a5eda2d44e905a70a1d5c502",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_static_spells.py",
+      "sha256": "d6aaa0581523ac123901f70e119e320b90d1de4f667686d0b65aed165ea71d43",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_static_world.py",
+      "sha256": "1e8e93796654e0e9a791c3e76351c56124cce8d002a6aba4c1810b7124af3d0c",
+      "test_functions": 2
+    },
+    {
+      "path": "tests/test_status_api.py",
+      "sha256": "c5719cb33ba5d41c19aa6100b81fb347b327ab13f6d6e5dfde88c87fa4360ce4",
+      "test_functions": 1
+    },
+    {
+      "path": "tests/test_status_queries.py",
+      "sha256": "8f087502b0b8b3ad351d3757f91934d552875a55bd1167ebbccebf5a9373ee48",
+      "test_functions": 15
+    },
+    {
+      "path": "tests/test_status_semantics.py",
+      "sha256": "f4297efae11ee0214f2075103e5a82a9cbff1ff993ab0d1046ca858dc5a4b30f",
+      "test_functions": 12
+    },
+    {
+      "path": "tests/test_tamisage_mechanics.py",
+      "sha256": "8675d9e23240cd38373a597f2ddf8293132395680c024170041057ce456a7a10",
+      "test_functions": 6
+    },
+    {
+      "path": "tests/test_targeting.py",
+      "sha256": "3949bf0a49f2d9c0fc8f3b3cb5033f7ada28c4b6c2d626224a098010b1a52a88",
+      "test_functions": 30
+    },
+    {
+      "path": "tests/test_tir_de_repli_mechanics.py",
+      "sha256": "0c6f3392d5685a53c30abd2cf444a24c838e21bbc0d3cba089b6192d8fe3b502",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_tirs_eloignes_mechanics.py",
+      "sha256": "db5fea3e0ea8e50a85d0567df85b18e8c9ea68332434f90b402e66644b95d800",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_tirs_puissants_mechanics.py",
+      "sha256": "d7657896bb32a16f846252a3d507368bd796e91b19a28c38e3a45aa62aef8944",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_turn_history.py",
+      "sha256": "fd77c0a667f19cb35f717002b641e6080d4923db6b57d7621e53c1b7ffd2bf88",
+      "test_functions": 6
+    }
+  ],
+  "active_q3_subset": [
+    {
+      "path": "tests/test_aoe.py",
+      "sha256": "d5e6d7ef8f7dfe9d9cfe78416b3f54e71d68d608259beb3f1a62b655d57bde29",
+      "test_functions": 18
+    },
+    {
+      "path": "tests/test_casting.py",
+      "sha256": "d2b48f6b0cc82e1358fffdc03a4691b34ec6907ea7c350c17456734ae0e7d045",
+      "test_functions": 34
+    },
+    {
+      "path": "tests/test_collision.py",
+      "sha256": "83e9f6fc9baed90064b1b33c43e56591ce6c5b5386423ad29ba40cc453bdc3f3",
+      "test_functions": 7
+    },
+    {
+      "path": "tests/test_displacement.py",
+      "sha256": "555513579a6a15e1eae413b74c04f238aa30b6d30560b32487ab782388c78cd3",
+      "test_functions": 23
+    },
+    {
+      "path": "tests/test_geometry_grid.py",
+      "sha256": "c736bf5a491bc53f8a404918b64d7c8c6e36139f61096d06559d6f270072a890",
+      "test_functions": 13
+    },
+    {
+      "path": "tests/test_los.py",
+      "sha256": "d9cf38a782219e85093d5d1a8913f9add193b7382ababec57ac78cb44a6705c4",
+      "test_functions": 12
+    },
+    {
+      "path": "tests/test_movement.py",
+      "sha256": "c28286e89a77af248f4d67f7c9b49b67284d74b893e9a5585e103126cc3804e4",
+      "test_functions": 16
+    },
+    {
+      "path": "tests/test_range.py",
+      "sha256": "0e72179e8cac8b27449c3f670c171a8dec5aefce09d1966d9b6ded9033bcda27",
+      "test_functions": 11
+    },
+    {
+      "path": "tests/test_relocation.py",
+      "sha256": "ecfd897434752a5364582a38be1da068b2385ab55954d314fe0c1bfaaad9651d",
+      "test_functions": 10
+    },
+    {
+      "path": "tests/test_spell_readiness.py",
+      "sha256": "b59eea875b85c698309fa9ada67dac7b0a17b211d6cfe5b057db3897991cd74d",
+      "test_functions": 9
+    },
+    {
+      "path": "tests/test_targeting.py",
+      "sha256": "3949bf0a49f2d9c0fc8f3b3cb5033f7ada28c4b6c2d626224a098010b1a52a88",
+      "test_functions": 30
+    }
+  ],
+  "active_q3_test_functions": 183,
+  "selection_rationale": "Fast independent coverage of geometry/range/LoS/AoE/movement/casting/readiness/targeting/displacement/collision/relocation. Exact source+data byte parity covers the full preserved legacy implementation; slower static-data spell fixtures remain archived for later targeted regression use."
+}

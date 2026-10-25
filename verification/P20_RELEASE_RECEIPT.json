@@ -1,0 +1,31 @@
+{
+  "milestone": "P20",
+  "scope": "synthetic cross-system replay and two-operator-command workflow",
+  "operator_commands": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "extra_root_batch_files": 0,
+  "physical_input_enabled": false,
+  "live_ready": false,
+  "evidence": {
+    "p20_focused_tests": "13 passed, 7 subtests",
+    "p11_p19_targeted_tests": "72 passed, 39 subtests (before final workflow integration)",
+    "inherited_shard_0": "180 passed, 59 subtests (before final workflow integration)",
+    "complete_suite": "NOT_CONFIRMED: intermittent inherited runner stall; do not claim full suite passed",
+    "cli_setup": "EXIT 0 / synthetic smoke PASS",
+    "cli_start": "EXIT 40 / LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "windows_batch_execution": "NOT TESTED ON WINDOWS",
+    "current_protocol": "NOT CERTIFIED",
+    "fresh_archive_targeted_tests": "85 passed, 46 subtests (P11/P19/P20)",
+    "fresh_archive_cli_setup": "PASS, exit 0, automatic positive and negative synthetic integration smoke",
+    "fresh_archive_cli_start": "BLOCKED, exit 40, incident created; LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "archive_integrity": "ZIP CRC PASS; exactly setup.bat/start.bat in root"
+  },
+  "previous_baseline": "P19: 647 passing tests in prior release; P20 full preservation not independently proven by complete suite",
+  "limitations": [
+    "Synthetic observations, manually supplied synthetic outcome evidence",
+    "No physical input, no certified current build, no real fight acceptance",
+    "Historical regression runner intermittently stalls"
+  ]
+}

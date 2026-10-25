@@ -1,0 +1,100 @@
+{
+  "milestone": "P30",
+  "title": "Versioned hash-pinned declarative protocol research adapters",
+  "verification_date": "2026-10-20",
+  "source_project": "ANKA_NEXT_P29_EXACT_SOURCE_SEMANTIC_ORACLE_COMPARISON_OFFLINE_VERIFIED.zip",
+  "implementation": {
+    "source": "src/anka_protocol/adapters/declarative.py",
+    "composition": "src/anka_app/protocol_evidence_compare.py",
+    "local_registry": "reference/protocol/research_adapters/registry.json",
+    "registered_current_build_recipes": 0,
+    "supported_recipe_semantics": [
+      "actor_ap",
+      "actor_mp",
+      "actor_range",
+      "actor_hp"
+    ],
+    "schema": "LOCAL_REVIEWED_RESEARCH_ONLY",
+    "canonical_wire_contract_alignment": "underscore allowed in EvidenceRef and WireMessage",
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "offline_test_result": {
+    "status": "PASS_8_ISOLATED_SHARDS",
+    "test_files_discovered": 46,
+    "test_files_executed": 46,
+    "shards_completed": 8,
+    "shards_expected": 8,
+    "shard_tests": [
+      110,
+      110,
+      110,
+      109,
+      109,
+      108,
+      109,
+      109
+    ],
+    "tests_passed": 874,
+    "P30_new_tests": 30,
+    "single_process_monolithic_run": "NOT_CLAIMED; historical intermittent stalls",
+    "fresh_extraction": {
+      "status": "PASS_8_ISOLATED_SHARDS",
+      "test_files_discovered": 46,
+      "test_files_executed": 46,
+      "shard_tests": [
+        110,
+        110,
+        110,
+        109,
+        109,
+        108,
+        109,
+        109
+      ],
+      "tests_passed": 874,
+      "note": "Freshly unpacked archive, all test modules run across eight isolated groups. Monolithic runner not claimed."
+    }
+  },
+  "setup_test": {
+    "normal_no_pack": "PASS_EXIT_0",
+    "new_build_recipe_pack": "PASS_AS_RESEARCH_ONLY_IN_REGRESSION_TEST",
+    "fresh_extraction": "PASS_EXIT_0"
+  },
+  "start_test": {
+    "status": "BLOCKED",
+    "exit_code": 40,
+    "failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "fresh_extraction": "BLOCKED_EXIT_40",
+    "fresh_incident_bundle_integrity": "PASS"
+  },
+  "architecture": {
+    "status": "PASS",
+    "packages": 13,
+    "forbidden_imports": 0
+  },
+  "safety": {
+    "live_ready": false,
+    "adapter_activated": false,
+    "current_build_certified": false,
+    "current_build_canonical_commits": 0,
+    "physical_input_sent": false
+  },
+  "remaining_acceptance_gaps": [
+    "No actual new-build semantic recipe is registered or independently certified",
+    "New build field meanings and complete current-client captures not supplied",
+    "More complex event families require reviewed code adapters and contract tests",
+    "Current-client Canonical admission and authoritative state absent",
+    "Windows identity, calibration, capture and physical driver acceptance absent",
+    "CRA/ENU autonomous live-fight and recovery acceptance absent",
+    "Intermittent monolithic verifier issue not root-caused"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 81,
+    "live_fight_acceptance_percent": 0,
+    "percent_type": "Weighted scope estimate only; not a production quality or reliability score"
+  },
+  "note": "Even a matching new-build scalar research recipe cannot grant live authority or certify an adapter."
+}

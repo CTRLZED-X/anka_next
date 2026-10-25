@@ -1,0 +1,50 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false
+  },
+  "changes": {
+    "global_message_count_preserved": true,
+    "historical_selector_regeneration_required": true,
+    "multi_message_same_packet_ordinals_stable": true,
+    "packet_local_message_ordinal": true,
+    "prior_global_message_index_was_source_ordinal": true,
+    "two_interleaved_flows_research_independently": true
+  },
+  "date": "2026-10-22",
+  "estimated_roadmap_scope_percent": 92,
+  "limitations": [
+    "No real Windows or current-client acceptance evidence",
+    "Historical or synthetic capture equality is not independent packet origin proof",
+    "Pre-P60 packet selectors using global message indexes require regeneration/replay",
+    "No canonical admission, breed/actor proof, spell settlement, or real input driver"
+  ],
+  "milestone": "P60",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 279,
+    "check": "PASS",
+    "incident_bundle_integrity": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "synthetic_multiflow_wire_smoke": "PASS_MULTI_FLOW_PACKET_LOCAL_PROVENANCE"
+  },
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_subtests_passed": 8,
+    "focused_test_methods_passed": 127,
+    "isolated_test_methods_passed": 1508,
+    "isolated_test_modules_expected": 87,
+    "isolated_test_modules_passed": 87,
+    "new_p60_test_methods_passed": 4
+  },
+  "title": "Packet-local wire provenance across interleaved multi-account TCP flows",
+  "verification_fingerprint": "ef0c6e939ea981b6787986ae65afe3e734bdc7ef61640707ab0e9bbb27b16f90",
+  "verified_complete_live_cra_enu_percent": 0
+}

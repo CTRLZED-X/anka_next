@@ -1,0 +1,29 @@
+{
+  "milestone": "P3_READ_ONLY_CLIENT_INVENTORY_SEED",
+  "build_date": "2026-10-20",
+  "host_environment": "Linux, Python 3.13.5",
+  "tests": {"command": "PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -q", "total": 71, "result": "PASS"},
+  "checked": [
+    "exact HWND/PID/process-generation identity contract",
+    "ambiguous name and shared-window rejection",
+    "untrusted executable / changed creation time / stale or conflicting identity refusal",
+    "future and unknown evidence rejection",
+    "read-only package boundary and absence of input authorization",
+    "historical calibration and viewport/DPI uncertainty",
+    "incident bundle and partial identity evidence",
+    "P0/P1 preserved tests and reused kernel asset checks",
+    "start command blocks live runtime with explicit exit code 40",
+    "synthetic replay emits zero physical input"
+  ],
+  "open_gates": [
+    "real Windows ctypes host smoke",
+    "authoritative current-build character/class evidence provider",
+    "verified account to process/flow/bridge binding",
+    "current-client geometry / projection / spell-slot calibration",
+    "full P1 process crash and installer fault injection",
+    "capture, protocol, canonical, live state, AI, coordination, workflow and execution"
+  ],
+  "windows_live_certified": false,
+  "physical_input_sent": false,
+  "live_start_enabled": false
+}

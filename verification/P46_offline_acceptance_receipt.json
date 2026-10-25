@@ -1,0 +1,86 @@
+{
+  "archive_preservation": "All original P45 file paths preserved; existing READ_FIRST/README/STATUS prefixed with new release notes; no other original file content changed",
+  "baseline": "P45",
+  "baseline_archive_sha256": "7ea4f398644713142314f874692c44757efaa5842d8a6022977b560c379fe501",
+  "date": "2026-10-21",
+  "limitations": [
+    "No authentic new current-build PCAP/independent CRA/ENU witness in supplied project",
+    "Historical R5.198 handler layouts are not proof of modern build semantics",
+    "Synthetic oracles establish codec behavior only, not gameplay causality",
+    "jwp is a result/end boundary, not server-proven victory or world reentry",
+    "Full built-in isolated verifier not rerun uninterrupted, despite complete independently executed per-module inventory",
+    "No actual Windows BepInEx install, calibration acceptance, Win32 input or CRA+ENU live fight"
+  ],
+  "milestone": "P46",
+  "progress": {
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "not_quality_score": true,
+    "subjective_estimated_roadmap_pct": 91
+  },
+  "research_mappings": {
+    "all_other_jsq_actions": "UNSUPPORTED_ACTION, no inferred effects",
+    "combined_audit": "single-flow, fight/generation/build-bound P45 turn plus P46 combat event chronology; research-only",
+    "historical_build": "Dofus 3.7.10.10",
+    "jsq_cast_action_type": 300,
+    "jsq_push_action_type": 5,
+    "jsq_teleport_action_type": 4,
+    "jwp_terminal_result": "FIGHT_RESULT_BOUNDARY_OBSERVED; WIN_LOSS_UNKNOWN"
+  },
+  "safety": {
+    "authoritative_canonical_admission": false,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "real_input_enabled": false,
+    "spell_effect_confirmed": false,
+    "victory_confirmed": false
+  },
+  "scope": "STRICTLY HISTORICAL RESEARCH; NOT ACTION AUTHORIZATION",
+  "sha256_sources_and_new_tests": {
+    "docs/P46_HISTORICAL_COMBAT_OBSERVATIONS_AND_CROSS_FAMILY_CAUSAL_AUDIT.md": "dd7345b00a9696dbd3303b408cf32c24c5ceea01a90380d8c6aa7171b63659d5",
+    "src/anka_contracts/historical_combat.py": "b3d5e27060cd51d73f773342dd938432f45e0cf3a10f75e751e69258b76e6e7d",
+    "src/anka_protocol/adapters/historical_combat.py": "e48c85a7140c392326b2c753b5bd164210b301227971ceaf934809174356da12",
+    "src/anka_protocol/historical_combat_audit.py": "96ec78d71a3d4fe10f165d0d91d7f59b634cdd860c266002d88e9fd6125a329c",
+    "src/anka_protocol/historical_combined_audit.py": "06594f0578ff5201657a404c32b973a0492a1794d82219caa4242ea3446600d3",
+    "tests/test_p46_combined_lifecycle_combat_research.py": "3b7155d4ee99633335392a0cffd920b163b5b8a1a6ec100c60d762da24915637",
+    "tests/test_p46_historical_combat_effect_research.py": "662c3103fa38966780c7a5fd4661398008b53998219f6217f0a87c575702db83"
+  },
+  "source_code_added": [
+    "src/anka_contracts/historical_combat.py",
+    "src/anka_protocol/adapters/historical_combat.py",
+    "src/anka_protocol/historical_combat_audit.py",
+    "src/anka_protocol/historical_combined_audit.py"
+  ],
+  "test_files_added": [
+    "tests/test_p46_historical_combat_effect_research.py",
+    "tests/test_p46_combined_lifecycle_combat_research.py"
+  ],
+  "title": "Historical server combat records, result boundary and P45-P46 provenance/causal audit",
+  "verification": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 259,
+    "architecture_status": "PASS",
+    "built_in_checkpoint_verifier_entire_run_completed": false,
+    "check_exit_code": 0,
+    "execution_method": "66 modules run as independent unittest subprocesses with per-module counts and source/fixture fingerprint; slow P37 verifier module separately run with python -m unittest -q",
+    "expected_start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "focused_cross_system_subtests": 74,
+    "focused_cross_system_test_methods": 247,
+    "historical_decoder_source_integrity": "PASS",
+    "incident_zip_integrity": "PASS",
+    "module_inventory_failures": 0,
+    "module_inventory_individually_completed": 67,
+    "module_inventory_subprocess_methods": 1220,
+    "module_inventory_subprocess_modules": 66,
+    "module_inventory_total": 67,
+    "module_inventory_total_methods": 1231,
+    "native_source_archive_integrity": "PASS",
+    "new_subtests": 27,
+    "new_test_methods": 41,
+    "p37_verifier_module_separate_methods": 11,
+    "reused_assets_verified": 165,
+    "setup_exit_code": 0,
+    "source_and_fixture_input_fingerprint": "8ed4d710258ddd1b396eb832f2b667799f1b2292d4e51917d59f17a6c70eae7a",
+    "start_exit_code": 40
+  }
+}

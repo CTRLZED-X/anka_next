@@ -1,0 +1,57 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false
+  },
+  "changes": {
+    "automatic_preflight_smoke": true,
+    "cross_section_endianness_preserved": true,
+    "explicit_section_length_validated": true,
+    "first_section_header_required": true,
+    "packet_count_and_decoder_agree": true,
+    "shared_section_frame_parser": true,
+    "shb_version_1_0_required": true
+  },
+  "date": "2026-10-22",
+  "estimated_roadmap_scope_percent": 92,
+  "limitations": [
+    "Framing and source validity do not attest a saved capture was complete or genuine.",
+    "No current-client semantic adapter certification or Windows live acceptance.",
+    "No verified CRA/ENU identity, authoritative Canonical admission or real input driver."
+  ],
+  "milestone": "P63",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "preflight": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 282,
+    "architecture_violations": 0,
+    "check": "PASS",
+    "incident_zip_integrity": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "synthetic_section_smoke": "PASS_SECTION_BOUNDARIES_FAIL_CLOSED"
+  },
+  "reproduced_root_cause": "Both P62 PCAPNG readers accepted structurally invalid/orphan sections and silently ignored declared Section Length boundaries.",
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "baseline_p62_errors": 1,
+    "baseline_p62_failed_assertions": 29,
+    "focused_test_methods_passed": 162,
+    "isolated_checkpoint_source_bound": true,
+    "isolated_test_methods_passed": 1556,
+    "isolated_test_modules_expected": 90,
+    "isolated_test_modules_passed": 90,
+    "new_p63_tests_passed": 17
+  },
+  "title": "Fail-closed PCAPNG section-boundary and declared-length integrity",
+  "verification_fingerprint": "e359a0f10e9fc70f13e41a4b7375c5a1fa8f87eec1adf39413d7e63c183a0c05",
+  "verified_complete_live_cra_enu_percent": 0
+}

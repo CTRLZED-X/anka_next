@@ -1,0 +1,60 @@
+{
+  "milestone": "P14",
+  "scope": "BOUNDED_SYNTHETIC_KERNEL_TACTICAL_CANDIDATES_NON_EXECUTABLE",
+  "date_utc": "2026-10-20T15:00:35.532438+00:00",
+  "host": {
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "previous_P13_tests": 448,
+  "new_P14_tests": 20,
+  "total_test_count": 468,
+  "focused_test_result": "PASS_20_TESTS",
+  "all_tests_result": "PASS_468_TESTS_UNITTTEST_VERBOSE",
+  "asset_integrity_check": "PASS_165_REFERENCE_ASSETS",
+  "cli_check": "PASS",
+  "cli_tactical_demo": "PASS",
+  "cli_live_start": "BLOCKED_EXIT_40",
+  "kernel_rules": "preserved_original_kernel_reachability_shortest_path_projection_and_cast_legality",
+  "candidate_bound": "up to 12 origin/movement cells × up to 12 target cells = 144 previews",
+  "verified_offline_properties": [
+    "immutable_reports_and_inputs",
+    "deterministic_candidate_order",
+    "real_kernel_mp_and_shortest_path",
+    "kernel_ap_and_cast_legality",
+    "scope_version_and_geometry_guard",
+    "missing_cast_histories_remain_unknown",
+    "movement_reactive_modifiers_mark_unknown",
+    "multi_cast_budget_not_represented_as_cast_legality",
+    "unsupported_spell_refused",
+    "no_automatic_inputs"
+  ],
+  "known_limitations": [
+    "all scenarios synthetic",
+    "historical game data and calibration only",
+    "no current-client protocol certification",
+    "not actual CRA/ENU tactical scoring",
+    "not an executable action plan",
+    "Windows batch commands not host-tested",
+    "intermittent historical verify invocation stalls not root-caused",
+    "physical movement locking/tackle and server outcome unverified"
+  ],
+  "current_protocol_certified": false,
+  "live_ready": false,
+  "physical_input_sent": false,
+  "implementation_coverage_estimate_percent": 56,
+  "coverage_estimate_note": "Approximate roadmap coverage. Not verified software quality, bug-free claim or end-to-end readiness.",
+  "source_sha256": {
+    "src/anka_contracts/tactical_research.py": "62b52acad7283e5458fe29bbe201708e4e110a47d3ba89d484358db1067e0774",
+    "src/anka_decision/tactical_research.py": "f0a2418e4132e0851c5fae99dbbd78797a6637c61a66203c9e38752953ef81e4",
+    "src/anka_app/tactical_offline.py": "7ef925962f4c2616fee98de1583ee77b80070bc2b549cfe71579a07e15dc823f",
+    "src/anka_app/cli.py": "6a8f3006a6425deb18afbebeb09849817f5938790e06605ec57c9b279075e57d",
+    "tests/test_p14_tactical_research.py": "4293cdc0d23f42b4557904e6188eaffb2256fe2035a1727128bd582991c5405b",
+    "tactical_demo.bat": "9386a34e18dc386a5830fcc3278f633473ff600b0d33ac148b65257482b7470c",
+    "src/anka_decision/README.md": "43f9e90252d1c823b5d276c3794a7a2455c198b8b20a53bd3e3aadc16cea2b27",
+    "README.md": "78d42f48c90813359d26eba8de0b32a7d743e41b7c150d5827a08896c1f2fca0",
+    "IMPLEMENTATION_STATUS.md": "00d276fda09a46f4923156ea71c64683ac9c9c7cd0bb9976d2d5edbaabe6c9ff",
+    "docs/P14_BOUNDED_KERNEL_TACTICAL_RESEARCH.md": "d1842cf63be1a7e5c6e8e05405a35376ca61c024471dcd0f885f895ec69e9d58"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "milestone": "P31",
+  "title": "Fight-event research contracts, schema-2 declarative mappings, exact-source oracles, read-only timeline checks",
+  "verification_date": "2026-10-20",
+  "source_project": "ANKA_NEXT_P30_DECLARATIVE_PROTOCOL_RESEARCH_ADAPTERS_OFFLINE_VERIFIED.zip",
+  "implemented": {
+    "new_contracts": [
+      "src/anka_contracts/fight_semantic.py"
+    ],
+    "new_research_replay": [
+      "src/anka_canonical/research_timeline.py"
+    ],
+    "enhanced_adapter": "src/anka_protocol/adapters/declarative.py",
+    "enhanced_composition": "src/anka_app/protocol_evidence_compare.py",
+    "semantic_capabilities": [
+      "fight_start",
+      "fight_end",
+      "turn_start",
+      "turn_end",
+      "actor_cell",
+      "spell_cast"
+    ],
+    "recipe_schemas_supported": [
+      1,
+      2
+    ],
+    "registered_current_build_research_recipes": 0,
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "verification": {
+    "status": "PASS_8_ISOLATED_GROUPS",
+    "tests_passed": 910,
+    "inherited_p30_tests": 874,
+    "new_p31_tests": 36,
+    "test_modules": 47,
+    "test_groups": 8,
+    "counts_per_group": [
+      115,
+      114,
+      114,
+      114,
+      113,
+      113,
+      113,
+      114
+    ],
+    "single_process_monolithic": "NOT_CLAIMED; prior intermittent stalls unresolved",
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "asset_integrity_count": 165,
+    "architecture_packages": 13,
+    "architecture_forbidden_imports": 0,
+    "fresh_extraction_status": "PASS_TARGETED_141_TESTS",
+    "fresh_extraction_targeted_tests": 141,
+    "fresh_extraction_setup_exit_code": 0,
+    "fresh_extraction_start_exit_code": 40,
+    "fresh_extraction_architecture": "PASS",
+    "fresh_extraction_full_suite": "NOT_REPEATED; all 910 tests passed in working-tree isolated groups",
+    "remaining_warnings": "Earlier inherited SQLite ResourceWarnings observed in some groups; cleanup pending"
+  },
+  "safety": {
+    "current_build_certified": false,
+    "adapter_activated": false,
+    "canonical_commits": 0,
+    "authoritative_live_state": false,
+    "physical_input_sent": false,
+    "research_only": true
+  },
+  "pending": [
+    "Real current-build packet and independent oracle evidence not supplied",
+    "Complex protocol spell effects, repeated oneofs, action outcomes, fight result/identity and true cross-account ordering remain unsupported",
+    "Windows Npcap, client identity, calibration and physical execution require actual Windows acceptance",
+    "Intermittent monolithic verifier remains unresolved"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 82,
+    "integrated_live_fight_acceptance_percent": 0,
+    "note": "Weighted development scope estimate, not measured quality or reliability"
+  }
+}

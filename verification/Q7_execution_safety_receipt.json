@@ -1,0 +1,105 @@
+{
+  "artifacts": {
+    "docs/M11_EXECUTION_SAFETY.md": "bcc76a5bffe7104eeebd57cf810d925b48279058e087486c000fd2ddecca65d2"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 9,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "Q7_EXECUTION_REGRESSION",
+      "detail": "pytest_pass=143/143; minimum_collected=141; subtests=75",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_EXECUTION_IMPORT_ISOLATION",
+      "detail": "forbidden imports=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_SINGLE_PHYSICAL_INPUT_IMPLEMENTATION",
+      "detail": "OS input primitive sources outside sole driver=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_WINDOWS_DRIVER_NOT_COMPOSED",
+      "detail": "No normal production composition path constructs the Windows physical driver.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_INPUT_DISABLED_BY_DEFAULT",
+      "detail": "Explicit disabled scope cannot construct physical driver.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_DURABLE_UNCERTAINTY_INVARIANTS",
+      "detail": "Atomic prepare, SEND_STARTED/MAY_HAVE_SENT recovery and immutable command hash are present.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_FINAL_ADMISSION_INVARIANTS",
+      "detail": "Latest-state/context/loadout/outcome-policy rechecks present.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_SPLIT_POINTER_TRANSACTION",
+      "detail": "Pointer transaction rechecks after mouse-down and best-effort releases.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q7_ZERO_PHYSICAL_INPUT",
+      "detail": "Q7 runs fake drivers and pure pointer API fakes only; no Windows driver is constructed.",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 19543,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "3a0106866fb258e374bc7a983d4ecc4a2ff68867094b4461866622515779dc59",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q7",
+  "generated_utc": "2026-10-24T23:25:39.220718+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "Q7 is offline/fake-only; no current Windows host or Dofus client was controlled.",
+    "The production Windows driver remains disabled and uncomposed until exact-build Q10-Q12 acceptance.",
+    "Current-client protocol, calibration, loadout and live outcome evidence remain unaccepted."
+  ],
+  "milestone": "M11",
+  "observed_client_build": null,
+  "physical_input_count": 0,
+  "physical_input_state": "FAKE_ONLY",
+  "protocol_adapter_release": null,
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 143,
+    "skipped": 0
+  }
+}

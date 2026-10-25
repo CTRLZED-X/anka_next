@@ -1,0 +1,56 @@
+{
+  "milestone": "P18",
+  "date": "2026-10-20",
+  "implementation": "SYNTHETIC_OFFLINE_ONLY",
+  "title": "Durable action intent and outcome reconciliation with no real input",
+  "previous_baseline_tests": 562,
+  "new_tests": 50,
+  "working_tree_tests": {
+    "status": "PASS",
+    "tests_run": 612,
+    "runner": "PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -q",
+    "reported_seconds": 59.498
+  },
+  "clean_extraction_tests": {
+    "status": "PASS",
+    "tests_run": 612,
+    "runner": "PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -q",
+    "reported_seconds": 58.958
+  },
+  "safety_invariants": [
+    "Uncertain dispatch is durable before any future physical input, and is never auto-retried",
+    "Only one uncertain dispatch may exist globally across all accounts",
+    "Action ID and logical action key prohibit duplicate dispatch",
+    "Exact intent/evidence account, fight, turn, actor, client generation and revision scope required",
+    "Unknown and inconclusive outcomes do not imply success",
+    "SQLite action-event-evidence updates are atomic, with injected rollback faults tested",
+    "Read-only audits verify event hash chain, projection parity and evidence records",
+    "Every report is synthetic, non-actionable and cannot produce physical input"
+  ],
+  "new_commands": [
+    "execution_demo.bat",
+    "execution_audit.bat"
+  ],
+  "incident_export": "CHECKSUM_ZIP_PASS",
+  "limitations": [
+    "All actions and outcomes are synthetic fixtures, not actual game events",
+    "No physical driver, current-build protocol proof, real causal outcome correlator or Windows acceptance",
+    "Power-loss durability on Windows is not tested",
+    "Historic test suite produces SQLite ResourceWarnings; cause not yet isolated",
+    "Occasional slow verification runs remain possible, now with explicit timeout diagnostics"
+  ],
+  "live_start": "BLOCKED_BY_DESIGN",
+  "physical_input_sent": false,
+  "integrated_live_fight_acceptance": "NOT_PERFORMED",
+  "estimated_roadmap_progress_pct": 68,
+  "note": "The percent is a weighted planning estimate, not an engineering quality score.",
+  "cli_checks": {
+    "check": "PASS_EXIT_0",
+    "execution_fixture_accepted": "RESEARCH_ONLY",
+    "execution_uncertain": "BLOCKED_UNCERTAIN",
+    "execution_read_only_audit": "BLOCKED_UNCERTAIN_EXIT_10",
+    "start": "BLOCKED_EXIT_40",
+    "incident_integrity": "PASS"
+  },
+  "archive_p17_retention": "ALL_PRIOR_PATHS_PRESERVED"
+}

@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "specification": "ANKA_NEXT Definitive Master Specification",
+  "reference_archive_sha256": "69a3c3260a8dc20aeae2fe70e036c8bfcbfa2c275f9f370e1383419b3ff5461d",
+  "file_count": 33,
+  "tree_digest_sha256": "b23a40a8bd6b518f6bd325c07be161f543822d50d50f4de036de79e6f63a6a66",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "119852ace1354acc45ee7d32fd7c4880ef010d7389f13fef36f81fec3a37b6d2",
+      "bytes": 17507
+    },
+    {
+      "path": "SPECIFICATION_MANIFEST.json",
+      "sha256": "f30a9a205a0cca4b6079f8d48fd19ce359b2297b98ddb20ace953f596a352c3c",
+      "bytes": 5593
+    },
+    {
+      "path": "appendices/A_HISTORICAL_FAILURES.md",
+      "sha256": "0400b3afebbf393828f49645b1ccb286bf7c2fbdee445c5c433103eb0dd36759",
+      "bytes": 7310
+    },
+    {
+      "path": "appendices/B_GLOSSARY.md",
+      "sha256": "75c6043dd7bf33f3548ac1b3eb36339df4c90d8715790d43943ef9a50cbf6d03",
+      "bytes": 4252
+    },
+    {
+      "path": "appendices/C_EXAMPLE_SCHEMAS.md",
+      "sha256": "81129403d92b9177f1dcb1c1edfca082b4e31403e69580776503453be331e421",
+      "bytes": 2281
+    },
+    {
+      "path": "appendices/D_REFERENCE_EVIDENCE.md",
+      "sha256": "e9d5d64f69da671ab8f92e19e61b244c6cf29f463abe76e11cee4f5e43949119",
+      "bytes": 3020
+    },
+    {
+      "path": "appendices/E_SCENARIO_TEST_CATALOG.md",
+      "sha256": "7ddfd84b40f24a429cf3204162c46ab05b07ddc53beb913394d9d4ceee6d311c",
+      "bytes": 5784
+    },
+    {
+      "path": "appendices/F_ENGINEERING_REFERENCES.md",
+      "sha256": "ea1e749bd0d5dc95b9085dac17c4f30750f203e52c20cb61319944fa39ac7add",
+      "bytes": 2145
+    },
+    {
+      "path": "docs/01_PRODUCT_REQUIREMENTS.md",
+      "sha256": "67b87671e0219fb1131be63887b0be59911d4a5608c5112442fc176f5ef1740d",
+      "bytes": 15587
+    },
+    {
+      "path": "docs/02_ARCHITECTURE_AND_BOUNDARIES.md",
+      "sha256": "1be28daa0d410875714492b049c5a7860160092a67d6ee3b41e5d49b76a7f400",
+      "bytes": 13145
+    },
+    {
+      "path": "docs/03_SYSTEM_SPECIFICATIONS.md",
+      "sha256": "b7ede851b11a9ce88459ed849fc10c6d2351f4ff3a5937b98168020e5931667d",
+      "bytes": 6641
+    },
+    {
+      "path": "docs/04_CONTRACTS_STATE_AND_RUNTIME.md",
+      "sha256": "9f1e273ee105f2ac98ffb795bdf2e517ac14e27620a8e3392c509a31d59d66ff",
+      "bytes": 11093
+    },
+    {
+      "path": "docs/05_PROTOCOL_EVOLUTION.md",
+      "sha256": "d8bb71cdcb90da39ecb602fc59a06a72d9181a88489bcf071da2c0f3e2e68d58",
+      "bytes": 7593
+    },
+    {
+      "path": "docs/06_RELIABILITY_RECOVERY_CONCURRENCY.md",
+      "sha256": "b385d75f526f5f878468385b3761df3c1980c26e6bcef59ee09ebd40f90872f9",
+      "bytes": 6608
+    },
+    {
+      "path": "docs/07_DIAGNOSTICS_AND_FORENSICS.md",
+      "sha256": "6d55b77144648d6e36b3143a45ff1f427bdd87432b8c7698f702d4cd43b23396",
+      "bytes": 9208
+    },
+    {
+      "path": "docs/08_CONFIGURATION_OPERATIONS_PACKAGING.md",
+      "sha256": "d6fe4c6dabff9c629908853e66d79fa5f6d9d032c5f885e9edcabc2f00b74d6a",
+      "bytes": 6794
+    },
+    {
+      "path": "docs/09_TESTING_VERIFICATION_QUALITY_GATES.md",
+      "sha256": "3255d0a6edccb57de2c86ff655bc2936dfe83470fb0277ffe6714369959fe2b1",
+      "bytes": 7358
+    },
+    {
+      "path": "docs/10_DEVELOPMENT_ROADMAP.md",
+      "sha256": "295d9a6ec55d964ed9e3190d8e6f79445653f76ce8a42b59685e390e8572f48f",
+      "bytes": 9047
+    },
+    {
+      "path": "docs/11_REUSE_AND_MIGRATION.md",
+      "sha256": "673e983b4fb680fa590ad94d8baa708565dafd95333d252bbb2d85d1b5bb4fd1",
+      "bytes": 4992
+    },
+    {
+      "path": "docs/12_TRACEABILITY_ADRS_RISKS.md",
+      "sha256": "39afb5a9b7007d4905d4daf2736752810f704b773c91aa623c30cae9b1d91467",
+      "bytes": 8596
+    },
+    {
+      "path": "docs/13_DEFINITION_OF_DONE.md",
+      "sha256": "08cd6a989db9c9a7281a6d74c45cb4db5ea85f8743acb95be5b78e726fe1486c",
+      "bytes": 5514
+    },
+    {
+      "path": "docs/systems/01_CAPTURE.md",
+      "sha256": "32aa3b8bc0d3298490785d3654ffa0cd93d6cfecc6a508c17caa7fc631dce314",
+      "bytes": 2687
+    },
+    {
+      "path": "docs/systems/02_PROTOCOL.md",
+      "sha256": "923e555c3d99910193e4f353f84501317cdd05497474a2b6d269d8c4ad78f68e",
+      "bytes": 2778
+    },
+    {
+      "path": "docs/systems/03_CANONICAL.md",
+      "sha256": "808e3ebd489983996c8ad2e4304548b0fa9fb5e6002328a524b54933f5c7f9b7",
+      "bytes": 1855
+    },
+    {
+      "path": "docs/systems/04_LIVE_STATE.md",
+      "sha256": "86cccc1ac15e3abd1ca62108e84a12808ebc6d6865f8b1190a3980c894762d2c",
+      "bytes": 2192
+    },
+    {
+      "path": "docs/systems/05_GAME_KERNEL.md",
+      "sha256": "e9d9785406bf893bc96d1882ad452fc00dea90c0c59e3bd11e2ae2ccd56eb543",
+      "bytes": 1837
+    },
+    {
+      "path": "docs/systems/06_DECISION.md",
+      "sha256": "a7685fd06be4860123edd1ccfbc61ab91a4821a0ae12c9c923b105c559a21c19",
+      "bytes": 2333
+    },
+    {
+      "path": "docs/systems/07_EXECUTION.md",
+      "sha256": "dc17dda160646052c0b11803ae8f71939db37a18e4d842d93d38a9cc9a99ecc7",
+      "bytes": 4201
+    },
+    {
+      "path": "docs/systems/08_COORDINATION.md",
+      "sha256": "a2c798e3a4b574be92fffed6f5a1be8c1e2747360de5865da9ed6ef857f49473",
+      "bytes": 1835
+    },
+    {
+      "path": "docs/systems/09_WORKFLOW.md",
+      "sha256": "e3e93b38a954d34c3ceaeff5775f87aa892f50b6b465ada5baab747091caa4e1",
+      "bytes": 2054
+    },
+    {
+      "path": "docs/systems/10_CLIENT.md",
+      "sha256": "24045067d8878efbcdbbe6bfe51dd571a5853d5711e7a39cc225d82ddab0a27a",
+      "bytes": 2135
+    },
+    {
+      "path": "docs/systems/11_OBSERVABILITY.md",
+      "sha256": "90a6d523eff98a81518fab536a1bb80d81e0192089916d47facfc4cacbdc0979",
+      "bytes": 2587
+    },
+    {
+      "path": "templates/IMPLEMENTATION_STATUS_TEMPLATE.md",
+      "sha256": "7a7199e6e0e1db4b093b5554c0f92b10d22d7184288870fc475cca2bcd1f05ae",
+      "bytes": 1881
+    }
+  ]
+}

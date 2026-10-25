@@ -1,0 +1,75 @@
+{
+  "milestone": "P36",
+  "date": "2026-10-21",
+  "title": "Cross-actor research effect confounders and per-module verification isolation",
+  "base_archive": "ANKA_NEXT_P35_EVIDENCE_LINKED_EFFECT_RECONCILIATION_OFFLINE_VERIFIED(1).zip",
+  "base_archive_sha256": "1fce45e46465e94773813309a5513d1e452ce5fc56044e44db58fca7c0570150",
+  "project_version": "0.36.0",
+  "verification": {
+    "status": "FOCUSED_PASS_FULL_MODULE_INCOMPLETE",
+    "new_p36_tests_passed": 29,
+    "focused_neighbors_passed": 138,
+    "focused_modules": [
+      "test_p24_verification_runner",
+      "test_p33_shadow_projection_bridge",
+      "test_p34_reconstruction_gap_audit",
+      "test_p35_effect_reconciliation",
+      "test_p36_module_isolation",
+      "test_p36_target_effect_research"
+    ],
+    "all_test_files_discovered": 53,
+    "all_test_methods_expected_by_AST": 1062,
+    "all_module_isolation_attempt": "INCOMPLETE_EXECUTION_TIMEOUT",
+    "attempt_details": [
+      "Sequential isolation reached 13 module PASS records before outer environment command timeout",
+      "Parallel isolation reached 30 module PASS records before outer environment command timeout; not a complete PASS receipt"
+    ],
+    "historical_p35_distinct_tests": "1033 inherited PASS reported by P35 receipt; not independently rerun in full under P36",
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "architecture_packages": 13,
+    "architecture_modules": 247,
+    "architecture_result": "PASS",
+    "assets_verified": 165,
+    "assets_mismatched": [],
+    "windows_tested": false,
+    "live_tested": false
+  },
+  "safety": {
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "canonical_commits": 0,
+    "real_physical_input_enabled": false,
+    "game_server_effect_proven": false,
+    "live_runtime_block_enabled": true
+  },
+  "source_file_sha256": {
+    "src/anka_app/cli.py": "5b971fb4c1f7b01a1f1eede4d7f4841693d105f79a473e88ad99381230609848",
+    "src/anka_app/verification_runner.py": "6bcacf6a8ca0e07e0317d602913c7807d0054ad48b921a68847a3692d1422a5b",
+    "src/anka_app/target_effect_research_offline.py": "9aad98f0f8c98ce653d6727061c08f67f6087ae24080090c5448de82f1e8fe4c",
+    "src/anka_contracts/target_effect_research.py": "4e02c94a158c06bbae3c910c69e4a2da99b0a3ea71fccbe9dd6917949510156c",
+    "tests/test_p36_module_isolation.py": "fe26f726e977ca2c4e3447b84aaa2f83a92cb0c27b1e3936d4c928b347f96886",
+    "tests/test_p36_target_effect_research.py": "f2ad57f814840f2fd0b509bec1d56800aa6a3805ecc8a6b207ae491da2cfb295",
+    "docs/P36_TARGET_EFFECT_CONFOUNDER_AUDIT_AND_MODULE_ISOLATION.md": "ebd5925e363b9849987199b9d44d9f1d1554e698ecca2ecda0498e0230b6e0f6",
+    "00_READ_FIRST_NEXT_CHAT.md": "efa83341f254e83c03f4ac879953aa2f7ee5a674b410b775ebfff183239fd158"
+  },
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "roadmap_estimate_pct": 87,
+    "live_fight_acceptance_pct": 0,
+    "note": "Roadmap is subjective implemented-scope estimate, not measured quality or production readiness"
+  },
+  "remaining_blockers": [
+    "Current-build protocol and independent source/witness evidence missing",
+    "Target HP/AP/MP delta not causal server effect proof",
+    "Production Canonical admission not implemented",
+    "Current Windows PID-HWND-game identity/calibration unverified",
+    "Real physical-input and server outcome validation unavailable",
+    "Full P36 regression inventory has not completed within this environment"
+  ]
+}

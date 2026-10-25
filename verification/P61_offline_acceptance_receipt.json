@@ -1,0 +1,56 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false
+  },
+  "changes": {
+    "automatic_check_setup_smoke": true,
+    "ipv6_fragment_offset_and_more_flags_checked": true,
+    "no_current_client_adapter": true,
+    "reserved_fragment_flags_rejected": true,
+    "unclassifiable_tcp_or_extension_fragments_quarantined": true,
+    "unrelated_udp_icmpv6_fragments_outside_selected_tcp_scope": true
+  },
+  "date": "2026-10-22",
+  "estimated_roadmap_scope_percent": 92,
+  "limitations": [
+    "No current client capture or live packet-source attestation",
+    "Offline parser supports only IPv4 selected TCP; IPv6 remains unsupported",
+    "No independently verified modern protocol semantics or process-to-character mapping",
+    "No authoritative Canonical admission or physical input"
+  ],
+  "milestone": "P61",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "preflight": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 280,
+    "architecture_violations": 0,
+    "check": "PASS",
+    "incident_zip_integrity": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "synthetic_ipv6_fragment_smoke": "PASS_UNCLASSIFIABLE_IPV6_FRAGMENT_QUARANTINED"
+  },
+  "reproduced_root_cause": "Non-initial IPv6 TCP fragments have no port header, but P60 skipped extension header without parsing offset/M and interpreted payload as ports; unsupported selected traffic could disappear.",
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_subtests_passed": 22,
+    "focused_tests_passed": 194,
+    "isolated_modules_expected": 88,
+    "isolated_modules_passed": 88,
+    "isolated_test_methods_passed": 1522,
+    "new_p61_tests_passed": 14,
+    "p60_baseline_new_tests_failed_before_fix": 5
+  },
+  "title": "Fail-closed IPv6 fragmented TCP transport evidence",
+  "verification_fingerprint": "c46332198e1686d8451aca987792b2a205fe544f0261355f14812a0ecc8ed6c3",
+  "verified_complete_live_cra_enu_percent": 0
+}

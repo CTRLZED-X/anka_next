@@ -1,0 +1,145 @@
+from __future__ import annotations
+
+import hashlib
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved, ActorDeathObserved, ActorEffectsObserved, ActorLookObserved, ActorStatesObserved,
+    ChallengeLifecycleObserved, DisplacementObserved, FightActorObserved, FightActorRosterObserved,
+    FightDiscoveryObserved, FightJoinLifecycleObserved, FightJoinPresentationObserved, FightLifecycleObserved,
+    FightMapContextObserved, FighterReadyObserved, FightMovementObserved, FightRoundObserved, FightStatsObserved,
+    FightTurnEndedObserved, FightTurnObserved, FightTurnOrderObserved, LegalPlacementCellsObserved, LocalPlayerObserved,
+    MonsterGroupObserved, MonsterGroupSnapshotObserved, MonsterGroupMovedObserved, ObservedEffect, ObservedMonsterGroup,
+    ObservedMonsterMember, ResourceChangedObserved, ShieldAbsorbedObserved, ShieldChangedObserved, SideRelationObserved,
+    SpellCastObserved, SpellCooldownEntry, SpellCooldownSnapshotObserved, SpellLoadoutObserved, SpellPropertyModifierObserved,
+    SummonCountObserved, SummonCreatedObserved, VitalityChangedObserved, WorldActorPositionObserved, WorldEntityRemovedObserved,
+    WorldMapObserved, WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.protocol.errors import ProtocolSchemaDriftError
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.protobuf import bytes_values, child, first_bytes, int_value, parse_direct_fields, read_varint, signed, signed_sum
+
+class LifecycleProtocolHandlersMixin:
+    """Version-local capability handler mixin; not a public protocol API."""
+
+    @staticmethod
+    def _challenge_record(node: dict[int, list[int | bytes]], outer_field: int) -> tuple[int, int | None]:
+        raw = first_bytes(node, outer_field)
+        if raw is None:
+            raise ValueError("challenge record missing")
+        record = parse_direct_fields(raw)
+        challenge_id = int_value(record, 2)
+        runtime_id = int_value(record, 3)
+        if challenge_id is None:
+            raise ValueError("challenge id missing")
+        return int(challenge_id), None if runtime_id is None else int(runtime_id)
+
+    def _ktm(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Challenge offer/create record.
+
+        Structural continuity with the previous certified revision is unusually
+        strong here: the challenge record is again carried in outer field 2,
+        and controlled 3.6.12.16 ids cross-check against the static challenge
+        dictionary and later ktk terminal records.
+        """
+        challenge_id, runtime_id = self._challenge_record(parse_direct_fields(message.payload), 2)
+        return (ChallengeLifecycleObserved(
+            challenge_id=challenge_id, phase="OFFERED",
+            runtime_id=self._known(runtime_id) if runtime_id is not None else self._not_observed(),
+        ),)
+
+    def _ktl(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Challenge activation record (outer field 1)."""
+        challenge_id, runtime_id = self._challenge_record(parse_direct_fields(message.payload), 1)
+        return (ChallengeLifecycleObserved(
+            challenge_id=challenge_id, phase="ACTIVATED",
+            runtime_id=self._known(runtime_id) if runtime_id is not None else self._not_observed(),
+        ),)
+
+    def _kth(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Challenge target assignment/update with actor and target cell."""
+        node = parse_direct_fields(message.payload)
+        raw = first_bytes(node, 1)
+        if raw is None:
+            raise ValueError("challenge target record missing")
+        record = parse_direct_fields(raw)
+        challenge_id = int_value(record, 2)
+        runtime_id = int_value(record, 3)
+        target_raw = first_bytes(record, 5)
+        if challenge_id is None or target_raw is None:
+            raise ValueError("challenge target id/payload missing")
+        target = parse_direct_fields(target_raw)
+        target_actor = int_value(target, 1, signed_value=True)
+        target_cell = int_value(target, 5)
+        return (ChallengeLifecycleObserved(
+            challenge_id=int(challenge_id), phase="TARGET_UPDATED",
+            runtime_id=self._known(int(runtime_id)) if runtime_id is not None else self._not_observed(),
+            target_actor_id=self._known(int(target_actor)) if target_actor is not None else self._not_observed(),
+            target_cell_id=self._known(int(target_cell)) if target_cell is not None else self._not_observed(),
+        ),)
+
+    def _ktk(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Challenge terminal result. Only failure has a canonical v1 phase.
+
+        Field 3 is the challenge id. Field 2 is present and equal to 1 for the
+        independently corroborated successful CRA challenge 969; omission is
+        observed for failed challenges. Canonical v1 intentionally has no
+        SUCCEEDED phase, so success remains diagnostic instead of being forced
+        into FAILED_OR_INVALIDATED.
+        """
+        node = parse_direct_fields(message.payload)
+        challenge_id = int_value(node, 3)
+        succeeded = int_value(node, 2)
+        if challenge_id is None:
+            raise ValueError("challenge terminal id missing")
+        if int(succeeded or 0) == 1:
+            return ()
+        return (ChallengeLifecycleObserved(
+            challenge_id=int(challenge_id), phase="FAILED_OR_INVALIDATED"
+        ),)
+
+    def _jwp(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        # jwp is the server terminal/result boundary. Outcome/reward details are
+        # intentionally not promoted beyond the lifecycle because downstream
+        # canonical state only needs an authoritative fight end.
+        self._fight_active = False
+        self._fight_phase = "ENDED"
+        events = (FightLifecycleObserved(
+            fight_id=self._known(self._fight_id) if self._fight_id is not None else self._unknown("fight id not repeated in result"),
+            phase="ENDED",
+            reason=self._known("RESULT"),
+            fight_instance_id=self._fight_id,
+        ),)
+        self._active_turn_actor_id = None
+        self._turn_order = ()
+        self._known_fight_actors.clear()
+        self._known_summons.clear()
+        self._summon_counts.clear()
+        self._char_totals_by_actor.clear()
+        self._hp_initialized_actors.clear()
+        self._current_hp_by_actor.clear()
+        self._max_hp_by_actor.clear()
+        self._party_hp_by_actor.clear()
+        self._current_resource_by_actor.clear()
+        self._effect_shadow.clear()
+        self._effects_complete_actors.clear()
+        self._effect_bootstrap_done = False
+        self._last_cooldown_actor_id = None
+        self._team_by_actor.clear()
+        self._team_leaders.clear()
+        self._local_team_id = None
+        self._pending_local_hp = None
+        self._pending_world_attack_group_id = None
+        self._pending_join_request_fight_id = None
+        self._pending_join_request_leader_id = None
+        if self.separate_world_fight_map_ids:
+            self._pending_join_presentation_fight_id = None
+            self._fight_map_id = None
+            self._pending_fight_map_load_id = None
+        self._pending_world_move_targets.clear()
+        self._awaiting_own_map_transition = False
+        if self._fight_id is not None:
+            self._join_presentation_by_fight.pop(int(self._fight_id), None)
+        self._fight_id = None
+        self._origin_world_entity_id = None
+        return events

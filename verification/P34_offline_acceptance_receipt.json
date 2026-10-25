@@ -1,0 +1,56 @@
+{
+  "milestone": "P34",
+  "title": "Non-authoritative reconstruction coverage / spell effects gap audit",
+  "verification_date": "2026-10-20",
+  "source_archive": "ANKA_NEXT_P33_RESEARCH_SHADOW_REPLAY_CANONICAL_COMPATIBILITY_OFFLINE_VERIFIED.zip",
+  "implemented": {
+    "contracts": "src/anka_contracts/reconstruction_gaps.py",
+    "composition": "src/anka_app/reconstruction_gaps_offline.py",
+    "setup_smoke": "src/anka_app/cli.py",
+    "test_module": "tests/test_p34_reconstruction_gap_audit.py",
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "verification": {
+    "status": "FOCUSED_PASS_FULL_SUITE_INCOMPLETE",
+    "p34_new_tests_passed": 33,
+    "inherited_selected_tests_passed": 493,
+    "total_unique_focused_passed": 526,
+    "full_per_module_attempt": "TIMED_OUT_AFTER_15_OF_50_MODULES",
+    "setup_exit_code": 0,
+    "start_should_be_blocked": true,
+    "architecture_packages_passed": 13,
+    "reused_assets_verified": 165,
+    "native_windows_tested": false,
+    "current_build_live_tested": false,
+    "fresh_zip_targeted_tests_passed": 125,
+    "fresh_zip_check_exit_code": 0,
+    "fresh_zip_setup_exit_code": 0,
+    "fresh_zip_start_exit_code": 40,
+    "full_suite_status": "INCOMPLETE_TIMEOUT"
+  },
+  "safety": {
+    "research_only": true,
+    "adapter_activated": false,
+    "current_build_certified": false,
+    "canonical_commits": 0,
+    "actionable": false,
+    "physical_input_sent": false
+  },
+  "remaining": [
+    "Current-client protocol semantics and independent witness evidence",
+    "Server-confirmed cast effects, cooldown and resource deltas",
+    "Actual movement costs and fight walkability",
+    "Cross-account server ordering",
+    "Windows client identity/calibration/physical execution",
+    "Autonomous CRA/ENU end-to-end fight acceptance",
+    "Long-running inherited verification runner issue"
+  ],
+  "progress": {
+    "roadmap_estimate_pct": 85,
+    "live_fight_acceptance_pct": 0,
+    "note": "Development-roadmap estimate only; not a quality or reliability rating"
+  }
+}

@@ -1,0 +1,149 @@
+schema_version: 1
+kind: ANKA_SHARED_UI_CALIBRATION
+profile_name: shared
+client_size:
+  width: 1280
+  height: 649
+spell_slots:
+  '1':
+    x: 467
+    y: 583
+    verified: true
+    source: user_click_calibration
+  '2':
+    x: 494
+    y: 584
+    verified: true
+    source: user_click_calibration
+  '3':
+    x: 523
+    y: 584
+    verified: true
+    source: user_click_calibration
+  '4':
+    x: 550
+    y: 586
+    verified: true
+    source: user_click_calibration
+  '5':
+    x: 578
+    y: 582
+    verified: true
+    source: user_click_calibration
+  '6':
+    x: 608
+    y: 582
+    verified: true
+    source: user_click_calibration
+  '7':
+    x: 633
+    y: 583
+    verified: true
+    source: user_click_calibration
+  '8':
+    x: 662
+    y: 583
+    verified: true
+    source: user_click_calibration
+  '9':
+    x: 690
+    y: 583
+    verified: true
+    source: user_click_calibration
+  '10':
+    x: 718
+    y: 586
+    verified: true
+    source: user_click_calibration
+  '11':
+    x: 745
+    y: 584
+    verified: true
+    source: user_click_calibration
+  '12':
+    x: 467
+    y: 611
+    verified: true
+    source: user_click_calibration
+  '13':
+    x: 495
+    y: 611
+    verified: true
+    source: user_click_calibration
+  '14':
+    x: 521
+    y: 611
+    verified: true
+    source: user_click_calibration
+  '15':
+    x: 551
+    y: 611
+    verified: true
+    source: user_click_calibration
+  '16':
+    x: 579
+    y: 612
+    verified: true
+    source: user_click_calibration
+  '17':
+    x: 605
+    y: 610
+    verified: true
+    source: user_click_calibration
+  '18':
+    x: 634
+    y: 609
+    verified: true
+    source: user_click_calibration
+  '19':
+    x: 661
+    y: 610
+    verified: true
+    source: user_click_calibration
+  '20':
+    x: 688
+    y: 610
+    verified: true
+    source: user_click_calibration
+  '21':
+    x: 719
+    y: 610
+    verified: true
+    source: user_click_calibration
+  '22':
+    x: 746
+    y: 610
+    verified: true
+    source: user_click_calibration
+controls:
+  PHASE_BUTTON:
+    x: 893
+    y: 606
+    verified: true
+    source: user_click_calibration
+  JOIN_FIGHT:
+    x: 91
+    y: 304
+    verified: true
+    source: user_window_spy_scaled_1920x974_to_1280x649
+directions:
+  RIGHT:
+    x: 1249
+    y: 224
+    verified: true
+    source: user_click_calibration
+  BOTTOM:
+    x: 859
+    y: 640
+    verified: true
+    source: user_click_calibration
+  LEFT:
+    x: 23
+    y: 286
+    verified: true
+    source: user_click_calibration
+  TOP:
+    x: 591
+    y: 2
+    verified: true
+    source: user_click_calibration

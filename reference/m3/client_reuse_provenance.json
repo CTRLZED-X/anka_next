@@ -1,0 +1,174 @@
+{
+  "limitations": [
+    "Historical calibration is not current-client certified.",
+    "Native bridge source parity is not runtime/loadability/current-build acceptance.",
+    "Old execution/windows.py is not copied wholesale because it mixed observation and input behavior."
+  ],
+  "milestone": "M3",
+  "native_bridge_byte_identical_count": 14,
+  "native_bridge_compared_count": 14,
+  "policy": "Legacy client code supplies evidence/behavior only. New Client owns read-only identity/calibration/projection; Execution remains sole physical-input authority.",
+  "rows": [
+    {
+      "legacy_path": "defaults/shared_ui_calibration_1280x649.yaml",
+      "legacy_sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff",
+      "mode": "ADAPTED_REUSE_REFERENCE_ONLY",
+      "semantic_change": false,
+      "target_path": "reference/calibration/shared_ui_calibration_1280x649.yaml",
+      "target_sha256": "6088e985f3fc5413b033209f171699ff02b0be118057358816792dfc11d06aff"
+    },
+    {
+      "legacy_path": "unity_bridge/AuthoritativeCellPositionSource.cs",
+      "legacy_sha256": "5d5af4c574c0719e12523c34e4c00439ab66d86218adc54ddb9932c1b21bec0c",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/AuthoritativeCellPositionSource.cs",
+      "target_sha256": "5d5af4c574c0719e12523c34e4c00439ab66d86218adc54ddb9932c1b21bec0c"
+    },
+    {
+      "legacy_path": "unity_bridge/AutomaticMapAdapter.cs",
+      "legacy_sha256": "446d239040ca7d9a9e4d109c7a9289e87933415e0674fe1463527e1106e8a301",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/AutomaticMapAdapter.cs",
+      "target_sha256": "446d239040ca7d9a9e4d109c7a9289e87933415e0674fe1463527e1106e8a301"
+    },
+    {
+      "legacy_path": "unity_bridge/CompilerServicesCompat.cs",
+      "legacy_sha256": "56d3737754543c1b752e605cc45dfa049846ce53e2095a4e35a75dce76235a26",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/CompilerServicesCompat.cs",
+      "target_sha256": "56d3737754543c1b752e605cc45dfa049846ce53e2095a4e35a75dce76235a26"
+    },
+    {
+      "legacy_path": "unity_bridge/Contracts.cs",
+      "legacy_sha256": "15a1a598480e15cb42dd4d77c0bbc364ae1ca17290d7697ed5b1c651c6c7f685",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/Contracts.cs",
+      "target_sha256": "15a1a598480e15cb42dd4d77c0bbc364ae1ca17290d7697ed5b1c651c6c7f685"
+    },
+    {
+      "legacy_path": "unity_bridge/CoordinateBridgeBehaviour.cs",
+      "legacy_sha256": "2aeba04a1f1e2638b38a7582114778190f32feaea401a591411428ebff3a9dda",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/CoordinateBridgeBehaviour.cs",
+      "target_sha256": "2aeba04a1f1e2638b38a7582114778190f32feaea401a591411428ebff3a9dda"
+    },
+    {
+      "legacy_path": "unity_bridge/CoordinateProjection.cs",
+      "legacy_sha256": "e93a13b9ce3de2f8d039be49198d146ddadfb0c2b0c6cb5d497bfbb7226b66c7",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/CoordinateProjection.cs",
+      "target_sha256": "e93a13b9ce3de2f8d039be49198d146ddadfb0c2b0c6cb5d497bfbb7226b66c7"
+    },
+    {
+      "legacy_path": "unity_bridge/DofusCoordinateBridge.csproj",
+      "legacy_sha256": "0f7699288f1ba501bd33d46103470f2eb656bbb764640ef472030b3a4b88669b",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/DofusCoordinateBridge.csproj",
+      "target_sha256": "0f7699288f1ba501bd33d46103470f2eb656bbb764640ef472030b3a4b88669b"
+    },
+    {
+      "legacy_path": "unity_bridge/IDofusMapAdapter.cs",
+      "legacy_sha256": "18dd4809dcc6f7cac0aedda4855aead375a827c91363a27b2ff2940dc957594d",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/IDofusMapAdapter.cs",
+      "target_sha256": "18dd4809dcc6f7cac0aedda4855aead375a827c91363a27b2ff2940dc957594d"
+    },
+    {
+      "legacy_path": "unity_bridge/Json.cs",
+      "legacy_sha256": "e572ccde85f8cb7acba21f54a1d9133066797c7870a98ddc30a42090899fd67b",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/Json.cs",
+      "target_sha256": "e572ccde85f8cb7acba21f54a1d9133066797c7870a98ddc30a42090899fd67b"
+    },
+    {
+      "legacy_path": "unity_bridge/LocalHttpServer.cs",
+      "legacy_sha256": "01e3832511dc33756f94083dd328cf3e9eea74164f4ca6371e0a27a29d8e7bd0",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/LocalHttpServer.cs",
+      "target_sha256": "01e3832511dc33756f94083dd328cf3e9eea74164f4ca6371e0a27a29d8e7bd0"
+    },
+    {
+      "legacy_path": "unity_bridge/Plugin.cs",
+      "legacy_sha256": "71bae1ccea1b3b260a6638a4a62cbab1f2683f2d901a6cf4d0136e23f9821975",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/Plugin.cs",
+      "target_sha256": "71bae1ccea1b3b260a6638a4a62cbab1f2683f2d901a6cf4d0136e23f9821975"
+    },
+    {
+      "legacy_path": "unity_bridge/README.md",
+      "legacy_sha256": "e19067ed6e4e47f6dd44785756052394d11299c4c4b497174d54b6e2a260fd92",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/README.md",
+      "target_sha256": "e19067ed6e4e47f6dd44785756052394d11299c4c4b497174d54b6e2a260fd92"
+    },
+    {
+      "legacy_path": "unity_bridge/README_UPSTREAM_PROVEN.md",
+      "legacy_sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/README_UPSTREAM_PROVEN.md",
+      "target_sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e"
+    },
+    {
+      "legacy_path": "unity_bridge/RuntimeSceneScanner.cs",
+      "legacy_sha256": "fdd0b25e4c8ac04b93e10e71dbbcb28041af088df568a886e7dc85c561667655",
+      "mode": "UNCHANGED_REUSE",
+      "semantic_change": false,
+      "target_path": "native/unity_bridge/RuntimeSceneScanner.cs",
+      "target_sha256": "fdd0b25e4c8ac04b93e10e71dbbcb28041af088df568a886e7dc85c561667655"
+    },
+    {
+      "legacy_path": "src/anka_platform/calibration/models.py",
+      "legacy_sha256": "87e982367eb6e4832ea2adaf05902215eb3e9c008bb1b7b406f6d92df2803f80",
+      "mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "target_path": "src/anka_client/calibration.py",
+      "target_sha256": "baee22f059923f059a3fea58ef69800d115283656ae11df386af15ffdbd438d1"
+    },
+    {
+      "legacy_path": "src/anka_platform/calibration/service.py",
+      "legacy_sha256": "5140bb897ad372b01c924f10a9fa3c3f47c17c3544ececb7b83c06275519af6b",
+      "mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "target_path": "src/anka_client/calibration.py",
+      "target_sha256": "baee22f059923f059a3fea58ef69800d115283656ae11df386af15ffdbd438d1"
+    },
+    {
+      "legacy_path": "src/anka_platform/projection/service.py",
+      "legacy_sha256": "9b4b821ea2d79f079672430d46697936803952657f620823600ab2b4717a0a70",
+      "mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "target_path": "src/anka_client/projection.py",
+      "target_sha256": "4e210c189c4f9d732840115ff39ba9d82a5ae6ac6021846e85605a19917a5631"
+    },
+    {
+      "legacy_path": "src/anka_platform/projection/coordinator.py",
+      "legacy_sha256": "f295eb380168a1f9da7a3a18398d603772a814c270ead510665e57e167b2e150",
+      "mode": "REIMPLEMENTED_FROM_BEHAVIOR",
+      "semantic_change": true,
+      "target_path": "src/anka_client/context.py",
+      "target_sha256": "427fc4df013b0b8f032df1aa941c97f5235c1ae89b8444a796cd4caf2dbeeea7"
+    },
+    {
+      "legacy_path": "src/anka_platform/execution/windows.py",
+      "legacy_sha256": "9ec7742f43cfcb2e04ca9b399b5874abd212ccb4e5a1faef5c7263452238399b",
+      "mode": "ADAPTED_REUSE",
+      "semantic_change": true,
+      "target_path": "src/anka_client/win32_inventory.py",
+      "target_sha256": "7bb5caf82abb9e0c0a4637d2b1a49001d2e944e1e1a32409a09b67a70235792f"
+    }
+  ],
+  "schema_version": 1
+}

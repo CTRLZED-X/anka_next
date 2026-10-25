@@ -1,0 +1,54 @@
+{
+  "milestone": "P65",
+  "title": "Interrupted Windows passive capture loss sealing",
+  "date": "2026-10-22",
+  "status": "FULLY_OFFLINE_VERIFIED_WINDOWS_UNTESTED",
+  "baseline": "P64_OPT_IN_WINDOWS_PASSIVE_PCAPNG_EVIDENCE",
+  "reproduced_defect": "P64 polling/consumer/shutdown failures could finalize capture without loss metadata",
+  "changes": {
+    "capture_poll_interruption_marks_incomplete": true,
+    "protocol_consumer_failure_marks_incomplete": true,
+    "sniffer_stop_failure_marks_incomplete": true,
+    "stop_before_start_marks_incomplete": true,
+    "preflight_synthetic_cases": 3,
+    "opt_in_recording_default_off": true,
+    "raw_frames_in_incident_zip": false
+  },
+  "verification": {
+    "test_modules_passed": 92,
+    "test_modules_expected": 92,
+    "test_methods_passed": 1580,
+    "new_p65_tests": 7,
+    "focused_pytest_tests_passed": 98,
+    "focused_pytest_subtests_passed": 37,
+    "source_bound_checkpoint": true,
+    "fingerprint": "0f9ecb0c10ce3d911d1a3b0b077fff2fcda671dc5b1b085d01a86ccbe2c23fb9",
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_intentional_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS",
+    "architecture_packages": 13,
+    "reference_assets_verified": "165/165"
+  },
+  "authority": {
+    "real_windows_npcap_capture_verified": false,
+    "driver_loss_visibility": "UNKNOWN",
+    "current_build_certified": false,
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "physical_input_enabled": false,
+    "complete_live_mission_verified_percent": 0
+  },
+  "estimated_roadmap_scope_percent": 92,
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "limitations": [
+    "No real Windows/Npcap capture test.",
+    "A clean-looking PCAPNG is not a full capture or current-build certification.",
+    "Raw saved frames remain sensitive local artifacts and are never packaged.",
+    "No live CRA/ENU admission or action authority."
+  ]
+}

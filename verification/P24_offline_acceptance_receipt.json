@@ -1,0 +1,105 @@
+{
+  "milestone": "P24",
+  "status": "PASS_GROUPED_OFFLINE",
+  "date": "2026-10-20",
+  "scope": "isolated_test_inventory_and_failure_diagnostics",
+  "environment": "Linux Python 3.13.5; Windows host not exercised",
+  "test_inventory": {
+    "files": 40,
+    "static_test_methods": 726,
+    "shards": 8,
+    "shard_results": [
+      {
+        "shard": 1,
+        "tests_passed": 92,
+        "elapsed_seconds": 11.009,
+        "status": "PASS"
+      },
+      {
+        "shard": 2,
+        "tests_passed": 91,
+        "elapsed_seconds": 17.681,
+        "status": "PASS"
+      },
+      {
+        "shard": 3,
+        "tests_passed": 91,
+        "elapsed_seconds": 0.099,
+        "status": "PASS"
+      },
+      {
+        "shard": 4,
+        "tests_passed": 91,
+        "elapsed_seconds": 16.606,
+        "status": "PASS"
+      },
+      {
+        "shard": 5,
+        "tests_passed": 90,
+        "elapsed_seconds": 12.343,
+        "status": "PASS"
+      },
+      {
+        "shard": 6,
+        "tests_passed": 90,
+        "elapsed_seconds": 6.135,
+        "status": "PASS"
+      },
+      {
+        "shard": 7,
+        "tests_passed": 91,
+        "elapsed_seconds": 7.49,
+        "status": "PASS"
+      },
+      {
+        "shard": 8,
+        "tests_passed": 90,
+        "elapsed_seconds": 7.629,
+        "status": "PASS"
+      }
+    ]
+  },
+  "new_p24_tests": 12,
+  "inherited_p23_tests": 714,
+  "single_process_full_suite": {
+    "status": "UNRESOLVED_INTERMITTENT_STALL",
+    "explanation": "historical monolithic runner replaced as normal developer verification path; not claimed permanently resolved"
+  },
+  "automated_isolated_cli": {
+    "status": "PARTIAL_DIAGNOSTIC_RUN",
+    "explanation": "a combined orchestration attempt did not complete in the host execution window; all shards were then run individually and passed"
+  },
+  "architecture": {
+    "status": "PASS",
+    "packages": 13,
+    "modules": 229,
+    "forbidden_imports": 0
+  },
+  "live_acceptance": {
+    "status": "NOT_TESTED",
+    "percent_complete": 0
+  },
+  "physical_input_enabled": false,
+  "operator_bat_commands": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "remaining_gaps": [
+    "Windows launcher acceptance",
+    "current-client protocol certification",
+    "authoritative event admission",
+    "production decision/execution and server outcome confirmation",
+    "investigate host-dependent intermittent test stalls"
+  ],
+  "fresh_archive_smoke": {
+    "focused_legacy_and_p24_tests": "62 PASS",
+    "setup_cli": "PASS exit 0",
+    "start_cli": "BLOCKED_AS_DESIGNED exit 40",
+    "architecture": "PASS (13 packages, 229 modules)",
+    "operator_bat_files": [
+      "setup.bat",
+      "start.bat"
+    ],
+    "windows_batch_host_tested": false
+  }
+}

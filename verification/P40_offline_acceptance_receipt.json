@@ -1,0 +1,61 @@
+{
+  "base_archive_name": "ANKA_NEXT_P39_TARGET_CONTEXT_INTEGRITY_OFFLINE_VERIFIED.zip",
+  "base_archive_sha256": "fc1947b29f2ff1c685124bb1684ab8ddffc470fc97dba8f72060b431d0d4ba09",
+  "changes": [
+    "Reject duplicate byte-identical oracle source+observation ID even across filename aliases",
+    "Reject same exact byte-identified network source/message selector reused across leader/follower roles",
+    "Keep legitimate distinct message observations and same-role independent capabilities research-only",
+    "Preserve safety/readiness and prior project assets"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P40",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "basis": "Roadmap estimate subjective; not quality or real-client readiness",
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "estimated_weighted_roadmap_pct": 88
+  },
+  "remaining_blockers": [
+    "Independent current-client CRA/ENU capture and oracle identity confirmation unavailable",
+    "No authoritative Canonical production admission or physical input driver",
+    "Windows identity/calibration/Npcap and end-to-end outcomes not verified",
+    "Full inherited test suite not completed"
+  ],
+  "safety": {
+    "adapter_activated": false,
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "00_READ_FIRST_NEXT_CHAT.md": "a2b3da7b9a158378434f2fb59b94bb583aa87dba02c92a89483dbca7adbb2fb3",
+    "IMPLEMENTATION_STATUS.md": "7dd07cb05e67ed608f0af5b45c849d06b0c85643bb68fe7cd76f745f86783153",
+    "README.md": "126d7f3900410242b08b37b7e2dc727661073ac2cdcb5fedd10d1b08f1ee9199",
+    "docs/P40_CROSS_ACCOUNT_EVIDENCE_SOURCE_INDEPENDENCE.md": "d4cfa4c321cc93e7724a8bc9eb52ee57e263ada2f055e2903507b705ce8f7363",
+    "pyproject.toml": "963483716ddc9398d2daffc90d9109bc54c8f1d8ffb4f582a6ea06c0ceee2aa1",
+    "src/anka_protocol/evidence_intake.py": "7dc32d76ec776401cd0a28dba66f513d38ae4efed8dcb8a56c1387f54e7ae4d0",
+    "tests/test_p40_evidence_source_independence.py": "bee6c8605911d65d882df5dd6b7f5c6b1b8d5fbe098fa15068a26d22b45cf081"
+  },
+  "title": "Cross-account protocol research evidence source independence",
+  "verification": {
+    "check_exit_code": 0,
+    "focused_scope": "P28/P29/P30/P31/P32/P33/P34/P35/P36/P38/P39/P40 and protocol architecture",
+    "focused_subtests_passed": 12,
+    "focused_test_methods_passed": 305,
+    "full_suite_notes": "Attempted one-process pytest tests; made partial progress but did not finish within execution limit; cannot claim complete regression coverage",
+    "full_suite_status": "INCOMPLETE_OUTER_EXECUTION_TIMEOUT",
+    "live_tested": false,
+    "new_p40_tests_passed": 11,
+    "physical_input_sent": false,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_zip_integrity": "PASS",
+    "windows_tested": false
+  }
+}

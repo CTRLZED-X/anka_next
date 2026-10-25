@@ -1,0 +1,56 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "cross_flow_ordering_verified": false,
+    "current_client_certified": false,
+    "independent_current_character_witnesses": 0,
+    "live_ready": false,
+    "physical_input_enabled": false
+  },
+  "complete_live_cra_enu_acceptance_percent": 0,
+  "date": "2026-10-21",
+  "historical_chain": {
+    "build": "Dofus 3.7.10.10",
+    "clean_synthetic_process_flow_character_actor_candidates": 2,
+    "identity_wire": "jnj",
+    "result_status": "HISTORICAL_ACTOR_CANDIDATES_ONLY",
+    "scope": "HISTORICAL_RESEARCH_ONLY"
+  },
+  "limitations": [
+    "Historical Dofus 3.7.10.10 actor continuity is not current-client certification.",
+    "Foreign actors on one server flow are expected and do not establish account ownership.",
+    "Cross-flow CRA/ENU ordering remains unverified.",
+    "Cast wire observations do not prove server acceptance, effects, damage, healing or displacement causation.",
+    "Fight-result boundaries do not prove victory, rewards or world re-entry.",
+    "No real Windows/current-client acceptance was performed.",
+    "A single-process full-suite attempt timed out and is not counted; the complete isolated inventory passed."
+  ],
+  "live_start": {
+    "exit_code": 40,
+    "failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS"
+  },
+  "milestone": "P54",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 273,
+    "check": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS"
+  },
+  "roadmap_scope_estimate_percent": 92,
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_p51_p54_tests_passed": 221,
+    "historical_p45_p54_tests_passed": 112,
+    "isolated_test_methods_passed": 1411,
+    "isolated_test_modules_discovered": 81,
+    "isolated_test_modules_passed": 81,
+    "new_p54_tests_passed": 24,
+    "physical_input_sent": false
+  },
+  "title": "Historical process-flow-character-fight actor continuity",
+  "verification_fingerprint": "78539d36aecf73262672ab7940eb27572b1f9364847ed48c18575f1f65686d50"
+}

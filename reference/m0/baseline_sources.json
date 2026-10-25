@@ -1,0 +1,68 @@
+{
+  "schema_version": 2,
+  "milestone": "M0",
+  "reference_archives": {
+    "legacy_r5_198": {
+      "filename": "ANKA_R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENED_LEAN_OFFLINE_VERIFIED_FINAL(3)(2).zip",
+      "sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+      "bundled": true,
+      "role": "immutable_reference_and_evidence_source",
+      "bundled_path": "reference/baselines/archives/R5_198_REFERENCE.zip"
+    },
+    "starting_anka_next_p66": {
+      "filename": "ANKA_NEXT_P66_POST_STOP_BUFFER_DRAIN_EVIDENCE_SEALING_FULLY_OFFLINE_VERIFIED(1).zip",
+      "sha256": "9c0edf863de39be9479bbd25e39c22d089af088268f9cf0afcc87e37f7765297",
+      "bundled": true,
+      "role": "starting_implementation_baseline",
+      "bundled_path": "reference/baselines/archives/ANKA_NEXT_P66_STARTING_BASELINE.zip"
+    },
+    "definitive_master_specification": {
+      "filename": "ANKA_NEXT_DEFINITIVE_MASTER_SPECIFICATION(1).zip",
+      "sha256": "69a3c3260a8dc20aeae2fe70e036c8bfcbfa2c275f9f370e1383419b3ff5461d",
+      "bundled_copy_path": "reference/master_specification/ANKA_NEXT_DEFINITIVE_BLUEPRINT",
+      "role": "authoritative_target_design",
+      "bundled": true,
+      "bundled_archive_path": "reference/baselines/archives/ANKA_NEXT_DEFINITIVE_MASTER_SPECIFICATION.zip"
+    }
+  },
+  "manifests": {
+    "legacy_r5_198_file_manifest.json": {
+      "sha256": "40acc59de03b7a948b047a3a154c248a57c90b4d44f43840bf251d634481edb0",
+      "bytes": 289921
+    },
+    "starting_p66_file_manifest.json": {
+      "sha256": "ce93ef0ccc806e6a5b9f235a0322e78e0177ce83765414b009a8c09f355823d8",
+      "bytes": 106395
+    },
+    "master_specification_file_manifest.json": {
+      "sha256": "1d2451bac7fa2682122ee93cbd516d76a8d282c3b07c6623c99dc7685dbd781b",
+      "bytes": 5824
+    },
+    "legacy_inventory.json": {
+      "sha256": "63acbc63789fa67e33c60b57793b492abfaaf45b04b685ac5a807b8fa2b7ff54",
+      "bytes": 11582
+    },
+    "evidence_catalog.json": {
+      "sha256": "d213da4359363853ab2d7b8be121d8e9a0c372b379cddfd1b830b66d20ffbfd8",
+      "bytes": 40732
+    },
+    "regression_catalog.json": {
+      "sha256": "9a499178b96a5145aa8ac00fa9b4648c1e3380d3b1d1704ac87ff8561929ec30",
+      "bytes": 7764
+    },
+    "live_pending_boundaries.json": {
+      "sha256": "937bacb58505678a9172c7e6a08a92c6a9853d499f30c2474dab38817b534fb0",
+      "bytes": 2349
+    },
+    "REUSE_MANIFEST_M0.json": {
+      "sha256": "e6db0f58ecf188c78e9262ae0e45a551801759abfc3c6ec158f92c3391520a6b",
+      "bytes": 145344
+    }
+  },
+  "mutable_ledgers": {
+    "provenance/REUSE_MANIFEST.json": {
+      "purpose": "continuously updated implementation reuse ledger",
+      "m0_snapshot": "reference/m0/REUSE_MANIFEST_M0.json"
+    }
+  }
+}

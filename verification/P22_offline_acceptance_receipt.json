@@ -1,0 +1,168 @@
+{
+  "architecture_modules_audited": 228,
+  "date": "2026-10-20",
+  "implementation": "typed event links, same-snapshot canonical source audit before decision/dispatch",
+  "live_execution": {
+    "current_client_certified": false,
+    "physical_input_enabled": false,
+    "status": "BLOCKED_BY_DESIGN"
+  },
+  "milestone": "P22",
+  "operator_commands": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "operators": {
+    "setup": {
+      "asset_count": 165,
+      "source_package_audit": "PASS",
+      "status": "PASS",
+      "synthetic_smoke_scenarios": 2
+    },
+    "start": {
+      "code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+      "exit_code": 40,
+      "incident_bundle_generated": true,
+      "status": "BLOCKED_AS_DESIGNED"
+    }
+  },
+  "pending": [
+    "Windows batch validation",
+    "current-build protocol certification",
+    "live turn-epoch evidence",
+    "real multi-account workflow and physical input",
+    "single-process regression runner stall"
+  ],
+  "scope": "synthetic_cross_system_event_provenance",
+  "source_release": "P21",
+  "verification": {
+    "grouped_pytest": {
+      "all_test_files_covered": true,
+      "groups": [
+        {
+          "files": [
+            "test_bootstrap.py",
+            "test_capture_architecture.py",
+            "test_capture_cli.py",
+            "test_capture_integration.py",
+            "test_capture_live.py",
+            "test_capture_parser.py"
+          ],
+          "name": "capture-a",
+          "passed": 51
+        },
+        {
+          "files": [
+            "test_capture_transport.py",
+            "test_client_discovery.py",
+            "test_client_geometry.py",
+            "test_client_integration.py",
+            "test_configuration.py",
+            "test_diagnostics.py"
+          ],
+          "name": "capture-client-b",
+          "passed": 70
+        },
+        {
+          "files": [
+            "test_foundation.py",
+            "test_invariants.py",
+            "test_kernel_reuse.py"
+          ],
+          "name": "foundation-kernel",
+          "passed": 12
+        },
+        {
+          "files": [
+            "test_p10_protocol_qualification.py"
+          ],
+          "name": "protocol-qualification",
+          "passed": 33
+        },
+        {
+          "files": [
+            "test_p11_fight_evidence.py"
+          ],
+          "name": "fight-evidence",
+          "passed": 37
+        },
+        {
+          "files": [
+            "test_p12_decision_probe.py"
+          ],
+          "name": "kernel-decision",
+          "passed": 43
+        },
+        {
+          "files": [
+            "test_p13_map_research.py"
+          ],
+          "name": "map-planning",
+          "passed": 31
+        },
+        {
+          "files": [
+            "test_p14_tactical_research.py"
+          ],
+          "name": "tactical-research",
+          "passed": 20
+        },
+        {
+          "files": [
+            "test_p15_tactical_scoring.py"
+          ],
+          "name": "scoring",
+          "passed": 20
+        },
+        {
+          "files": [
+            "test_p16_sequence_research.py"
+          ],
+          "name": "sequence",
+          "passed": 29
+        },
+        {
+          "files": [
+            "test_p17_coordination_workflow.py"
+          ],
+          "name": "workflow-coordination",
+          "passed": 45
+        },
+        {
+          "files": [
+            "test_p18_execution_settlement.py",
+            "test_p19_offline_fake_driver.py",
+            "test_p20_cross_system_replay.py",
+            "test_p21_architecture_readiness.py",
+            "test_p22_causal_linkage.py",
+            "test_p8_integration.py",
+            "test_p8_state_journal.py"
+          ],
+          "name": "execution-provenance-journals",
+          "passed": 171
+        },
+        {
+          "files": [
+            "test_p9_quality.py",
+            "test_protocol_architecture.py",
+            "test_protocol_integration.py",
+            "test_protocol_wire.py",
+            "test_reference_assets.py",
+            "test_semantic_p7.py",
+            "test_semantic_p7_architecture.py",
+            "test_semantic_p7_cli.py"
+          ],
+          "name": "protocol-core-and-semantics",
+          "passed": 134
+        }
+      ],
+      "new_p22": 18,
+      "status": "PASS",
+      "total_passed": 696
+    },
+    "monolithic_pytest": {
+      "reason": "single-process full suite exceeded available runtime budget before completion; not accepted as passed",
+      "status": "UNRESOLVED_STALL"
+    }
+  }
+}

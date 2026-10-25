@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "id": "LP-001",
+      "boundary": "Current Dofus client build/protocol",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "fresh build identity + complete capture + adapter qualification"
+    },
+    {
+      "id": "LP-002",
+      "boundary": "Current display/DPI/window calibration",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "Windows projection/calibration acceptance on the target host"
+    },
+    {
+      "id": "LP-003",
+      "boundary": "Automatic class/loadout/spell-slot authority",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "current-client independent identity/loadout evidence"
+    },
+    {
+      "id": "LP-004",
+      "boundary": "Full CRA→ENU join/placement/Ready/first-turn/handoff/reentry",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "bounded live acceptance sequence with authoritative events"
+    },
+    {
+      "id": "LP-005",
+      "boundary": "Unsupported mechanics such as tackle/lock if required",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "Kernel rule/data/tests or explicit unsupported capability"
+    },
+    {
+      "id": "LP-006",
+      "boundary": "Map coverage beyond required route",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "required route/data inventory and coverage receipts"
+    },
+    {
+      "id": "LP-007",
+      "boundary": "Eight-account scale",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "load + scheduling + Windows acceptance tests"
+    },
+    {
+      "id": "LP-008",
+      "boundary": "Current-build negative-absence semantics",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "complete capture/oracle evidence for the exact build"
+    },
+    {
+      "id": "LP-009",
+      "boundary": "Unity bridge current install/build compatibility",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "clean Windows setup and live read-only endpoint evidence"
+    },
+    {
+      "id": "LP-010",
+      "boundary": "Physical gameplay action authority",
+      "status": "BLOCKED_MISSING_EVIDENCE",
+      "required_evidence": "Q11 observe-only then individually accepted Q12 action scopes; never inferred from offline tests"
+    }
+  ]
+}

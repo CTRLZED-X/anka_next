@@ -1,0 +1,55 @@
+{
+  "milestone": "P59",
+  "title": "Saved-PCAPNG-backed corroboration of untrusted admission wire evidence",
+  "date": "2026-10-22",
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "verification_fingerprint": "8b933302c7872915f076195d4ebb65fa37742ca00c148c7b99fe653ebc6e560a",
+  "tests": {
+    "new_p59_test_methods_passed": 13,
+    "focused_p48_p49_p58_p59_test_methods_passed": 71,
+    "focused_subtests_passed": 6,
+    "full_isolated_test_modules": 86,
+    "full_isolated_test_modules_passed": 86,
+    "full_isolated_test_methods_passed": 1504
+  },
+  "preflight": {
+    "check": "PASS",
+    "setup": "PASS",
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 278,
+    "reused_assets_verified": "165/165",
+    "automatic_source_crosscheck_smoke": "PASS_PCAPNG_WIRE_CROSSCHECK_UNTRUSTED",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_bundle_integrity": "PASS"
+  },
+  "capabilities": {
+    "saved_capture_bytes_sha_corroboration": true,
+    "exact_tcp_flow_generation_and_wire_source_join": true,
+    "claim_body_bytes_equal_replayed_message_body": true,
+    "unclaimed_selected_flow_wire_quarantined": true,
+    "changed_capture_between_reads_quarantined": true,
+    "unsupported_current_build_quarantined": true,
+    "privacy_filtered_receipt": true,
+    "current_capture_origin_attested": false,
+    "capture_driver_loss_proven": false,
+    "current_client_semantics_certified": false,
+    "current_character_breed_identity_verified": false,
+    "authoritative_canonical_writer_implemented": false
+  },
+  "authority": {
+    "current_build_certified": false,
+    "canonical_live_commits": 0,
+    "physical_input_sent": false,
+    "live_ready": false
+  },
+  "limitations": [
+    "No current Windows/client test: this environment is Linux",
+    "A forged PCAPNG plus matching self-declared claim can pass; byte correspondence is not independent origin proof",
+    "The historical Dofus 3.7.10.10 catalog does not certify current-build semantics",
+    "Missing Npcap driver-loss attestation, Windows process/window/character/breed binding, live mission acceptance"
+  ],
+  "estimated_roadmap_scope_percent": 92,
+  "verified_complete_live_cra_enu_percent": 0
+}

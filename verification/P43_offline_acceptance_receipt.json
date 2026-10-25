@@ -1,0 +1,67 @@
+{
+  "baseline_archive": "ANKA_NEXT_P42_EXACT_PROTOCOL_COMPARISON_BINDING_FULLY_OFFLINE_VERIFIED.zip",
+  "baseline_archive_sha256": "7e1fbcf3e2492eb8cd88e4e409f0765bba3022acb4131f767628e820efbdae66",
+  "changes": [
+    "Add versioned opaque case-level binding to each research comparison row using exact evidence pack, declared build, adapter, case index, capability, role, witness and selector presence",
+    "Reject missing, stale, re-ordered or modified case bindings even for same-capability different-role rows",
+    "Validate per-case comparison status vocabulary, mismatch-field explanations and result finding counts",
+    "Update synthetic consumer fixtures and keep permissive positive coverage for separate leader/follower cases and genuine field mismatches",
+    "Add nine independent negative/positive P43 regression tests; preserve non-authoritative semantics and privacy limits"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P43",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "basis": "Subjective coverage estimate, not software quality or live reliability",
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "estimated_weighted_roadmap_pct": 88
+  },
+  "remaining_blockers": [
+    "Authentic current-client PCAPNG and independent CRA/ENU witness observations not supplied",
+    "No current-build certified adapter or authoritative Canonical admission",
+    "Windows/Npcap, process/flow/window association and calibration not accepted",
+    "Physical input and server effect/outcome integration remain unavailable",
+    "Complete real CRA+ENU fight/turn-handoff acceptance 0%"
+  ],
+  "safety": {
+    "adapter_activated": false,
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "src/anka_app/protocol_evidence_compare.py": "7faea17ffaba0380350e7c0d483dcc2ac0c97a3517c47fd9c45c3736b42f6cb0",
+    "src/anka_protocol/capability_matrix.py": "d8991017cbe676c207f405e752a6314919185137fe5f9ae6bfdf338fec09b7fc",
+    "src/anka_protocol/evidence_intake.py": "3adffb5fcfbdc214d7c62e340a4f5eb3f8b623c28a76dd18a101692dd6c29d59",
+    "tests/test_p32_protocol_capability_assessment.py": "a53ea93ca6fba70c158d1de7d58584b47cf3b30c91ad5edf781a869a370971b2",
+    "tests/test_p43_case_level_comparison_integrity.py": "843460b658f39e2b5f895745d6a7639c3263cc227b868bf868d4383bff1f1836"
+  },
+  "title": "Per-case protocol comparison lineage and result integrity (offline only)",
+  "verification": {
+    "architecture_modules": 248,
+    "architecture_packages": 13,
+    "asset_integrity": "165/165",
+    "before_fix_reproduction": "7 P43 tests failed against P42, 2 passed; fixed tests later passed",
+    "check_exit_code": 0,
+    "complete_tests_passed": 1138,
+    "focused_subtests_passed": 17,
+    "focused_tests_passed": 353,
+    "live_tested": false,
+    "module_inventory": 61,
+    "module_isolated_status": "PASS",
+    "new_p43_tests_passed": 9,
+    "note": "All test modules passed offline on Linux Python 3.13.5; current-client/Windows acceptance not exercised.",
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_zip_integrity": "PASS",
+    "test_fingerprint": "218a41efb8718d69cd079b2fdefec881ccdb02b9921902857c7a3974693445fd",
+    "verification_mode": "source-bound resumable, one subprocess per module",
+    "windows_tested": false
+  }
+}

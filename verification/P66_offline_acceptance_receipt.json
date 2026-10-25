@@ -1,0 +1,56 @@
+{
+  "milestone": "P66",
+  "title": "Final buffered-drain sealing for consented passive PCAPNG evidence",
+  "date": "2026-10-22",
+  "status": "FULLY_OFFLINE_VERIFIED_WINDOWS_UNTESTED",
+  "baseline": "P65_INTERRUPTED_PASSIVE_CAPTURE_LOSS_SEALING",
+  "reproduced_defect": "P65 prematurely finalized evidence on sniffer stop, before final queue drain and downstream consumer audit; known post-stop errors could leave zero-gap PCAPNG",
+  "changes": {
+    "two_phase_quiesce_and_finalize": true,
+    "capture_buffer_drain_precedes_evidence_finalization": true,
+    "post_stop_consumer_failure_sealed": true,
+    "post_stop_poll_failure_sealed": true,
+    "post_stop_auditor_failure_sealed": true,
+    "direct_stop_backward_compatible": true,
+    "preflight_synthetic_cases": 4,
+    "recording_opt_in_default_off": true,
+    "raw_frames_in_incident_or_release_zip": false
+  },
+  "verification": {
+    "test_modules_passed": 93,
+    "test_modules_expected": 93,
+    "unittest_methods_passed": 1586,
+    "new_p66_tests": 6,
+    "focused_pytest_tests_passed": 78,
+    "focused_pytest_subtests_passed": 29,
+    "source_bound_checkpoint": true,
+    "fingerprint": "434c8beeed437ee23609dfb87537d3c7a70f5862c57aecaf2ba9c805ebe2c0b7",
+    "check_exit_code": 0,
+    "setup_exit_code": 0,
+    "start_intentional_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS",
+    "architecture_packages": 13,
+    "reference_assets_verified": "165/165"
+  },
+  "authority": {
+    "real_windows_npcap_capture_verified": false,
+    "driver_loss_visibility": "UNKNOWN",
+    "current_build_certified": false,
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "physical_input_enabled": false,
+    "complete_live_mission_verified_percent": 0
+  },
+  "estimated_roadmap_scope_percent": 92,
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "limitations": [
+    "Real Windows/Npcap operation was not tested in this offline environment.",
+    "Source check proves recorder integrity under simulated failures, not actual driver capture completeness.",
+    "Current-build protocol, game identity and live mission acceptance remain unverified.",
+    "No actual raw capture bytes are included in this release archive."
+  ]
+}

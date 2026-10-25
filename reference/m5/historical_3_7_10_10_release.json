@@ -1,0 +1,20 @@
+{
+  "adapter_release_id": "adapter-dofus-3.7.10.10-historical-m5-r1",
+  "code_sha256": "ab9bf55e51269f8c3ae178bc9a5197a5e97308e0ed0e80bb0b4a3e0f2cb7d623",
+  "current_build_certified": false,
+  "evidence_manifest_sha256": "5ab5e7485b646834f5d63b489891b8ee4a7a49a03a9147753c2c74c5da28f5f4",
+  "lifecycle": "REPLAY_CERTIFIED",
+  "limitations": [
+    "Synthetic/historical replay does not certify the current Dofus client.",
+    "No live action scope is authorized.",
+    "Unknown/unproven wire traffic fences the entire envelope batch."
+  ],
+  "observed_client_build": "Dofus 3.7.10.10",
+  "reused_modules": [
+    "src/anka_protocol/adapters/dofus_3_7_10_10/adapter.py",
+    "src/anka_protocol/adapters/historical_semantic.py",
+    "src/anka_protocol/wire.py"
+  ],
+  "schema_version": 1,
+  "source_role": "HISTORICAL_REFERENCE_ONLY"
+}

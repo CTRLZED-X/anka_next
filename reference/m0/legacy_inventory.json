@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "reference_release": "R5.198",
+  "reference_archive_sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+  "areas": {
+    "game_kernel": {
+      "file_count": 137,
+      "bytes": 804311,
+      "tree_digest_sha256": "efc8f5d38dbdee8536b4b9905fb63765599cb981d9ab18920362a6779156db86",
+      "paths": [
+        "src/anka_game_kernel"
+      ]
+    },
+    "game_data": {
+      "file_count": 27,
+      "bytes": 28977112,
+      "tree_digest_sha256": "76b700bc7f9b41d9477a5f2f564cc6063ff3c2f4c96392ac87ec027e4d7fecb4",
+      "paths": [
+        "gamedata"
+      ]
+    },
+    "calibration": {
+      "file_count": 6,
+      "bytes": 25272,
+      "tree_digest_sha256": "2d9c6d7ea7c8d21c5130aa75e906ebedd15897c91a3c42ebaf2b71dff5728c8f",
+      "paths": [
+        "defaults/shared_ui_calibration_1280x649.yaml",
+        "src/anka_platform/calibration"
+      ]
+    },
+    "projection_and_unity_bridge": {
+      "file_count": 21,
+      "bytes": 301315,
+      "tree_digest_sha256": "f3d1139a868de650e853adcd181aa0a08beaf103581f455f086b36736f47198d",
+      "paths": [
+        "src/anka_platform/projection",
+        "src/anka_platform/unity_bridge",
+        "unity_bridge"
+      ]
+    },
+    "capture": {
+      "file_count": 13,
+      "bytes": 103217,
+      "tree_digest_sha256": "7760c3f42adc8f2607c8dd4353357eccd3723df6687adca8115ce088715594b8",
+      "paths": [
+        "src/anka_platform/capture"
+      ]
+    },
+    "protocol": {
+      "file_count": 78,
+      "bytes": 912288,
+      "tree_digest_sha256": "f794219a9dfb35a463e594e9ba3efbfbaccfbfaf19c0e19643b1b687fdd65883",
+      "paths": [
+        "src/anka_platform/protocol"
+      ]
+    },
+    "canonical_live_state": {
+      "file_count": 3,
+      "bytes": 75321,
+      "tree_digest_sha256": "5f1748817a1fdd5cb8f4a2cdf7adf7f263ec95dab80f85d506427c06a4f52fb6",
+      "paths": [
+        "src/anka_platform/live_state"
+      ]
+    },
+    "decision_fight_ai": {
+      "file_count": 58,
+      "bytes": 680426,
+      "tree_digest_sha256": "a35d3a03364ad36365d67556f4706aedf8af2c2c942a6f14171341bdf07094d8",
+      "paths": [
+        "src/anka_platform/core/fight",
+        "src/anka_platform/fight_ai"
+      ]
+    },
+    "execution": {
+      "file_count": 19,
+      "bytes": 677810,
+      "tree_digest_sha256": "08f1c581e44cdd36e469142c6b2b6fe4ee6834ed10c80c5f1dceab77612fe243",
+      "paths": [
+        "src/anka_platform/execution"
+      ]
+    },
+    "coordination_workflow": {
+      "file_count": 29,
+      "bytes": 592316,
+      "tree_digest_sha256": "d0487b213b021dec98ad7c9e99b38c9bf149343af1a4ec11184c161ec5e92f44",
+      "paths": [
+        "src/anka_platform/party",
+        "src/anka_platform/campaign",
+        "src/anka_platform/scripting"
+      ]
+    },
+    "observability_diagnostics_simulation": {
+      "file_count": 16,
+      "bytes": 496535,
+      "tree_digest_sha256": "1086952a79f00084a72c8c2e23ad87df9e1e499183354e839ec5b7b31098a56e",
+      "paths": [
+        "src/anka_platform/observability",
+        "src/anka_platform/diagnostics",
+        "src/anka_platform/simulation"
+      ]
+    },
+    "legacy_web_ui": {
+      "file_count": 25,
+      "bytes": 279987,
+      "tree_digest_sha256": "d26a79d3d26447cb31db95c0f76151728c5dcd0e9fb664577507d381ef32c7b1",
+      "paths": [
+        "src/anka_platform/web"
+      ]
+    },
+    "tests": {
+      "file_count": 629,
+      "bytes": 4352680,
+      "tree_digest_sha256": "a8523b2df407def2e170f1d17a51abb86877cace2bba3b54708a24c31589f2e8",
+      "paths": [
+        "tests"
+      ]
+    },
+    "docs_and_handoffs": {
+      "file_count": 196,
+      "bytes": 908146,
+      "tree_digest_sha256": "85f9d172e707bd46f6db898878b0ab07b114113a3e77e270a82a5b69e61a6fed",
+      "paths": [
+        "docs",
+        "00_NEW_CHAT_HANDOFF_R5_138.md",
+        "00_NEW_CHAT_HANDOFF_R5_139.md",
+        "00_NEW_CHAT_HANDOFF_R5_140.md",
+        "00_NEW_CHAT_HANDOFF_R5_141.md",
+        "00_NEW_CHAT_HANDOFF_R5_142.md",
+        "00_NEW_CHAT_HANDOFF_R5_143.md",
+        "00_NEW_CHAT_HANDOFF_R5_144.md",
+        "00_NEW_CHAT_HANDOFF_R5_145.md",
+        "00_NEW_CHAT_HANDOFF_R5_146.md",
+        "00_NEW_CHAT_HANDOFF_R5_147.md",
+        "00_NEW_CHAT_HANDOFF_R5_148.md",
+        "00_NEW_CHAT_HANDOFF_R5_149.md",
+        "00_NEW_CHAT_HANDOFF_R5_150.md",
+        "00_NEW_CHAT_HANDOFF_R5_151.md",
+        "00_NEW_CHAT_HANDOFF_R5_152.md",
+        "00_NEW_CHAT_HANDOFF_R5_153.md",
+        "00_NEW_CHAT_HANDOFF_R5_154.md",
+        "00_NEW_CHAT_HANDOFF_R5_155.md",
+        "00_NEW_CHAT_HANDOFF_R5_156.md",
+        "00_NEW_CHAT_HANDOFF_R5_157.md",
+        "00_NEW_CHAT_HANDOFF_R5_158.md",
+        "00_NEW_CHAT_HANDOFF_R5_159.md",
+        "00_NEW_CHAT_HANDOFF_R5_160.md",
+        "00_NEW_CHAT_HANDOFF_R5_161.md",
+        "00_NEW_CHAT_HANDOFF_R5_162.md",
+        "00_NEW_CHAT_HANDOFF_R5_163.md",
+        "00_NEW_CHAT_HANDOFF_R5_164.md",
+        "00_NEW_CHAT_HANDOFF_R5_165.md",
+        "00_NEW_CHAT_HANDOFF_R5_166.md",
+        "00_NEW_CHAT_HANDOFF_R5_167.md",
+        "00_NEW_CHAT_HANDOFF_R5_168.md",
+        "00_NEW_CHAT_HANDOFF_R5_169.md",
+        "00_NEW_CHAT_HANDOFF_R5_170.md",
+        "00_NEW_CHAT_HANDOFF_R5_171.md",
+        "00_NEW_CHAT_HANDOFF_R5_172.md",
+        "00_NEW_CHAT_HANDOFF_R5_173.md",
+        "00_NEW_CHAT_HANDOFF_R5_174.md",
+        "00_NEW_CHAT_HANDOFF_R5_175.md",
+        "00_NEW_CHAT_HANDOFF_R5_176.md",
+        "00_NEW_CHAT_HANDOFF_R5_177.md",
+        "00_NEW_CHAT_HANDOFF_R5_178.md",
+        "00_NEW_CHAT_HANDOFF_R5_179.md",
+        "00_NEW_CHAT_HANDOFF_R5_180.md",
+        "00_NEW_CHAT_HANDOFF_R5_181.md",
+        "00_NEW_CHAT_HANDOFF_R5_182.md",
+        "00_NEW_CHAT_HANDOFF_R5_183.md",
+        "00_NEW_CHAT_HANDOFF_R5_184.md",
+        "00_NEW_CHAT_HANDOFF_R5_185.md",
+        "00_NEW_CHAT_HANDOFF_R5_186.md",
+        "00_NEW_CHAT_HANDOFF_R5_187.md",
+        "00_NEW_CHAT_HANDOFF_R5_188.md",
+        "00_NEW_CHAT_HANDOFF_R5_189.md",
+        "00_NEW_CHAT_HANDOFF_R5_190.md",
+        "00_NEW_CHAT_HANDOFF_R5_191.md",
+        "00_NEW_CHAT_HANDOFF_R5_192.md",
+        "00_NEW_CHAT_HANDOFF_R5_193.md",
+        "00_NEW_CHAT_HANDOFF_R5_194.md",
+        "00_NEW_CHAT_HANDOFF_R5_195.md",
+        "00_NEW_CHAT_HANDOFF_R5_196.md",
+        "00_NEW_CHAT_HANDOFF_R5_197.md",
+        "00_NEW_CHAT_HANDOFF_R5_198.md",
+        "00_START_HERE.md",
+        "ARCHITECTURE.md",
+        "DEBUGGING.md",
+        "DEVELOPMENT_RULES.md",
+        "FIGHT_POLICY_CHANGE_GUIDE.md",
+        "LIVE_ACCEPTANCE.md",
+        "PROTOCOL_UPGRADE_GUIDE.md",
+        "R5_132_TACTICAL_AI_ARCHITECTURE.md",
+        "R5_133_GENERIC_L200_TACTICAL_HARDENING.md",
+        "R5_134_TEAM_OBSERVATION_SYNCHRONIZATION_HARDENING.md",
+        "R5_135_SPELL_READINESS_ACTION_ADMISSION_HARDENING.md",
+        "R5_136_ALL_SPELL_RANGE_READINESS_HARDENING.md",
+        "R5_137_FIGHT_ENTRY_LOCAL_IDENTITY_CAUSAL_HARDENING.md",
+        "R5_138_TACTICAL_IMPACT_GEOMETRY_CAST_TARGET_INTEGRITY_HARDENING.md",
+        "R5_139_CAST_TRANSACTION_UI_NEUTRALITY_PROTOCOL_NEGATIVE_EVIDENCE_HARDENING.md",
+        "R5_140_COMBAT_FRAME_FEASIBILITY_RECOVERY_TACTICAL_FOUNDATION_HARDENING.md",
+        "R5_141_SPELL_TARGET_INTERACTION_ACTION_INTENT_SEQUENCE_PLANNING_HARDENING.md",
+        "R5_142_COMBAT_ACTION_CONTRACT_QUARANTINE_TURN_LIVENESS_HARDENING.md",
+        "R5_143_COMBAT_LIVENESS_FAILURE_DISPOSITION_HARDENING.md",
+        "R5_144_FIGHT_FOUNDATION_STATE_INTERACTION_TEAM_AI_HARDENING.md",
+        "R5_145_COMBAT_CAUSAL_RECONCILIATION_PLANNER_EFFICIENCY_L200_READINESS_HARDENING.md",
+        "R5_145_IMPLEMENTATION_PLAN.md",
+        "R5_146_COMBAT_SURVIVABILITY_COMPLETE_ACTION_COVERAGE_INPUT_CAUSALITY_L200_TRUTH_GATES_HARDENING.md",
+        "R5_147_TURN_LIVENESS_PROGRESSIVE_SPELL_PLANNING_INACTIVITY_DEFENSE_ACTION_ECONOMY_HARDENING.md",
+        "R5_148_COMBAT_FOUNDATION_CONTRACTS_STATE_AUTHORITY_FIGHTAI_ISOLATION_HARDENING.md",
+        "R5_149_TRANSACTION_AUTHORITY_STRICT_RESULT_CONTRACTS_SINGLE_LIFECYCLE_OWNER_VERIFICATION_HARDENING.md",
+        "R5_150_COMBAT_FOUNDATION_EXECUTION_HISTORY_MOVEMENT_PLANNING_FORENSIC_HEALTH_HARDENING.md",
+        "R5_151_LATENCY_RECONCILIATION_FOUNDATION_READINESS_HARDENING.md",
+        "R5_152_ZONE_200_FOUNDATION_READINESS_ACTION_EFFECT_FORENSICS_HARDENING.md",
+        "R5_153_CONTROLLED_ZONE_200_PILOT_EVIDENCE_ROUTING_HARDENING.md",
+        "R5_154_NORMAL_LAUNCH_ATTESTATION_CAPTURE_CONTAINMENT_DIAGNOSTIC_IO_HARDENING.md",
+        "R5_155_CLIENT_INTERACTION_ADMISSIBILITY_HARDENING.md",
+        "R5_156_LIVE_DECODING_CERTIFICATION.md",
+        "R5_157_PROTOCOL_INDEPENDENT_LIVE_DECODING_REFERENCE.md",
+        "R5_158_LIVE_TRUTH_CONTINUITY_TRANSPORT_RECOVERY_HARDENING.md",
+        "R5_159_SMOOTH_POINTER_MOTION_SAFE_ENDPOINT_HARDENING.md",
+        "R5_160_LIVE_POINTER_SEMANTIC_READMISSION_READY_DIAGNOSTIC_HARDENING.md",
+        "R5_161_POINTER_TRAJECTORY_READY_FORENSIC_HARDENING.md",
+        "R5_162_RESOURCE_CAUSALITY_POINTER_INTERACTION_READY_FORENSIC_HARDENING.md",
+        "R5_163_IDENTITY_AUTHORITY_PROJECTION_ACQUISITION_FORENSIC_HARDENING.md",
+        "R5_164_FIGHT_LIFECYCLE_POINTER_TRAJECTORY_FORENSIC_HARDENING.md",
+        "R5_165_LIVE_TRUTH_READY_RECOVERY_TRAJECTORY_HARDENING.md",
+        "R5_166_ACTIVE_EXECUTION_CONTINUITY_READY_EFFICIENCY_FORENSIC_HARDENING.md",
+        "R5_167_PROTOCOL_POLICY_ISOLATION_WORKER_RECOVERY_ARCHITECTURE_HARDENING.md",
+        "R5_168_NEW_PROTOCOL_3_6_12_16_INTEGRATION.md",
+        "R5_169_MULTI_ACCOUNT_JOIN_PROTOCOL_COMPLETION.md",
+        "R5_170_PROTOCOL_SCHEMA_DRIFT_FAIL_CLOSED_HARDENING.md",
+        "R5_171_BRIDGE_RUNTIME_REFLECTION_HARDENING.md",
+        "R5_172_PROJECTION_ENTITY_RESOLUTION_HARDENING.md",
+        "R5_173_STARTUP_PROTOCOL_PROJECTION_FOUNDATION.md",
+        "R5_174_STARTUP_AUTHORITY_PROTOCOL_FOUNDATION.md",
+        "R5_175_CONTRACTS_FAILURE_TRACEABILITY_FOUNDATION.md",
+        "R5_176_PROTOCOL_ADAPTER_SDK_CAPABILITY_CERTIFICATION.md",
+        "R5_177_DIAGNOSTICS_V2_ROOT_CAUSE_FOUNDATION.md",
+        "R5_178_EXECUTION_STATE_MACHINE_CONCURRENCY_FOUNDATION.md",
+        "R5_179_RELEASE_REPRODUCIBILITY_FOUNDATION.md",
+        "R5_180_TRANSACTIONAL_LIVE_TRUTH_FOUNDATION.md",
+        "R5_181_WINDOWS_SETUP_LIVE_READINESS_HARDENING.md",
+        "R5_182_DURABLE_EXECUTION_DIAGNOSTIC_VERIFICATION_FOUNDATION.md",
+        "R5_183_LIVE_ACCEPTANCE_EVIDENCE_INTEGRITY_FOUNDATION.md",
+        "R5_184_MULTI_ACCOUNT_EVIDENCE_COMPLETENESS_FOUNDATION.md",
+        "R5_185_STARTUP_LAUNCH_WINDOW_OWNERSHIP_FOUNDATION.md",
+        "R5_186_ENTITY_RESOLUTION_CONTROL_DIAGNOSTIC_CAUSALITY_FOUNDATION.md",
+        "R5_187_RELEASE_IDENTITY_SETUP_COHERENCE_FOUNDATION.md",
+        "R5_188_BRIDGE_BUILD_VERIFICATION_FOUNDATION.md",
+        "R5_189_FIGHT_GEOMETRY_AUTHORITY_FOUNDATION.md",
+        "R5_190_CURRENT_PROTOCOL_FIGHT_CHAIN_HARDENED.md",
+        "R5_191_VERIFICATION_FAILURE_BOUNDARY_FOUNDATION.md",
+        "R5_192_PROTOCOL_UPGRADE_SETUP_RESILIENCE_FOUNDATION.md",
+        "R5_193_SETUP_INSTALL_DIAGNOSTIC_HARDENING.md",
+        "R5_194_PROTOCOL_STARTUP_DIAGNOSTIC_HARDENING.md",
+        "R5_195_FIGHT_ENTRY_GEOMETRY_REPLAY_HARDENING.md",
+        "R5_196_TURN_HANDOFF_SYSTEMIC_SIMULATION_HARDENING.md",
+        "R5_197_CONTROL_PLANE_TAKEOVER_HARDENING.md",
+        "R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENING.md",
+        "README.md",
+        "TESTING.md",
+        "WINDOWS_LIVE_RUNBOOK.md"
+      ]
+    }
+  },
+  "notes": [
+    "Full file-level identity is frozen in legacy_r5_198_file_manifest.json.",
+    "This inventory is provenance only; it does not authorize legacy runtime ownership.",
+    "No legacy Python package is copied into the ANKA_NEXT import path by M0."
+  ]
+}

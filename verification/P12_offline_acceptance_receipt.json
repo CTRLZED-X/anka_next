@@ -1,0 +1,57 @@
+{
+  "milestone": "P12",
+  "scope": "KERNEL_BACKED_SYNTHETIC_READ_ONLY_DECISION_FEASIBILITY",
+  "date_utc": "2026-10-20T13:50:59.267908+00:00",
+  "host": {
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "prior_P11_tests": 374,
+  "current_tests": 417,
+  "added_tests": 43,
+  "unittest_discover_result": "PASS_417_TESTS",
+  "focused_test_result": "PASS_43_TESTS",
+  "cli_check": "PASS_165_ASSETS_HISTORICAL_CALIBRATION",
+  "cli_verify": "PASS_COMPLETE_417_TESTS",
+  "kernel_evidence": {
+    "real_preserved_kernel_used": true,
+    "static_spell_id": 32435,
+    "historical_grade": 3,
+    "AP_less_than_cost": "REJECTED_BY_KERNEL",
+    "active_cooldown": "REJECTED_BY_KERNEL",
+    "static_sufficient_but_missing_context": "RESEARCH_ONLY"
+  },
+  "journal_evidence": "READ_ONLY_AUDITED_SNAPSHOT_SINGLE_SQLITE_TRANSACTION",
+  "journal_corruption": "BLOCKED_WITHOUT_REPORT",
+  "decision_package_dependency_contract": "PASS",
+  "live_ready": false,
+  "current_protocol_build_certified": false,
+  "windows_host_accepted": false,
+  "physical_input_sent": false,
+  "authoritative_state_commits": 0,
+  "implementation_coverage_estimate_percent": 50,
+  "coverage_estimate_note": "Illustrative weighted roadmap estimate; not a measured quality, reliability or live-acceptance metric.",
+  "next_requirements": [
+    "current-client certified semantic capture and typed canonical admission",
+    "map/fight geometry/LoS + turn cast counters + spell equipment identity",
+    "full candidate evaluation and tactical ranking using Kernel without shortcut legality",
+    "multi-account turn/generation coherence and execution admission",
+    "Windows host and live acceptance"
+  ],
+  "source_sha256": {
+    "src/anka_contracts/decision.py": "9c5942d5047c3dfddbf3619e122adda990c68f68a140a6378faf3e35ec9045c9",
+    "src/anka_decision/probe.py": "f352946a881561cd79c419a154fcaf450eda105f137eba134c75fbd21ba8b96f",
+    "src/anka_app/decision_offline.py": "106ce72d66a4e2465980faa83c6f85c0df3a1cfa7c4f5f926390b66501f7044c",
+    "src/anka_app/cli.py": "ed132e36940d21239d01ee757668ee726f907498a9817045bd25260745dad89b",
+    "tests/test_p12_decision_probe.py": "633b4c4a069575a843f947cbbf41659a11230a3127725b76fb0e978e77d19294",
+    "docs/P12_KERNEL_BACKED_READ_ONLY_DECISION_PROBES.md": "b2fe0611b02ffdcab94c50df880fd20be893ada723e6601fc4f694e6fa73e720",
+    "README.md": "cd199107204856f0ba0bdd5ce2ad31459d1d777f1a1bbb30daca481af4f6a6e3",
+    "IMPLEMENTATION_STATUS.md": "c8e8aa8854dff5096cc60f49e127725763e14d3abbeec6823370458052996cea",
+    "pyproject.toml": "3b340700dce6d02081d73ae254317c642a27bf9d3d971a2a4506d02446f47e6b",
+    "decision_demo.bat": "4609dc6eb154f6a121eac857cda3ea808e19f52bd35f46e5d38032aac1ed622d",
+    "decision_audit.bat": "8eed403d809902512c6da79320e307a701956ebee3e86f20cd38c56719c28d34"
+  },
+  "qualification_meaning": "Offline research-only cast legality negative checks; nothing may drive gameplay",
+  "intermittent_previous_verify_stall": "NOT_REPRODUCED_IN_P12_FINAL_RUN_BUT_ROOT_CAUSE_NOT_PROVEN"
+}

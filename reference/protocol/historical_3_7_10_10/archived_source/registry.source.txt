@@ -1,0 +1,105 @@
+from __future__ import annotations
+
+from anka_platform.protocol.capabilities import ProtocolCapability as C
+from anka_platform.protocol.handlers import (
+    ProtocolHandlerBinding,
+    ProtocolHandlerModule,
+    ProtocolHandlerRegistry,
+)
+
+
+def _binding(adapter, wire_name: str, *capabilities: C, mutates: bool = True) -> ProtocolHandlerBinding:
+    return ProtocolHandlerBinding(
+        wire_name=wire_name,
+        handler=getattr(adapter, f"_{wire_name}"),
+        capability=capabilities[0].value if capabilities else None,
+        capabilities=frozenset(item.value for item in capabilities),
+        mutates_canonical_state=mutates,
+    )
+
+
+def build_handler_registry(adapter) -> ProtocolHandlerRegistry:
+    """Compose the 3.7.10.10 adapter from capability-oriented modules.
+
+    The grouping is version-local metadata.  It does not leak wire names into
+    generic protocol/campaign code, but it gives diagnostics and upgrade tooling
+    an explicit answer to "which capability module owns this wire semantic?".
+    """
+
+    modules = (
+        ProtocolHandlerModule(
+            module_id="world_identity",
+            capabilities=frozenset({C.WORLD_MAP.value, C.MONSTER_GROUPS.value, C.LOCAL_ACTOR.value, C.CELL.value, C.FIGHT_JOIN.value}),
+            description="World snapshots/movement, local identity seeding and fight discovery/join presentation.",
+            bindings=(
+                _binding(adapter, "jnj", C.WORLD_MAP, C.MONSTER_GROUPS, C.LOCAL_ACTOR, C.CELL),
+                _binding(adapter, "jns", C.MONSTER_GROUPS),
+                _binding(adapter, "jnz", C.CELL, C.MONSTER_GROUPS, C.LOCAL_ACTOR),
+                _binding(adapter, "jow", C.WORLD_MAP),
+                _binding(adapter, "joo", C.MONSTER_GROUPS),
+                _binding(adapter, "joc", C.WORLD_MAP, C.CELL),
+                _binding(adapter, "jok", C.CELL, mutates=False),
+                _binding(adapter, "hms", C.FIGHT_IDENTITY, mutates=False),
+                _binding(adapter, "hnl", C.FIGHT_JOIN, C.FIGHT_IDENTITY),
+                _binding(adapter, "iia", C.FIGHT_JOIN, C.FIGHT_IDENTITY),
+                _binding(adapter, "iib", C.CURRENT_HP, C.MAX_HP),
+                _binding(adapter, "jwz", C.FIGHT_JOIN, mutates=False),
+                _binding(adapter, "jxh", C.FIGHT_IDENTITY),
+            ),
+        ),
+        ProtocolHandlerModule(
+            module_id="fight_state",
+            capabilities=frozenset({C.FIGHT_IDENTITY.value, C.LOCAL_ACTOR.value, C.CELL.value, C.TURN_OWNER.value, C.ROUND.value, C.FIGHT_JOIN.value}),
+            description="Fight bootstrap/roster, placement, ready state, turn order and local principal identity.",
+            bindings=(
+                _binding(adapter, "jxi", C.FIGHT_IDENTITY, C.FIGHT_JOIN),
+                _binding(adapter, "jwj", C.CELL, C.FIGHT_IDENTITY),
+                _binding(adapter, "kjl", C.CELL),
+                _binding(adapter, "jxk", C.CELL),
+                _binding(adapter, "jvu", C.ROUND, C.FIGHT_IDENTITY),
+                _binding(adapter, "jvi", C.ROUND, C.TURN_OWNER),
+                _binding(adapter, "jvj", C.TURN_OWNER, C.ROUND),
+                _binding(adapter, "jup", C.TURN_OWNER),
+                _binding(adapter, "jxd", C.FIGHT_JOIN),
+                _binding(adapter, "jxb", C.CELL, mutates=False),
+                _binding(adapter, "juf", C.LOCAL_ACTOR, C.SPELL_CAST),
+            ),
+        ),
+        ProtocolHandlerModule(
+            module_id="resources_effects",
+            capabilities=frozenset({C.CURRENT_HP.value, C.MAX_HP.value, C.CURRENT_AP.value, C.CURRENT_MP.value, C.RANGE.value, C.COOLDOWN.value, C.EFFECTS.value, C.STATES.value, C.SHIELD.value, C.CHARACTERISTICS.value}),
+            description="Absolute resources, cooldowns, effects/states and spell property modifiers.",
+            bindings=(
+                _binding(adapter, "jti", C.COOLDOWN),
+                _binding(adapter, "jtk", C.CURRENT_AP, C.CURRENT_MP, C.RANGE, C.SHIELD, C.CHARACTERISTICS),
+                _binding(adapter, "kqo", C.CURRENT_HP, C.MAX_HP),
+                _binding(adapter, "juh", C.EFFECTS, C.STATES),
+                _binding(adapter, "juu", C.EFFECTS, C.STATES),
+                _binding(adapter, "hkg", C.SPELL_CAST, C.CHARACTERISTICS),
+                _binding(adapter, "hkk", C.SPELL_CAST, C.CHARACTERISTICS),
+            ),
+        ),
+        ProtocolHandlerModule(
+            module_id="combat_actions",
+            capabilities=frozenset({C.SPELL_CAST.value, C.CURRENT_HP.value, C.ERODED_HP.value, C.SHIELD.value, C.DEATH.value, C.SUMMON.value, C.DISPLACEMENT.value, C.CURRENT_AP.value, C.CURRENT_MP.value}),
+            description="Authoritative server combat actions, consequences, summons, death and displacement.",
+            bindings=(
+                _binding(adapter, "jsq", C.SPELL_CAST, C.CURRENT_HP, C.ERODED_HP, C.SHIELD, C.DEATH, C.SUMMON, C.DISPLACEMENT, C.CURRENT_AP, C.CURRENT_MP),
+                _binding(adapter, "juo", C.FIGHT_IDENTITY),
+                _binding(adapter, "jnv", C.FIGHT_IDENTITY),
+            ),
+        ),
+        ProtocolHandlerModule(
+            module_id="fight_lifecycle",
+            capabilities=frozenset({C.FIGHT_END.value, C.FIGHT_IDENTITY.value, C.WORLD_MAP.value}),
+            description="Challenge lifecycle and terminal fight/world re-entry boundary.",
+            bindings=(
+                _binding(adapter, "ktm", C.FIGHT_IDENTITY),
+                _binding(adapter, "ktl", C.FIGHT_IDENTITY),
+                _binding(adapter, "kth", C.FIGHT_IDENTITY),
+                _binding(adapter, "ktk", C.FIGHT_IDENTITY),
+                _binding(adapter, "jwp", C.FIGHT_END, C.WORLD_MAP),
+            ),
+        ),
+    )
+    return ProtocolHandlerRegistry.from_modules(modules)

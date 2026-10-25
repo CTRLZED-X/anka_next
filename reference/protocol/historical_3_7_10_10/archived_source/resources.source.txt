@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+import hashlib
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved, ActorDeathObserved, ActorEffectsObserved, ActorLookObserved, ActorStatesObserved,
+    ChallengeLifecycleObserved, DisplacementObserved, FightActorObserved, FightActorRosterObserved,
+    FightDiscoveryObserved, FightJoinLifecycleObserved, FightJoinPresentationObserved, FightLifecycleObserved,
+    FightMapContextObserved, FighterReadyObserved, FightMovementObserved, FightRoundObserved, FightStatsObserved,
+    FightTurnEndedObserved, FightTurnObserved, FightTurnOrderObserved, LegalPlacementCellsObserved, LocalPlayerObserved,
+    MonsterGroupObserved, MonsterGroupSnapshotObserved, MonsterGroupMovedObserved, ObservedEffect, ObservedMonsterGroup,
+    ObservedMonsterMember, ResourceChangedObserved, ShieldAbsorbedObserved, ShieldChangedObserved, SideRelationObserved,
+    SpellCastObserved, SpellCooldownEntry, SpellCooldownSnapshotObserved, SpellLoadoutObserved, SpellPropertyModifierObserved,
+    SummonCountObserved, SummonCreatedObserved, VitalityChangedObserved, WorldActorPositionObserved, WorldEntityRemovedObserved,
+    WorldMapObserved, WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.protocol.errors import ProtocolSchemaDriftError
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.protobuf import bytes_values, child, first_bytes, int_value, parse_direct_fields, read_varint, signed, signed_sum
+
+class ResourceProtocolHandlersMixin:
+    """Version-local capability handler mixin; not a public protocol API."""
+
+    def _jti(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 2, signed_value=True)
+        if actor is None:
+            raise ValueError("jti cooldown actor missing")
+        actor = int(actor)
+        self._last_cooldown_actor_id = actor
+        cooldowns: list[SpellCooldownEntry] = []
+        for raw in bytes_values(node, 4):
+            rec = parse_direct_fields(raw)
+            spell = int_value(rec, 3)
+            remaining = int_value(rec, 2, default=0)
+            if spell is not None:
+                cooldowns.append(SpellCooldownEntry(spell_id=int(spell), remaining_turns=max(0, int(remaining or 0))))
+        return (SpellCooldownSnapshotObserved(actor_id=actor, cooldowns=tuple(cooldowns), complete_snapshot=True),)
+
+    def _jtk(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 2, signed_value=True)
+        if actor is None:
+            raise ValueError("jtk characteristic actor missing")
+        actor = int(actor)
+        root = child(node, 1)
+        events: list[object] = []
+        totals = self._char_totals_by_actor.setdefault(actor, {})
+        for raw in bytes_values(root, 4):
+            row = parse_direct_fields(raw)
+            cid = int(int_value(row, 2, default=0) or 0)
+            value = int(self._new_characteristic_total(row))
+            totals[cid] = value
+            events.append(ActorCharacteristicObserved(actor_id=actor, characteristic_id=cid, total_value=value))
+            resource = {1: "AP", 23: "MP", 19: "RANGE"}.get(cid)
+            if resource is not None:
+                resource_cache = self._current_resource_by_actor.setdefault(actor, {})
+                previous = resource_cache.get(resource)
+                resource_cache[resource] = int(value)
+                events.append(ResourceChangedObserved(
+                    actor_id=actor,
+                    resource=resource,
+                    previous_value=self._known(previous) if previous is not None else self._unknown("first 3.6.12.16 absolute resource observation has no prior baseline"),
+                    current_value=self._known(value),
+                    delta=self._known(int(value) - int(previous)) if previous is not None else self._not_observed(),
+                ))
+            if cid == 96:
+                events.append(ShieldChangedObserved(actor_id=actor, current_shield=max(0, value)))
+            # Do not infer max HP from hypothetical jtk characteristic 0/11
+            # rows. Across CRA, ENU and simultaneous captures, jtk never carries
+            # either characteristic; absolute/max HP is established by kqo/iib
+            # or fresh fighter bootstrap and in-fight erosion is authoritative
+            # in jsq damage consequences. Inventing an unobserved jtk max-HP
+            # authority could restore stale base+vitality after erosion.
+        return tuple(events)
+
+    def _kqo(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        max_hp = int_value(node, 1)
+        current_hp = int_value(node, 3)
+        if max_hp is None or current_hp is None:
+            raise ValueError("kqo current/max HP fields missing")
+        pair = (int(current_hp), int(max_hp))
+        if self._fight_active and self._local_actor_id is not None:
+            actor = int(self._local_actor_id)
+            self._hp_initialized_actors.add(actor)
+            self._current_hp_by_actor[actor] = int(pair[0])
+            self._max_hp_by_actor[actor] = int(pair[1])
+            return (FightStatsObserved(actor_id=actor, hp=self._known(pair[0]), max_hp=self._known(pair[1])),)
+        self._pending_local_hp = pair
+        return ()
+
+    def _complete_effect_events(self, actor_id: int) -> tuple[object, ...]:
+        shadow = self._effect_shadow.setdefault(int(actor_id), {})
+        effects = tuple(shadow[key] for key in sorted(shadow, key=str))
+        states = tuple(sorted({
+            int(effect.state_id.value)
+            for effect in effects
+            if effect.state_id.status is ValueStatus.KNOWN
+        }))
+        complete = int(actor_id) in self._effects_complete_actors
+        return (
+            ActorEffectsObserved(actor_id=int(actor_id), effects=effects, complete_snapshot=complete),
+            ActorStatesObserved(actor_id=int(actor_id), state_ids=states, complete_snapshot=complete),
+        )
+
+    def _juh(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        outer = child(parse_direct_fields(message.payload), 1)
+        effect_id = int_value(outer, 2)
+        source_actor = int_value(outer, 3, signed_value=True)
+        inner = child(outer, 1)
+        instance = int_value(inner, 5)
+        target = int_value(inner, 8, signed_value=True)
+        source_spell = int_value(inner, 16)
+        remaining_turns = int_value(inner, 15)
+        if effect_id is None or target is None:
+            raise ValueError("juh effect id/target missing")
+        state_id = int_value(inner, 1, signed_value=True) if int(effect_id) == 950 else None
+        effect = ObservedEffect(
+            effect_id=int(effect_id),
+            effect_instance_id=self._known(int(instance)) if instance is not None else self._not_observed(),
+            source_spell_id=self._known(int(source_spell)) if source_spell is not None else self._not_observed(),
+            state_id=self._known(int(state_id)) if state_id is not None else self._not_observed(),
+            source_actor_id=self._known(int(source_actor)) if source_actor is not None else self._not_observed(),
+            # Controlled independent effects identify inner field 15 as the
+            # server remaining-duration count: Punitive erosion=2 turns,
+            # Représailles/Pesanteur=1 turn, Tirs Éloignés modifiers=3 turns.
+            remaining_turns=self._known(max(0, int(remaining_turns))) if remaining_turns is not None else self._not_observed(),
+        )
+        actor = int(target)
+        self._effect_shadow.setdefault(actor, {})[self._effect_key(effect)] = effect
+        if actor in self._effects_complete_actors:
+            return self._complete_effect_events(actor)
+        return (
+            ActorEffectsObserved(actor_id=actor, effects=(effect,), complete_snapshot=False),
+            ActorStatesObserved(actor_id=actor, state_ids=(int(state_id),) if state_id is not None else (), complete_snapshot=False),
+        )
+
+    def _juu(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        instance = int_value(node, 1)
+        actor = int_value(node, 2, signed_value=True)
+        if instance is None or actor is None:
+            raise ValueError("juu effect instance/target missing")
+        actor = int(actor)
+        shadow = self._effect_shadow.setdefault(actor, {})
+        shadow.pop(("instance", int(instance)), None)
+        if actor in self._effects_complete_actors:
+            return self._complete_effect_events(actor)
+        return ()
+
+    def _hkg(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 2, signed_value=True)
+        record = child(node, 1)
+        spell = int_value(record, 1)
+        raw_value = int_value(record, 3, signed_value=True)
+        prop = int_value(record, 6)
+        if None in (actor, spell, raw_value, prop):
+            raise ValueError("hkg spell-property modifier fields missing")
+        return (SpellPropertyModifierObserved(actor_id=int(actor), spell_id=int(spell), property_code=int(prop), raw_value=int(raw_value), removed=False),)
+
+    def _hkk(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        spell = int_value(node, 1)
+        prop = int_value(node, 3)
+        actor = int_value(node, 4, signed_value=True)
+        if None in (actor, spell, prop):
+            raise ValueError("hkk spell-property removal fields missing")
+        return (SpellPropertyModifierObserved(actor_id=int(actor), spell_id=int(spell), property_code=int(prop), removed=True),)

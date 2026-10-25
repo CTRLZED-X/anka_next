@@ -1,0 +1,118 @@
+{
+  "artifacts": {
+    "docs/Q9_ZERO_INPUT_INTEGRATION.md": "34e6a6e3f318c174bdcf4c1dcf9a76d113151de3511eba0f1333f8dfde92ddd6",
+    "src/anka_app/zero_input_integration.py": "18a0c2d3cc3538563490e3dc8e283a4fb9d732a39b5a0537931f5ed7ceea0147"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 11,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "Q9_CHECKPOINT_SCOPE",
+      "detail": "All expensive stages are bound to the current Q9 implementation/test/config scope.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_Q9A_REGRESSION",
+      "detail": "pytest_pass=4/4; subtests=2",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_Q9B_REGRESSION",
+      "detail": "pytest_pass=5/5; subtests=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_P20_REGRESSION",
+      "detail": "pytest_pass=13/13; subtests=7",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_REAL_SYSTEM_BOUNDARIES_WIRED",
+      "detail": "Production Canonical/State/Coordination/Decision/Workflow/Execution/Kernel/Observability boundaries are composed.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_END_TURN_TO_NEXT_OWNER_CAUSALITY",
+      "detail": "END_TURN cannot grant ENU authority before cross-account owner convergence.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_NO_OS_INPUT_REACHABILITY",
+      "detail": "unsafe_imports=[]; primitive_hits=[]",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_SYNTHETIC_EXTERNAL_BOUNDARY",
+      "detail": "Current-client-required boundaries are explicitly synthetic and the fake driver is used.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_ARCHITECTURE_STILL_CLEAN",
+      "detail": "packages=13; modules=357; violations=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_OPERATOR_SURFACE",
+      "detail": "root BAT launchers=['setup.bat', 'start.bat']",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q9_ZERO_PHYSICAL_INPUT",
+      "detail": "All Q9/P20 scenarios use fake/synthetic external boundaries; physical OS input count is 0.",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 871,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "0632a7511be4067767d394674896e9403ccc622e27d6c44465a96568d379c17b",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q9",
+  "generated_utc": "2026-10-24T23:26:57.645565+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "Q9 proves full production-service integration only against an explicitly synthetic protocol/build/client boundary; it is not current-client acceptance.",
+    "Q10 Windows packaging/startup and Q11 current-build observe-only acceptance remain blocked pending real supported-host evidence.",
+    "Q9 evidence cannot activate the Windows physical-input driver or any action scope."
+  ],
+  "milestone": "M12-Q9",
+  "observed_client_build": "SYNTHETIC-Q9-NOT-A-LIVE-CLIENT",
+  "physical_input_count": 0,
+  "physical_input_state": "FAKE_ONLY",
+  "protocol_adapter_release": "adapter-q9-synthetic-zero-input-r1",
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 22,
+    "skipped": 0
+  }
+}

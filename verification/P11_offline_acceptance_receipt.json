@@ -1,0 +1,53 @@
+{
+  "milestone": "P11",
+  "scope": "OFFLINE_SYNTHETIC_CROSS_ACCOUNT_FIGHT_TURN_EVIDENCE_AUDIT",
+  "date_utc": "2026-10-20T13:15:05.579317+00:00",
+  "host": {
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "prior_P10_tests": 337,
+  "current_tests": 374,
+  "added_tests": 37,
+  "pytest_result": "PASS_374_TESTS_17_SUBTESTS",
+  "unittest_discover_result": "PASS_374_TESTS",
+  "cli_check": "PASS",
+  "cli_verify": "PASS_ON_BOUNDED_RETRY",
+  "intermittent_verify_timeout": "UNRESOLVED",
+  "fight_demo": "ALIGNED_SIMULATED_ONLY_THEN_BLOCKED_INCONSISTENT",
+  "fight_audit_inconsistent_exit_code": 10,
+  "fight_audit_aligned_exit_code": 0,
+  "diagnostic_incident_integrity": "PASS",
+  "same_sqlite_read_snapshot": "TESTED",
+  "corrupt_journal_rejection": "TESTED",
+  "cross_account_fight_epoch_and_owner_conflicts": "TESTED",
+  "malformed_actor_map": "NAMED_BLOCKED_REASONS",
+  "missing_decision_fields": "REPORTED_SEPARATELY_FROM_TURN_ALIGNMENT",
+  "package_dependency_boundaries": "PASS_STATIC_TEST",
+  "live_ready": false,
+  "current_protocol_build_certified": false,
+  "windows_host_accepted": false,
+  "physical_input_sent": false,
+  "authoritative_state_commits": 0,
+  "implementation_coverage_estimate_percent": 47,
+  "coverage_estimate_note": "Subjective weighted roadmap estimate, not software quality or live reliability metric",
+  "next_requirements": [
+    "independent current-build protocol capture/oracles",
+    "certified canonical admission and real event causal correlation",
+    "Windows/Npcap and window identity acceptance",
+    "decision/execution sandbox plus consumer regression",
+    "controlled multi-account live acceptance"
+  ],
+  "source_sha256": {
+    "src/anka_canonical/journal.py": "b8419547000e83310309f90ac18abbaba875fcf564422f5bb483c10190706732",
+    "src/anka_contracts/fight_audit.py": "830e0b4fd78e0fc287638c440c51ca67d25f6bf980925cd8013534d12535e434",
+    "src/anka_live_state/fight_trace.py": "b910048d512f7a2fa081c6e7f0024551cf32df0011a00082728d78a541753185",
+    "src/anka_coordination/fight_audit.py": "3b217d62f527f4a4140d9465f9023de9426e0087383b6aa1b1fe40d2b9e54a3a",
+    "src/anka_app/fight_offline.py": "4f10315e70c136de75c9ceef18ffdf72b71a9f18ddcea685e999a942e5e4ce98",
+    "src/anka_app/cli.py": "a895e86ebb07dc28cc971d0e83383ef72ee6f8ed6535173d7a97a9e68ad41bf5",
+    "tests/test_p11_fight_evidence.py": "6e10863c312e3a614055a44ac978fbb85659fd5f648f19c1d70a3cb3e704a628",
+    "docs/P11_FIGHT_TURN_EVIDENCE_RECONCILIATION.md": "d87324f1ed9c96679cf8d120a464657f168b92381a6389ba3b9d0a86d96f0690"
+  },
+  "qualification_meaning": "Synthetic read-only observation consistency. Absolutely no live game control certification."
+}

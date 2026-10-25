@@ -1,0 +1,61 @@
+{
+  "baseline_archive": "ANKA_NEXT_P41_CELL_TRANSITION_AND_PACKET_CLAIM_INTEGRITY_FULLY_OFFLINE_VERIFIED.zip",
+  "baseline_archive_sha256": "73e1aa1f5faad86cb4d93fa0a68e238d05700275a9e9cad5a2b7ee76564a6eb0",
+  "changes": [
+    "Fail closed when the capability matrix receives a matched comparison from a different evidence archive, client build or adapter",
+    "Use a stable opaque SHA256/Base32 comparison binding without emitting protocol build text or raw oracle values in comparator reports",
+    "Reject misleading case-count metadata and unbound/legacy matched results",
+    "Add adversarial setup-path, mismatched archive, wrong build, adapter and privacy regressions"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P42",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "basis": "Subjective weighted roadmap estimate only, not a measured software quality or live reliability score",
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "estimated_weighted_roadmap_pct": 88
+  },
+  "remaining_blockers": [
+    "Current client protocol capture and independently witnessed state/effect evidence missing",
+    "Windows/Npcap and exact actor-to-flow/window identity and calibration acceptance missing",
+    "Authoritative Canonical admission and physical driver not implemented",
+    "Complete real CRA+ENU turn/handoff/fight loop not accepted"
+  ],
+  "safety": {
+    "adapter_activated": false,
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "docs/P42_EXACT_PROTOCOL_COMPARISON_PROVENANCE_BINDING.md": "c67b2f8d6070d8c4ff5c495e7671000e2d4eac73f94ca4f77638e9fc66ebad51",
+    "src/anka_app/protocol_evidence_compare.py": "5e5402eea6aebd4727e76a61e6507498dae1e038c01f7b64b132bf98ca0e2004",
+    "src/anka_protocol/capability_matrix.py": "300e6e143771e9099149c7e18f20293cc324cd7637d59f71830ef12e6fe7b929",
+    "src/anka_protocol/evidence_intake.py": "90fd626cdd7f5f5fd44fcecb2925c89fcebd45cbacd77c8fbcc7383c752b4c10",
+    "tests/test_p32_protocol_capability_assessment.py": "c96abab6d822950c4534681ef412601ae087de84cc81b784d2c815c7652e5f56",
+    "tests/test_p42_comparison_provenance_binding.py": "02f941fdf831df88e6842dbc70d541d3f5958f33181bab02263a28138baf78d6"
+  },
+  "title": "Protocol comparison exact-source provenance binding and privacy-preserving research qualification",
+  "verification": {
+    "check_exit_code": 0,
+    "complete_module_inventory": 60,
+    "complete_tests_passed": 1129,
+    "fingerprint": "eab54581c687d74543b7a729b48999ae90cacc97cf5c68ad211262921b936fc7",
+    "focused_subtests_passed": 17,
+    "focused_tests_passed": 344,
+    "live_tested": false,
+    "module_isolated_status": "PASS",
+    "notes": "Full 60-file inventory completed with immutable source-bound checkpoints across bounded batches; some incomplete outer attempts were resumed rather than counted as PASS.",
+    "p42_tests_passed": 8,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_zip_integrity": "PASS",
+    "windows_tested": false
+  }
+}

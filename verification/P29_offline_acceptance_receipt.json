@@ -1,0 +1,76 @@
+{
+  "milestone": "P29",
+  "title": "Pinned protocol evidence to vetted adapter field comparison",
+  "verification_date": "2026-10-20",
+  "source_project": "ANKA_NEXT_P28_PROTOCOL_EVIDENCE_INTAKE_OFFLINE_VERIFIED.zip",
+  "implementation": {
+    "comparison_implementation": "src/anka_app/protocol_evidence_compare.py",
+    "p28_intake_extension": "Optional validated server_ports and case selector; compatible with existing schema 1 packs",
+    "setup_integration": "src/anka_app/protocol_updates.py",
+    "only_locally_vetted_adapter": "Dofus 3.7.10.10 historical research adapter",
+    "unsupported_current_build_behavior": "ADAPTER_UNAVAILABLE_FOR_EXACT_BUILD",
+    "candidate_admission": "RESEARCH_ONLY",
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "offline_test_result": {
+    "status": "PASS_8_ISOLATED_SHARDS",
+    "test_files_discovered": 45,
+    "test_files_executed": 45,
+    "shards_completed": 8,
+    "shards_expected": 8,
+    "shard_tests": [
+      107,
+      105,
+      105,
+      106,
+      106,
+      106,
+      105,
+      104
+    ],
+    "tests_passed": 844,
+    "P29_new_tests": 18,
+    "verification_mode": "Independent Python subprocess per shard; all test files present once",
+    "monolithic_single_process_run": "NOT_RUN; earlier milestones observed intermittent stalls"
+  },
+  "setup_test": {
+    "normal_no_pack": "PASS_EXIT_0",
+    "synthetic_staged_pack": "PASS_IN_REGRESSION_TEST"
+  },
+  "start_test": {
+    "status": "BLOCKED",
+    "exit_code": 40,
+    "failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_bundle_generated": true
+  },
+  "architecture": {
+    "status": "PASS",
+    "packages": 13,
+    "forbidden_imports": 0
+  },
+  "safety": {
+    "live_ready": false,
+    "adapter_activated": false,
+    "current_build_certified": false,
+    "current_build_canonical_commits": 0,
+    "physical_input_sent": false
+  },
+  "remaining_acceptance_gaps": [
+    "Current-build versioned semantic adapter not provided and not certified",
+    "Independent oracle values and actual full PCAPNG game captures not provided for new build",
+    "Game event/turn epochs and cross-account authoritative reconstruction",
+    "Windows native process/window/capture acceptance and current calibration",
+    "Physical execution with server-confirmed outcomes and mission recovery",
+    "End-to-end CRA/ENU live-fight acceptance",
+    "Earlier single-process verification stalls not yet root-caused"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 80,
+    "live_fight_acceptance_percent": 0,
+    "percent_type": "Approximate weighted scope coverage, not measured reliability or quality"
+  },
+  "note": "All successful field comparisons are research-only. This release does not activate arbitrary adapters or execute Dofus actions."
+}

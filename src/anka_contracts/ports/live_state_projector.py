@@ -1,0 +1,6 @@
+from typing import Protocol
+from anka_contracts.canonical import CanonicalEventEnvelope
+from anka_contracts.state import LiveStateSnapshot
+class LiveStateProjectorPort(Protocol):
+    def prepare(self, previous: LiveStateSnapshot | None, batch: tuple[CanonicalEventEnvelope,...]) -> LiveStateSnapshot: ...
+    def validate_snapshot(self, snapshot: LiveStateSnapshot) -> None: ...

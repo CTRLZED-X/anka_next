@@ -1,0 +1,94 @@
+{
+  "artifacts": {
+    "docs/M6_CANONICAL_DURABLE_AUTHORITY.md": "703636547e42504b4d78a856934452133e56c913a73342f731b97c9e44d699c8",
+    "docs/M7_LIVE_STATE_PROVENANCE_FRESHNESS.md": "70e66474d58c5069cba890f0fcdd51c9b3f62d56b965c0751263d309dd6dee4f"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 7,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "Q5_CANONICAL_STATE_REGRESSION",
+      "detail": "pytest_pass=405; subtests=13",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_CANONICAL_IMPORT_ISOLATION",
+      "detail": "forbidden imports=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_LIVE_STATE_IMPORT_ISOLATION",
+      "detail": "forbidden imports=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_UNMAPPED_FAILS_CLOSED",
+      "detail": "allowed=False; reason=CANONICAL_PROTOCOL_HEALTH_UNSAFE",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_CANONICAL_PUBLIC_API",
+      "detail": "commit/read/cursor/replay/health surface present.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_PROTOCOL_CANONICAL_LINKAGE",
+      "detail": "Composition adapter distinguishes commit/reject/uncertain and Protocol rollback is regression tested.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q5_ZERO_PHYSICAL_INPUT",
+      "detail": "M6/M7 verification opens no physical input driver.",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 13116,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "4abe63c62c55694da939ce52f26ec1bf872bc9101fc71f6cfa84f6a370cf47c1",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q5",
+  "generated_utc": "2026-10-24T23:25:09.005222+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "Current-client protocol semantics remain unaccepted.",
+    "Historical/synthetic P55 journals are retained as regression evidence and are not silently promoted into definitive Canonical truth.",
+    "Windows/live observation and all physical input remain outside Q5."
+  ],
+  "milestone": "M6+M7",
+  "observed_client_build": null,
+  "physical_input_count": 0,
+  "physical_input_state": "DISABLED",
+  "protocol_adapter_release": null,
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 405,
+    "skipped": 0
+  }
+}

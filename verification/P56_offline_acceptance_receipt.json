@@ -1,0 +1,50 @@
+{
+  "authority": {
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "historical_or_current_drafts_admitted": false,
+    "live_ready": false,
+    "physical_input_enabled": false
+  },
+  "complete_live_cra_enu_acceptance_percent": 0,
+  "date": "2026-10-21",
+  "live_start": {
+    "exit_code": 40,
+    "failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS"
+  },
+  "milestone": "P56",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 273,
+    "check": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "source_bound_receipt_smoke": "PASS_SYNTHETIC_SOURCE_RECEIPT",
+    "transactional_fixture_smoke": "PASS_SYNTHETIC_TRANSACTION_FENCE"
+  },
+  "roadmap_scope_estimate_percent": 92,
+  "source_bound_receipts": {
+    "atomic_with_events_and_projection": true,
+    "batch_id_immutable": true,
+    "commit_ack_recovery_idempotent": true,
+    "exact_receipt_replay_idempotent": true,
+    "receipt_hash_chain_audited": true,
+    "same_source_cannot_be_relabelled": true,
+    "schema": 2,
+    "scope": "SYNTHETIC_FIXTURE_ONLY",
+    "v1_writer_migration_serialized": true
+  },
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_canonical_state_tests_passed": 152,
+    "isolated_test_methods_passed": 1449,
+    "isolated_test_modules_discovered": 83,
+    "isolated_test_modules_passed": 83,
+    "new_p56_tests_passed": 16,
+    "physical_input_sent": false
+  },
+  "title": "Source-bound synthetic Canonical batch receipts and schema-v2 migration",
+  "verification_fingerprint": "673bd5450329377d0d796811f179589a6f5c085c4b63409fa8b64750951d44d2"
+}

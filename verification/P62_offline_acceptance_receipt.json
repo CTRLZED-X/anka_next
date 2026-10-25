@@ -1,0 +1,59 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false
+  },
+  "changes": {
+    "automatic_check_setup_smoke": true,
+    "epb_dropcount_rejected": true,
+    "isb_interface_os_drop_rejected": true,
+    "legacy_packet_block_drop_rejected": true,
+    "malformed_duplicate_loss_options_rejected": true,
+    "packet_count_uses_same_loss_guard": true,
+    "per_section_endianness_and_interface_scoping": true,
+    "unknown_or_missing_counts_are_not_certification": true
+  },
+  "date": "2026-10-22",
+  "estimated_roadmap_scope_percent": 92,
+  "limitations": [
+    "No current client PCAP/source attestation",
+    "Absent/zero PCAPNG counters are not proof of complete capture",
+    "No modern protocol semantic adapter or verified character binding",
+    "No authoritative Canonical or Windows input integration"
+  ],
+  "milestone": "P62",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "preflight": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 281,
+    "architecture_violations": 0,
+    "check": "PASS",
+    "incident_zip_integrity": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "synthetic_loss_metadata_smoke": "PASS_REPORTED_CAPTURE_LOSS_QUARANTINED"
+  },
+  "reproduced_root_cause": "P61 PCAPNG parser accepted explicit positive drop counters in EPB/PB/ISB loss metadata without surfacing evidence incompleteness.",
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_subtests_passed": 22,
+    "focused_tests_passed": 112,
+    "isolated_modules_expected": 89,
+    "isolated_modules_passed": 89,
+    "isolated_test_methods_passed": 1539,
+    "new_p62_subtests_passed": 11,
+    "new_p62_tests_passed": 17,
+    "p61_baseline_reproducer_failures_including_subtests": 19
+  },
+  "title": "Fail-closed PCAPNG recorded packet-loss metadata",
+  "verification_fingerprint": "06bcfc71d1b42b2bff800a11b857ec583ab21dc379f1753ce69771b25c9300cc",
+  "verified_complete_live_cra_enu_percent": 0
+}

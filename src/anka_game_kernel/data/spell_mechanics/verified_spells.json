@@ -1,0 +1,6178 @@
+{
+  "schema_version": "1",
+  "pack_version": "anka-verified-spells-r10h",
+  "game_version": "3.6.10.10",
+  "source": {
+    "source_kind": "verified_manual",
+    "source_name": "ANKA verified spell mechanics corpus",
+    "source_version": "2026-09-10-r10h",
+    "verification_status": "manually_verified",
+    "notes": "Verified spell-by-spell mechanics for Dofus 3.6.10.10. Static SpellLevels remain the cast-rule authority; this pack adds verified semantics absent or contradicted there. R9A added per-grade projection certification for Flèche de Recul rank 3. R9B certifies Flèche de Dispersion rank 3 for arbitrary-angle LoS and impact-centered radial Cross displacement. R9C certifies Flèche Perforante rank 2 for directional LINE multi-target displacement resolved from the selected cell outward / near-to-far, with packed-target collision damage remaining live-authoritative. R9D certifies Flèche Glacée rank 3 for arbitrary-angle LoS; dodgeable AP loss, damage, and temporary spell-base-damage lifecycle remain live-authoritative where appropriate. R9E certifies Flèche Vagabonde rank 3 for the already-proven eight-direction displacement engine, including proportional-diagonal recoil and diagonal passage blocking; damage/HP remain live-authoritative. R9F certifies Carreaux Destructeurs rank 2 for generic direction-grouped multi-target push over the verified FORK area; same-direction actors are sequenced nearest-to-farthest by canonical Direction8, cross-ray interactions fail closed, and collision damage remains live-authoritative. R9F also certifies Flèche d’Immobilisation rank 3 for the already-proven arbitrary-angle LoS engine; dodgeable MP transfer, damage/HP, and temporary spell-base-damage lifecycle remain live-authoritative. Lower grades remain explicitly unverified. R9J certifies Représailles rank 1 and Sentinelle rank 1 normal-branch caster-line-of-sight enumeration for the already-proven arbitrary-angle LoS engine; Sentinelle critical remains explicitly unknown. R9K certifies Flèche Assaillante rank 1 for the already-proven arbitrary-angle LoS and eight-direction forced-displacement engines; its melee branch pushes the selected enemy and its distance branch moves the caster toward the selected target, while damage/HP and temporary Power lifecycle remain live-authoritative. R9L certifies Tir de Repli rank 3 normal branch for the already-proven eight-direction forced-displacement engine; enemy targets recoil the caster 2 cells and ally targets advance the caster 2 cells, while the critical branch remains explicitly unknown and temporary range lifecycle remains live-authoritative. R9N adds Enutrof Lancer de Pièces (13338) grade 3: Static 0-12 modifiable arbitrary-angle LoS cast rules remain authoritative; verified POINT Water damage is 13-15 normal and 16-18 critical against enemies; +6 live PO explains the observed 0-18 effective range; grades 1-2 remain unknown. R9O adds Enutrof Force de l'Âge (13340) grade 3: Static 1-6 modifiable arbitrary-angle LoS, 3 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the observed 1-12 effective range; verified POINT Earth damage is 28-32 normal / 34-38 critical against enemies, followed by a caster-anchored fixed +1 MP for 1 turn. The generic resolver now projects fixed non-dodgeable immediate MP deltas for same-plan reasoning while expiry/status lifecycle remains live-authoritative; delayed MP effects are never applied early. Grades 1-2 remain unknown. R9P adds Enutrof Roulage de Pelle (13331) grade 3: Static 1-6 modifiable arbitrary-angle casting, no LoS, 3 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the observed 1-12 effective range; verified POINT Fire damage is 19-23 normal and 24-29 critical against enemies. Empty target cells are legal because Static requires neither a free nor occupied cell. No new engine or projection capability is needed; grades 1-2 remain unknown. R9Q adds Enutrof Opportunité (13366) grade 3: Static occupied-cell 1-8 modifiable arbitrary-angle LoS, 2 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the observed 1-14 effective range; a caster-anchored fixed +80 Power for 2 turns with max_stacks=2 resolves before verified POINT Air damage of 14-16 normal / 17-19 critical against enemies. The ordering follows verified Enutrof behavior that Opportunité applies Power before damage. The generic characteristic projector now respects declared same-turn max_stacks so a legal third cast does not over-project the Power bonus; temporary expiry and pre-existing live-effect lifecycle remain server-authoritative. Grades 1-2 remain unknown. R9R certifies Enutrof Ruée vers l'Or rank 3 for 2 AP, modifiable 0-12 base range, arbitrary-angle casting without LoS, a 3-turn recast interval, immediate +4 MP and state 5472 for one turn, plus target-turn-end conditional follow-ups: +150 Power on the next turn when adjacent to an enemy and a 10% max-HP heal when adjacent to an allied Enutrof summon. Generic adjacent-actor predicates and deferred trigger-time evaluation keep future conditions live-context-authoritative; final heal amount/HP and temporary lifecycle expiry remain live-authoritative. R9S certifies Enutrof Boîte de Pandore (13334) grade 3: Static self-only 0-0 fixed-range, no-LoS, 2 AP and 2-turn recast rules remain authoritative; verified GLOBAL/cercle-infini effects heal self/allied actors and allied summons for 10% target max HP normal / 12% critical while all enemy actors and enemy summons receive fixed +1 MP for 1 turn. A generic GLOBAL AoE primitive enumerates all 560 canonical fight CellIds; fixed immediate MP is projected for same-plan reasoning, while heal amount/resulting HP and temporary MP expiry remain live-authoritative. Grades 1-2 remain unknown. R9T certifies Enutrof Remblai (13335) grade 3: Static 0-8 modifiable arbitrary-angle LoS, 3 AP and 2 casts/turn remain authoritative; +6 live PO explains the observed 0-14 effective range. Verified CROSS radius 3 effects exclude the caster, deal 20-22 Earth normal / 24-26 critical to non-summons, 25-27 Earth normal / 30-32 critical to summons, and apply a fixed -2 range modifier for 1 turn with max_stacks=1 to affected non-caster actors. Fixed immediate PO is projected for same-plan reasoning while temporary expiry and final damage/HP remain live-authoritative. Grades 1-2 remain unknown. R9U certifies Enutrof Clef du Trésor (13332) grade 3: Static 0-9 modifiable arbitrary-angle LoS, 2 AP and 3-turn recast interval remain authoritative; +6 live PO explains the observed 0-15 effective range. Verified POINT effects apply fixed -4 Range for 2 turns with max_stacks=1 to enemies and +4 Range for 2 turns with max_stacks=1 to self/allied actors, including summons. The critical branch is verified empty. Fixed immediate PO is projected for same-plan reasoning while temporary Range expiry/lifecycle remains live-authoritative. Grades 1-2 remain unknown; no Enutrof-specific engine was added. R9V certifies Enutrof Obsolescence (13360) grade 1: Static 1-7 modifiable arbitrary-angle LoS, 3 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the observed 1-13 effective range. Verified POINT Water damage is 26-30 normal / 31-36 critical to non-summons and 34-38 normal / 40-45 critical to summons, with a fixed -20 MP-loss resistance (Esquive PM) modifier for 2 turns and max_stacks=1 on enemy targets. A generic COMBAT_STAT_CHANGE projector mutates canonical ActorCombatStats fields for same-plan reasoning while temporary expiry and final damage/HP remain live-authoritative; no Enutrof-specific engine was added. R9W adds Enutrof Pelle Animée (13344) grade 3 with generic summon creation for creature template 238 on a required free CellId, caller-owned team/summoner semantics, controllable=true, and linked summon spells Trésor d'Enutrof (13376) plus Déblayage (13348). Runtime ActorId and numeric summon stats remain live-authoritative. Déblayage grade 3 is certified for 3-cell eight-direction POINT push, including allies, with Static 3 AP, range 1, 3 casts/turn and 2 casts/target. R9X certifies Enutrof Avarice (13362) grade 3: Static self-only 0-0 fixed-range, no-LoS, 3 AP and 4-turn recast remain authoritative. Verified caster-centered LOZENGE radius 3 effects exclude the caster, remove 3 non-dodgeable MP for 1 turn (clamped at zero) and grant 3 AP for 1 turn to in-zone actors. All non-caster actors outside that radius lose 50 Power for 1 turn, while the caster gains 50 Power for 2 turns per affected outer actor, capped at 10 actors. Generic OUTSIDE_LOZENGE geometry, fixed immediate AP projection, per-affected-actor characteristic aggregation and same-class allied shared-cooldown projection were added; temporary expiry remains live-authoritative. The critical branch is verified empty and grades 1-2 remain unknown. R9Y certifies Enutrof Pelle Aurifère (13343) grade 3: Static 1-7 modifiable arbitrary-angle LoS, 4 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the observed 1-13 effective range. Verified POINT Water damage is 33-37 normal / 40-44 critical against enemies, followed by a dodgeable -3 MP attempt for 1 turn with max_stacks=1 and non-dispellable lifecycle. Damage/HP, actual MP-loss result and temporary lifecycle remain live-authoritative; grades 1-2 remain unknown and no new engine is required. R9Z certifies Enutrof Maladresse (13337) grade 3: Static 1-12 modifiable arbitrary-angle LoS, 1 AP, 4 casts/turn and 1 cast/target remain authoritative; +6 live PO explains the observed 1-18 effective range. Verified POINT control attempts a dodgeable -2 MP for 1 turn with max_stacks=1 and non-dispellable lifecycle against enemies. The critical branch is verified empty. Actual MP-loss result and temporary lifecycle remain live-authoritative; grades 1-2 remain unknown and no new engine is required. R10A certifies Enutrof Pelle Fantomatique (13336) grade 3: Static 0-8 modifiable arbitrary-angle LoS, 3 AP, 2 casts/turn and 1 cast/target remain authoritative; +6 live PO explains the supplied 0-14 effective range. Both branches first reduce the remaining duration of target effects by 1, then deal POINT Fire damage to enemies (26-28 normal / 31-34 critical). A generic effect_duration_change semantic records the deterministic reduction intent while the exact reducible-effect set and resulting status lifecycle remain live-authoritative; grades 1-2 remain unknown. R10B certifies Enutrof Lancer de Pelle (13330) grade 1: Static 1-8 modifiable arbitrary-angle LoS, 4 AP, 3 casts/turn and 2 casts/target remain authoritative; +6 live PO explains the supplied 1-14 effective range. Both branches deal POINT Earth damage to enemies (34-37 normal / 41-44 critical), followed by fixed -4 Range for 1 turn with max_stacks=1. Immediate fixed PO projection reuses the generic range-change service; final damage/HP and temporary range lifecycle remain live-authoritative. This is a single-grade spell and no new engine is required. R10C certifies Enutrof Pelle des Anciens (13345) grade 2: Static 1-7 modifiable arbitrary-angle LoS, 4 AP, 3 casts/turn and 1 cast/target remain authoritative; +6 live PO explains the supplied 1-13 effective range. Both branches deal POINT Water damage to enemies (40-44 normal / 48-53 critical), then attempt dodgeable -1 MP for 1 turn with max_stacks=1 and non-dispellable lifecycle, then push the selected actor 2 cells away from the caster. Damage and MP removal target enemies, while the generic Direction8 push applies to allied or enemy non-summons/summons; empty target cells remain cast-legal and produce no actor effect. Collision handling reuses the generic displacement engine. Final damage/HP, actual MP-loss result, temporary lifecycle and collision damage remain live-authoritative. Grade 1 remains unknown and no new engine is required. R10D certifies Enutrof Tamisage (13370) grade 1: Static 0-5 modifiable arbitrary-angle LoS, 3 AP and 1 cast/turn remain authoritative; +6 live PO explains the supplied 0-11 effective range. Both branches use a verified SQUARE size-1 effect area (3x3 logical CellId footprint, 9 cells before map clipping), excluding the caster while affecting other allied/enemy non-summons and summons. Water damage is 25-29 normal / 30-35 critical, followed by a dodgeable -2 MP attempt for 1 turn with max_stacks=1 and non-dispellable lifecycle. A generic SQUARE AoE primitive was added; final damage/HP, actual MP-loss result and temporary lifecycle remain live-authoritative. R10E certifies Enutrof Corruption (13346) Grade 2: Static 4-8 modifiable arbitrary-angle LoS, 5 AP, 5-turn recast and initial cooldown 1; supplied +6 PO explains the observed 4-14 range. POINT relation split: all allied/enemy non-self actors and summons receive Pacifist (state 218) for 1 turn; enemies additionally receive Invulnerable (state 56) for 1 turn; allies receive a live-authoritative heal equal to 40% target max HP. Both state effects are non-dispellable. Global/shared cooldown reuses the generic same-class allied cooldown projection. The critical branch is verified empty; Grade 1 remains UNKNOWN. Heal result/HP and temporary-state lifecycle remain live-authoritative. No Enutrof-specific engine added. R10F certifies Enutrof Retraite Anticipée (13349) Grade 2: Static self-only 0-0 fixed range, no LoS, 4 AP, 7-turn recast and initial cooldown 1 remain authoritative. Verified immediate effects are fight-wide over the living actor roster and exclude the caster: fixed non-dodgeable -100 MP for 1 turn plus non-dispellable Pesanteur state 7 for 1 turn. The caster instead receives a delayed fixed -100 MP effect at the next TURN_START (delay 1, duration 1), represented structurally and settled through the generic live status-lifecycle contract rather than projected early. A generic FIGHT target scope was added so true fight-wide effects do not fake geometry with an oversized AoE. Same-class allied shared cooldown projection is reused. The critical branch is verified empty and Grade 1 remains UNKNOWN; no Enutrof-specific engine was added. R10G certifies Enutrof Malle Animée (13371) Grade 1: Static fixed 1-3 arbitrary-angle LoS, 3 AP, required free CellId and 4-turn recast remain authoritative. Generic SUMMON creates controllable creature template 5839 and links Trésor d'Enutrof (13376) plus Malle aux Trésors (13381). Malle aux Trésors is Static self-only 0-0, no LoS, 3 AP, 2 casts/turn and heals allied non-self actors/summons in Dofus circle size 2 (Kernel LOZENGE radius 2) for 8% target max HP. Trésor d'Enutrof is represented by a reusable live-authoritative DAMAGE_SOURCE_HEAL trigger: when the effect holder receives damage from an allied source, that damage source is healed for 50% of the triggering damage received. Runtime summon identity/stats, trigger event, healed amount/HP and passive lifecycle remain live-authoritative. No Enutrof-specific engine was added. R10H completes the requested Enutrof 22/22 control set. Sac Animé (13328) Grade 3 uses Static 2 AP, fixed 1-5 range, no LoS, required free CellId and 4-turn recast; generic SUMMON creates controllable creature 5830 with a fixed 3-turn lifetime, links Trésor d'Enutrof (13376), and exposes a verified LOZENGE radius-2 allied damage-interception aura through reusable live-authoritative DAMAGE_INTERCEPT semantics. Runtime damage routing/HP and summon expiry remain live-authoritative; Grades 1-2 remain UNKNOWN. Bêche des Anciens (13367) Grade 1 uses Static 4 AP, fixed 1-7 arbitrary-angle LoS and 2 casts/turn; both branches apply CROSS radius-2 Air damage (32-36 normal / 38-43 critical) and dodgeable -2 AP for 1 turn to enemies, then reuse selected-target-cell radial CROSS displacement to push affected actors 2 cells outward. No Enutrof-specific engine was added."
+  },
+  "spells": [
+    {
+      "spell_id": 13330,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 37
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -4,
+                  "maximum": -4
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 41,
+                  "maximum": 44
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -4,
+                  "maximum": -4
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13331,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 19,
+                  "maximum": 23
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 24,
+                  "maximum": 29
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13332,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -4,
+                  "maximum": -4
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 4,
+                  "maximum": 4
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13334,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 1000,
+                  "maximum": 1000,
+                  "unit": "percent",
+                  "reference": "target_max_hp"
+                }
+              },
+              "area": {
+                "shape": "global"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 1,
+                  "maximum": 1
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "global"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 1200,
+                  "maximum": 1200,
+                  "unit": "percent",
+                  "reference": "target_max_hp"
+                }
+              },
+              "area": {
+                "shape": "global"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 1,
+                  "maximum": 1
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "global"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13335,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 20,
+                  "maximum": 22
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "enemy_non_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 27
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 24,
+                  "maximum": 26
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "enemy_non_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 30,
+                  "maximum": 32
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13336,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "effect_duration_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1,
+                  "maximum": -1
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 26,
+                  "maximum": 28
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "effect_duration_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1,
+                  "maximum": -1
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 31,
+                  "maximum": 34
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13337,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13338,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 13,
+                  "maximum": 15
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 16,
+                  "maximum": 18
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13340,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 28,
+                  "maximum": 32
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 1,
+                  "maximum": 1
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 38
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 1,
+                  "maximum": 1
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13342,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 4,
+                  "maximum": 4
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 5472
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 150,
+                  "maximum": 150
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 1,
+              "max_stacks": 1,
+              "trigger": "turn_end",
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "adjacent_actor",
+                    "subject": "target",
+                    "relation": "enemy"
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 1000,
+                  "maximum": 1000,
+                  "unit": "percent",
+                  "reference": "target_max_hp"
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "trigger": "turn_end",
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "adjacent_actor",
+                    "subject": "target",
+                    "relation": "ally",
+                    "summoned": true,
+                    "summoner_class_id": 3
+                  }
+                ]
+              }
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13343,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 33,
+                  "maximum": 37
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3,
+                  "maximum": -3
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 40,
+                  "maximum": 44
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3,
+                  "maximum": -3
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13344,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "summon",
+              "parameters": {
+                "creature_id": 238,
+                "summon_kind": "normal",
+                "controllable": true,
+                "linked_spell_ids": [
+                  13376,
+                  13348
+                ]
+              },
+              "area": {
+                "shape": "point"
+              }
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13345,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los",
+            "eight_direction_displacement"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 40,
+                  "maximum": 44
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1,
+                  "maximum": -1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 48,
+                  "maximum": 53
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1,
+                  "maximum": -1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13346,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 218
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 56
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 4000,
+                  "maximum": 4000,
+                  "unit": "percent",
+                  "reference": "target_max_hp"
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [],
+          "cast_rule_override": {
+            "shared_cooldown": true
+          }
+        }
+      ]
+    },
+    {
+      "spell_id": 13348,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "eight_direction_displacement"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13349,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -100,
+                  "maximum": -100
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "target_scope": "fight",
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 7
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "target_scope": "fight",
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -100,
+                  "maximum": -100
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 1,
+              "trigger": "turn_start",
+              "dispellable": false
+            }
+          ],
+          "critical_effects": [],
+          "cast_rule_override": {
+            "shared_cooldown": true
+          }
+        }
+      ]
+    },
+    {
+      "spell_id": 13360,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 26,
+                  "maximum": 30
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 38
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "combat_stat_change",
+              "parameters": {
+                "stat": "mp_loss_resistance",
+                "amount": {
+                  "minimum": -20,
+                  "maximum": -20
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 31,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 40,
+                  "maximum": 45
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "combat_stat_change",
+              "parameters": {
+                "stat": "mp_loss_resistance",
+                "amount": {
+                  "minimum": -20,
+                  "maximum": -20
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13362,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3,
+                  "maximum": -3
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 3
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 3,
+                  "maximum": 3
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 3
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": -50,
+                  "maximum": -50
+                }
+              },
+              "area": {
+                "shape": "outside_lozenge",
+                "radius": 3
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 3,
+              "mechanic": "characteristic_gain_per_affected_actor",
+              "parameters": {
+                "characteristic": "power",
+                "amount_per_actor": {
+                  "minimum": 50,
+                  "maximum": 50
+                },
+                "max_affected_actors": 10
+              },
+              "area": {
+                "shape": "outside_lozenge",
+                "radius": 3
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2
+            }
+          ],
+          "critical_effects": [],
+          "cast_rule_override": {
+            "shared_cooldown": true
+          }
+        }
+      ]
+    },
+    {
+      "spell_id": 13366,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 80,
+                  "maximum": 80
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 2
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 14,
+                  "maximum": 16
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 80,
+                  "maximum": 80
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 2
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 17,
+                  "maximum": 19
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13370,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 29
+                }
+              },
+              "area": {
+                "shape": "square",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "square",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 30,
+                  "maximum": 35
+                }
+              },
+              "area": {
+                "shape": "square",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "square",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 13371,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "summon",
+              "parameters": {
+                "creature_id": 5839,
+                "summon_kind": "normal",
+                "controllable": true,
+                "linked_spell_ids": [
+                  13376,
+                  13381
+                ]
+              },
+              "area": {
+                "shape": "point"
+              }
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13376,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage_source_heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 5000,
+                  "maximum": 5000,
+                  "unit": "percent",
+                  "reference": "trigger_damage_received"
+                },
+                "source_relation": "ally"
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "trigger": "on_damage"
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13381,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "heal",
+              "parameters": {
+                "amount": {
+                  "minimum": 800,
+                  "maximum": 800,
+                  "unit": "percent",
+                  "reference": "target_max_hp"
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 32426,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los",
+            "eight_direction_displacement"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 28
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 30,
+                  "maximum": 34
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32428,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 21,
+                  "maximum": 24
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 2,
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 1
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 1,
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 29
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 2,
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 1
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 1,
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los",
+            "radial_cross_displacement"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32429,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 38,
+                  "maximum": 42
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": false
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 44,
+                  "maximum": 48
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": true
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 46,
+                  "maximum": 50
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": false
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 53,
+                  "maximum": 58
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": true
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "line",
+                "radius": 4
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "certified_projection_capabilities": [
+            "directional_line_multi_target_displacement"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32435,
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 21,
+                  "maximum": 24
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32435,
+                "amount": {
+                  "minimum": 8
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 29
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32435,
+                "amount": {
+                  "minimum": 8
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "max_stacks": 1
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ],
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ]
+    },
+    {
+      "spell_id": 32436,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_steal",
+              "parameters": {
+                "amount": {
+                  "minimum": 1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 11,
+                  "maximum": 13
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32436,
+                "amount": {
+                  "minimum": 2
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "max_stacks": 4
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "mp_steal",
+              "parameters": {
+                "amount": {
+                  "minimum": 1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 14,
+                  "maximum": 16
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32436,
+                "amount": {
+                  "minimum": 2
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "max_stacks": 4
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32437,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "reveal_invisible",
+              "parameters": {},
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3,
+                  "maximum": -3
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 19,
+                  "maximum": 22
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "reveal_invisible",
+              "parameters": {},
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3,
+                  "maximum": -3
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 23,
+                  "maximum": 26
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32438,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "heal_received_percent",
+                "amount": {
+                  "minimum": -50,
+                  "maximum": -50
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 35,
+                  "maximum": 37
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32438,
+                "amount": {
+                  "minimum": 36,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32438,
+                "amount": {
+                  "minimum": 36,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 4,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "heal_received_percent",
+                "amount": {
+                  "minimum": -50,
+                  "maximum": -50
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 42,
+                  "maximum": 44
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32438,
+                "amount": {
+                  "minimum": 36,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32438,
+                "amount": {
+                  "minimum": 36,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 4,
+              "max_stacks": 1
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32439,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 34
+                }
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -1
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "water",
+                "amount": {
+                  "minimum": 38,
+                  "maximum": 41
+                }
+              },
+              "area": {
+                "shape": "cone",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32446,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "cast_rule_override": {
+            "max_global_cast_per_turn": 4
+          },
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 11,
+                  "maximum": 13
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "any",
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "absent"
+                  },
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target"
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 23,
+                  "maximum": 27
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 1,
+                    "maximum_stacks": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 38
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 2,
+                    "maximum_stacks": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 38
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 4,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 34,
+                  "maximum": 38
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 1,
+                    "maximum_stacks": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 5,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 52,
+                  "maximum": 56
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 2,
+                    "maximum_stacks": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 6,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 70,
+                  "maximum": 74
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 7,
+              "mechanic": "target_sequence_charge",
+              "parameters": {
+                "max_stacks": 3,
+                "timeout_turns": 3,
+                "timeout_element": "fire",
+                "timeout_amounts": [
+                  {
+                    "minimum": 34,
+                    "maximum": 38
+                  },
+                  {
+                    "minimum": 52,
+                    "maximum": 56
+                  },
+                  {
+                    "minimum": 70,
+                    "maximum": 74
+                  }
+                ]
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_team_relation",
+                    "subject": "caster",
+                    "relation": "enemy"
+                  }
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 14,
+                  "maximum": 16
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "any",
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "absent"
+                  },
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target"
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 28,
+                  "maximum": 32
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 1,
+                    "maximum_stacks": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 41,
+                  "maximum": 46
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 2,
+                    "maximum_stacks": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 41,
+                  "maximum": 46
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "same_selected_target",
+                    "minimum_stacks": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 4,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 41,
+                  "maximum": 46
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 1,
+                    "maximum_stacks": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 5,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 62,
+                  "maximum": 67
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 2,
+                    "maximum_stacks": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 6,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "fire",
+                "amount": {
+                  "minimum": 84,
+                  "maximum": 89
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "prior_sequence_target_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "spell_target_sequence",
+                    "subject": "caster",
+                    "relation": "different_selected_target",
+                    "minimum_stacks": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 7,
+              "mechanic": "target_sequence_charge",
+              "parameters": {
+                "max_stacks": 3,
+                "timeout_turns": 3,
+                "timeout_element": "fire",
+                "timeout_amounts": [
+                  {
+                    "minimum": 41,
+                    "maximum": 46
+                  },
+                  {
+                    "minimum": 62,
+                    "maximum": 67
+                  },
+                  {
+                    "minimum": 84,
+                    "maximum": 89
+                  }
+                ]
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 3,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_team_relation",
+                    "subject": "caster",
+                    "relation": "enemy"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32453,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 9,
+                  "maximum": 11
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_progression": {
+                "stages": [
+                  {
+                    "shape": "point"
+                  },
+                  {
+                    "shape": "cross",
+                    "radius": 1
+                  },
+                  {
+                    "shape": "lozenge",
+                    "radius": 2
+                  }
+                ]
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": false
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 18,
+                  "maximum": 22
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_progression": {
+                "stages": [
+                  {
+                    "shape": "point"
+                  },
+                  {
+                    "shape": "cross",
+                    "radius": 1
+                  },
+                  {
+                    "shape": "lozenge",
+                    "radius": 2
+                  }
+                ]
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": true
+                  }
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 12,
+                  "maximum": 14
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_progression": {
+                "stages": [
+                  {
+                    "shape": "point"
+                  },
+                  {
+                    "shape": "cross",
+                    "radius": 1
+                  },
+                  {
+                    "shape": "lozenge",
+                    "radius": 2
+                  }
+                ]
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": false
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 23,
+                  "maximum": 27
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_progression": {
+                "stages": [
+                  {
+                    "shape": "point"
+                  },
+                  {
+                    "shape": "cross",
+                    "radius": 1
+                  },
+                  {
+                    "shape": "lozenge",
+                    "radius": 2
+                  }
+                ]
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "operator": "all",
+                "predicates": [
+                  {
+                    "kind": "shield_present",
+                    "subject": "target",
+                    "present": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32454,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 4
+                  }
+                ]
+              }
+            },
+            {
+              "order": 4,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 27,
+                  "maximum": 30
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 2
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 3
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32454,
+                "amount": {
+                  "minimum": 6,
+                  "maximum": 6
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 4,
+              "dispellable": false,
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "previous_turn_enemy_attacks_received",
+                    "subject": "caster",
+                    "minimum": 4
+                  }
+                ]
+              }
+            },
+            {
+              "order": 4,
+              "mechanic": "lifesteal",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32455,
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "certified_projection_capabilities": [
+            "eight_direction_displacement"
+          ],
+          "cast_rule_override": {
+            "cast_in_diagonal": true
+          },
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "recoil",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 27,
+                  "maximum": 30
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "recoil",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ]
+    },
+    {
+      "spell_id": 32456,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "erosion_percent",
+                "amount": {
+                  "minimum": 15,
+                  "maximum": 15
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 30,
+                  "maximum": 34
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32456,
+                "amount": {
+                  "minimum": 24,
+                  "maximum": 24
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32456,
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 32
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 2,
+              "max_stacks": 1
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "erosion_percent",
+                "amount": {
+                  "minimum": 15,
+                  "maximum": 15
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 36,
+                  "maximum": 41
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32456,
+                "amount": {
+                  "minimum": 24,
+                  "maximum": 24
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 3,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32456,
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 32
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 2,
+              "max_stacks": 1
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32457,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32457,
+                "amount": {
+                  "minimum": 12,
+                  "maximum": 12
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 25,
+                  "maximum": 29
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "spell_base_damage_change",
+              "parameters": {
+                "affected_spell_id": 32457,
+                "amount": {
+                  "minimum": 12,
+                  "maximum": 12
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 30,
+                  "maximum": 35
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32458,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 23,
+                  "maximum": 26
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 150
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_distance",
+                    "subject": "caster",
+                    "minimum": 1,
+                    "maximum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "pull",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_distance",
+                    "subject": "caster",
+                    "minimum": 2
+                  }
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 28,
+                  "maximum": 31
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 150
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_distance",
+                    "subject": "caster",
+                    "minimum": 1,
+                    "maximum": 1
+                  }
+                ]
+              }
+            },
+            {
+              "order": 3,
+              "mechanic": "pull",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_distance",
+                    "subject": "caster",
+                    "minimum": 2
+                  }
+                ]
+              }
+            }
+          ],
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los",
+            "eight_direction_displacement"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32459,
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 38,
+                  "maximum": 42
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "fixed_damage",
+                "amount": {
+                  "minimum": -60
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "earth",
+                "amount": {
+                  "minimum": 46,
+                  "maximum": 50
+                },
+                "area_falloff": "non_degressive"
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "fixed_damage",
+                "amount": {
+                  "minimum": -60
+                }
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 3
+              },
+              "area": {
+                "shape": "fork",
+                "radius": 3
+              },
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            }
+          ],
+          "certified_projection_capabilities": [
+            "direction_grouped_multi_target_displacement"
+          ]
+        }
+      ],
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ]
+    },
+    {
+      "spell_id": 32464,
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "teleport",
+              "parameters": {},
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "mp_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 1
+                },
+                "dodgeable": false
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "delay_turns": 1,
+              "trigger": "turn_start"
+            }
+          ],
+          "critical_effects": []
+        }
+      ],
+      "class_id": 9,
+      "tags": []
+    },
+    {
+      "spell_id": 32465,
+      "class_id": 9,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "spell_range_change",
+              "parameters": {
+                "bound": "minimum",
+                "amount": {
+                  "minimum": 3
+                },
+                "affected_class_id": 9,
+                "required_tags": [
+                  "offensive"
+                ]
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "spell_range_change",
+              "parameters": {
+                "bound": "maximum",
+                "amount": {
+                  "minimum": 6
+                },
+                "affected_class_id": 9,
+                "required_tags": [
+                  "offensive"
+                ]
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 3
+                }
+              },
+              "area": {
+                "shape": "lozenge",
+                "min_radius": 0,
+                "radius": 2
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "ally_non_summon",
+                  "ally_summon"
+                ],
+                "excluded_class_ids": [
+                  9
+                ]
+              },
+              "additional_area_origins": {
+                "owned_creature_ids": [
+                  8347,
+                  8348
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": true
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 32466,
+      "class_id": 9,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 250
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "pushback_damage",
+                "amount": {
+                  "minimum": 150
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 3,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "critical_chance",
+                "amount": {
+                  "minimum": 15
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -3
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "power",
+                "amount": {
+                  "minimum": 300
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "pushback_damage",
+                "amount": {
+                  "minimum": 170
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            },
+            {
+              "order": 3,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "critical_chance",
+                "amount": {
+                  "minimum": 17
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "dispellable": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32470,
+      "class_id": 9,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "cast_rule_override": {
+            "cast_in_diagonal": true
+          },
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "recoil",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_team_relation",
+                    "subject": "caster",
+                    "relation": "enemy"
+                  }
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "pull",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "condition": {
+                "predicates": [
+                  {
+                    "kind": "selected_target_team_relation",
+                    "subject": "caster",
+                    "relation": "ally"
+                  }
+                ]
+              }
+            },
+            {
+              "order": 2,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 2
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            }
+          ],
+          "critical_effects": [],
+          "certified_projection_capabilities": [
+            "eight_direction_displacement"
+          ]
+        }
+      ]
+    },
+    {
+      "spell_id": 32472,
+      "class_id": 9,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "neutral",
+                "amount": {
+                  "minimum": 2000,
+                  "maximum": 2000,
+                  "unit": "percent",
+                  "reference": "target_eroded_hp"
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 7
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "damage_received_percent",
+                "amount": {
+                  "minimum": 10,
+                  "maximum": 10
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1,
+              "dispellable": true
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "neutral",
+                "amount": {
+                  "minimum": 2500,
+                  "maximum": 2500,
+                  "unit": "percent",
+                  "reference": "target_eroded_hp"
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "apply_state",
+              "parameters": {
+                "state_id": 7
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1
+            },
+            {
+              "order": 2,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "damage_received_percent",
+                "amount": {
+                  "minimum": 10,
+                  "maximum": 10
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 1
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 2,
+              "max_stacks": 1,
+              "dispellable": true
+            }
+          ],
+          "cast_rule_override": {
+            "max_global_cast_per_turn": 1
+          }
+        }
+      ]
+    },
+    {
+      "spell_id": 32475,
+      "class_id": 9,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los"
+          ],
+          "cast_rule_override": {
+            "max_global_cast_per_turn": 1
+          },
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "characteristic_change",
+              "parameters": {
+                "characteristic": "distance_damage_percent",
+                "amount": {
+                  "minimum": 20
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 2
+            },
+            {
+              "order": 1,
+              "mechanic": "range_change",
+              "parameters": {
+                "amount": {
+                  "minimum": 10
+                }
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 2
+            },
+            {
+              "order": 2,
+              "mechanic": "reveal_invisible",
+              "parameters": {},
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "target_scope": "caster_line_of_sight"
+            },
+            {
+              "order": 3,
+              "mechanic": "per_mp_used_modifier",
+              "parameters": {
+                "characteristic": "distance_damage_percent",
+                "characteristic_delta_per_mp": -2,
+                "range_delta_per_mp": -1,
+                "max_triggers": 10
+              },
+              "area": {
+                "shape": "point"
+              },
+              "area_anchor": "caster_cell",
+              "target": {
+                "allowed_classes": [
+                  "self"
+                ]
+              },
+              "duration_turns": 2
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13328,
+      "class_id": 3,
+      "tags": [],
+      "grades": [
+        {
+          "grade": 1,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 2,
+          "normal_effects": null,
+          "critical_effects": null
+        },
+        {
+          "grade": 3,
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "summon",
+              "parameters": {
+                "creature_id": 5830,
+                "summon_kind": "normal",
+                "controllable": true,
+                "linked_spell_ids": [
+                  13376
+                ]
+              },
+              "area": {
+                "shape": "point"
+              },
+              "duration_turns": 3,
+              "dispellable": false
+            },
+            {
+              "order": 1,
+              "mechanic": "damage_intercept",
+              "parameters": {},
+              "area": {
+                "shape": "lozenge",
+                "radius": 2
+              },
+              "area_anchor": "target_cell",
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon"
+                ]
+              },
+              "duration_turns": 3
+            }
+          ],
+          "critical_effects": []
+        }
+      ]
+    },
+    {
+      "spell_id": 13367,
+      "class_id": 3,
+      "tags": [
+        "offensive"
+      ],
+      "grades": [
+        {
+          "grade": 1,
+          "certified_projection_capabilities": [
+            "arbitrary_angle_los",
+            "radial_cross_displacement"
+          ],
+          "normal_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 32,
+                  "maximum": 36
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 1,
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            }
+          ],
+          "critical_effects": [
+            {
+              "order": 0,
+              "mechanic": "damage",
+              "parameters": {
+                "element": "air",
+                "amount": {
+                  "minimum": 38,
+                  "maximum": 43
+                }
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              }
+            },
+            {
+              "order": 1,
+              "mechanic": "ap_change",
+              "parameters": {
+                "amount": {
+                  "minimum": -2,
+                  "maximum": -2
+                },
+                "dodgeable": true
+              },
+              "area": {
+                "shape": "cross",
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "duration_turns": 1,
+              "max_stacks": 1,
+              "dispellable": false
+            },
+            {
+              "order": 2,
+              "mechanic": "push",
+              "parameters": {
+                "distance": 2
+              },
+              "area": {
+                "shape": "cross",
+                "min_radius": 1,
+                "radius": 2
+              },
+              "target": {
+                "allowed_classes": [
+                  "self",
+                  "ally_non_summon",
+                  "ally_summon",
+                  "enemy_non_summon",
+                  "enemy_summon"
+                ]
+              },
+              "displacement_origin": "selected_target_cell"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

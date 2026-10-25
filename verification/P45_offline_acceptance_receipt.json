@@ -1,0 +1,71 @@
+{
+  "baseline": "P44",
+  "baseline_archive_sha256": "a1e1d3a3f8969a8c9b890b79a442772eb2207ab3930f53dfa657c4d6a38b5d29",
+  "date": "2026-10-21",
+  "imported_historical_data": {
+    "capability_groups_indexed": 5,
+    "handler_bindings_indexed": 39,
+    "historic_build": "Dofus 3.7.10.10",
+    "inert_archived_source_files": 7,
+    "lifecycle_message_mappings_implemented": 4,
+    "source_sha256_checked": true
+  },
+  "milestone": "P45",
+  "next_priority": "Recover high-value historical server action/resource/fight outcome semantics with authentic independent replay; current-build Windows proof still required",
+  "notes": [
+    "Archived historical source files are stored as inert .source.txt, never executed",
+    "Test fixtures for P45 mapping are synthetic and NOT primary PCAP evidence",
+    "Full isolated verification passed after source changes; only docs/receipt were subsequently created"
+  ],
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "basis": "subjective roadmap scope estimate; not software quality, no real live fight acceptance",
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "estimated_weighted_roadmap_pct": 90
+  },
+  "r5198_reference_archive_sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+  "safety": {
+    "current_build_certified": false,
+    "historical_research_only": true,
+    "legacy_source_executed": false,
+    "live_client_accepted": false,
+    "production_canonical_admission_enabled": false,
+    "real_input_enabled": false
+  },
+  "title": "Historical protocol handler provenance and strictly research-only lifecycle decoder",
+  "verification": {
+    "architecture_modules": 255,
+    "architecture_packages": 13,
+    "architecture_status": "PASS",
+    "check_exit_code": 0,
+    "focused_cross_system_passed": 237,
+    "focused_groups_overlap": true,
+    "focused_subtests_passed": 71,
+    "generated_incident_integrity": "PASS",
+    "isolated_inventory_status": "PASS",
+    "isolated_modules_completed": 65,
+    "isolated_modules_discovered": 65,
+    "isolated_physical_input_emitted": false,
+    "isolated_tests_passed": 1190,
+    "new_subtests_passed": 12,
+    "new_test_methods_passed": 32,
+    "reused_assets_verified": 165,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_expected_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "verification_input_fingerprint": "13861d31ec734776fd21283af818c09338e1bedc1250cc8e987b6b3a25a4900d"
+  },
+  "verified_source_hashes": {
+    "reference/protocol/historical_3_7_10_10/handler_inventory.json": "cd603f9308d261e7aa4e95a27623f19b2f3de6732255b15018c73fa2b4230bc3",
+    "src/anka_app/cli.py": "26b85991af70fb749d2da1e654423db4030ff7c2436ddc4dd40c7b9ca2d15056",
+    "src/anka_contracts/historical_lifecycle.py": "75384318c678a24508a46cb5973d030c800c6fdc007ad13594acaecaff4fca98",
+    "src/anka_protocol/adapters/historical_lifecycle.py": "a16dfa0b4bf92fb714cbdb06ffa0556519de234880934f84baa57c353cd0838e",
+    "src/anka_protocol/historical_lineage.py": "d24aaf783402031d22d20a6d86f00233baf58713738630b40ab5a21ab7f6c544",
+    "src/anka_protocol/historical_timeline.py": "7de6c1a6374e1cbcad1efe5c2cde28fd8b71954f88a1155991e67c7dff9d4aeb",
+    "tests/test_p45_historical_handler_lineage.py": "3d74ad70a37b01046069011b234d3457f5a175987c2be1824fd96bf3a81a16a6",
+    "tests/test_p45_historical_lifecycle_research.py": "07bd20716f93c835f77cccfb0118bf46d6c8ec068bf5acc86cb02fd7cc77583f"
+  }
+}

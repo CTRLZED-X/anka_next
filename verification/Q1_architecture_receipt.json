@@ -1,0 +1,80 @@
+{
+  "artifacts": {
+    "docs/M1_CONTRACTS_ARCHITECTURE_LAB_BOOTSTRAP.md": "4f6f63aa6552479841c354158625097acd3ab375f5160904a4721a9f3e05ffa6"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 5,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "Q1_PACKAGE_GRAPH",
+      "detail": "13 reviewed packages, 357 modules; violations=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q1_NO_DEPENDENCY_CYCLES",
+      "detail": "Strongly connected top-level components=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q1_DYNAMIC_IMPORT_BOUNDARY",
+      "detail": "Unreviewed dynamic import sites=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q1_AUTHORITY_OWNERS",
+      "detail": "12 authorities have explicit owners.",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "Q1_ARCHITECTURE_MUTATION_TESTS",
+      "detail": "tests=26 pass=26 fail=0 skip=0",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 13254,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "ca6dd7278e9e94cc9286ac3d0ddfc0191f484194a6b5d9310f676259f3ee7b1f",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q1",
+  "generated_utc": "2026-10-24T23:24:03.376454+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "Offline architecture gate; Windows/client behavior is outside Q1.",
+    "Decision->Game Kernel concrete imports remain explicitly transitional and are addressed by the KernelQueries port/cutover roadmap."
+  ],
+  "milestone": "M1",
+  "observed_client_build": null,
+  "physical_input_count": 0,
+  "physical_input_state": "DISABLED",
+  "protocol_adapter_release": null,
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 26,
+    "skipped": 0
+  }
+}

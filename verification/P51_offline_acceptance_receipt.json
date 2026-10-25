@@ -1,0 +1,73 @@
+{
+  "baseline": "P50",
+  "baseline_zip_sha256": "dcf17e11a740da63c0d6931bc6f5d47b624572128db95847abce2810e308026d",
+  "changes": {
+    "modified_baseline_paths": [
+      "00_READ_FIRST_NEXT_CHAT.md",
+      "IMPLEMENTATION_STATUS.md",
+      "README.md",
+      "src/anka_app/cli.py",
+      "src/anka_app/ingress_readiness.py"
+    ],
+    "new_file_paths": [
+      "docs/P51_WINDOWS_TCP_OWNER_SNAPSHOT_STABILITY.md",
+      "tests/test_p51_setup_flow_stability.py",
+      "tests/test_p51_windows_flow_owner_stability.py",
+      "verification/P51_offline_acceptance_receipt.json"
+    ]
+  },
+  "date": "2026-10-21",
+  "limitations": [
+    "Windows and current Dofus client acceptance not performed",
+    "Two non-atomic Win32 snapshots are process hints and cannot prove continuous account ownership",
+    "Current owner-table API covers only IPv4 and does not account for all capture drops",
+    "No modern protocol semantics/independent CRA+ENU identity witness",
+    "No live physical executor or real mission acceptance"
+  ],
+  "milestone": "P51",
+  "next_priority": "Current-client Windows process/socket/window/character witnesses and protocol semantic acceptance",
+  "progress": {
+    "end_to_end_live_cra_enu_acceptance_pct": 0,
+    "not_a_quality_or_readiness_metric": true,
+    "subjective_historical_roadmap_pct": 92
+  },
+  "provenance_sha256": {
+    "00_READ_FIRST_NEXT_CHAT.md": "1e13cb5c3667e52208f0679c6f2a10216a547d86a6f98af2768842938d4122a7",
+    "IMPLEMENTATION_STATUS.md": "63d1999629269c7296fd5a30e17767cb7afc54856d916c96c39a9f5fb9bee728",
+    "README.md": "586ebd6169597dee8373890b4d1f9dd2f9971aae10a117df9d6e7e2be267e679",
+    "docs/P51_WINDOWS_TCP_OWNER_SNAPSHOT_STABILITY.md": "98c56e9d4ab532344e625ea6c4294c88007caf4573baf4851eb607e894b8aea0",
+    "src/anka_app/cli.py": "da35408da3c21c9d58cbabeb5d79838dac1e83f93f85ff8bb6a2e3875244e6d6",
+    "src/anka_app/ingress_readiness.py": "f1196789ad0b885c6c1fdb6168fcbd4dffca967868081c19c46115877d0ccbbf",
+    "tests/test_p51_setup_flow_stability.py": "a30cdd931b1b9e2744447f07863fa6765bd5fb00a62401637477a16faa2833af",
+    "tests/test_p51_windows_flow_owner_stability.py": "ce0b1419246ca84122b2e3271c6dd6b1bd604da1fef83891b9a72a393f1cc854"
+  },
+  "safety": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "driver_loss_accounted": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "start_blocked": true
+  },
+  "scope": "PASSIVE HOST FLOW RESEARCH ONLY — NO LIVE AUTHORITY",
+  "title": "Windows two-boundary TCP owner and client generation consistency",
+  "verification": {
+    "architecture_modules": 267,
+    "architecture_packages": 13,
+    "check_exit": 0,
+    "checkpoint_matches_source": true,
+    "incident_bundle_integrity": "PASS",
+    "inherited_p26_tests_passed": 36,
+    "input_fingerprint": "320c614046f42164add3657e4c40e7c23817e9d35ad8f22e7d3645cea6de68fc",
+    "module_isolated_full_regression": "PASS",
+    "modules_completed": 77,
+    "modules_discovered": 77,
+    "new_p51_test_methods": 30,
+    "reused_assets_verified": 165,
+    "setup_exit": 0,
+    "start_exit": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "tests_passed": 1336
+  }
+}

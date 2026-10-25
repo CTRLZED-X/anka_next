@@ -1,0 +1,53 @@
+{
+  "authority": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "independent_current_character_witnesses": 0,
+    "live_ready": false,
+    "physical_input_enabled": false
+  },
+  "complete_live_cra_enu_acceptance_percent": 0,
+  "date": "2026-10-21",
+  "limitations": [
+    "Historical Dofus 3.7.10.10 identity semantics are not current-client certification.",
+    "jns implementation/registry capability disagreement is preserved and not used as identity authority.",
+    "Historical character/process candidates do not implement a CharacterEvidenceProvider.",
+    "No real Windows/current-client acceptance was performed.",
+    "A single-process pytest aggregate timed out and is not counted; the complete isolated inventory passed."
+  ],
+  "live_start": {
+    "exit_code": 40,
+    "failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_zip_integrity": "PASS"
+  },
+  "milestone": "P53",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 271,
+    "check": "PASS",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS"
+  },
+  "roadmap_scope_estimate_percent": 92,
+  "source_recovery": {
+    "accepted_identity_wire": "jnj",
+    "historical_build": "Dofus 3.7.10.10",
+    "identity_manifest_sha256": "ca61dfe638f13387c400e480284adb9a66ecb0e22873514f58f03a865397b5d3",
+    "reference_only_wire": "jns",
+    "registry_discrepancy_preserved": true,
+    "world_identity_source_sha256": "cfac4d7e451ea0b484d6d0d15c80742a81690aca7fdf58d93d283aba6104ad0a"
+  },
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_tests_passed": 196,
+    "isolated_test_methods_passed": 1387,
+    "isolated_test_modules_discovered": 80,
+    "isolated_test_modules_passed": 80,
+    "new_p53_tests_passed": 31,
+    "physical_input_sent": false
+  },
+  "title": "Historical character-flow-process identity research",
+  "verification_fingerprint": "96e4669811fc140b0192459f37ce54f966214b12c160b6c9a53d639e301ebece"
+}

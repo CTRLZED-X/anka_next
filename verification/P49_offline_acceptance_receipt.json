@@ -1,0 +1,75 @@
+{
+  "baseline": "P48",
+  "baseline_archive_sha256": "6461eb6c53c4adf8b7c27d780870cacf82f2131b3c43fd8f36b6ebafafea86aa",
+  "date": "2026-10-21",
+  "limitations": [
+    "Actual Dofus current-build PCAP/oracles not supplied",
+    "Saved PCAPNG cannot establish capture-driver drops, actual actor identity or whole-source completeness",
+    "Windows client/Unity bridge/physical-input acceptance not performed",
+    "Research historical build 3.7.10.10 cannot promote game state",
+    "Complete inherited regression suite not independently completed"
+  ],
+  "milestone": "P49",
+  "modified_baseline_file_paths": [
+    "src/anka_app/historical_transport_bridge.py",
+    "src/anka_app/cli.py",
+    "00_READ_FIRST_NEXT_CHAT.md",
+    "IMPLEMENTATION_STATUS.md",
+    "README.md"
+  ],
+  "new_file_paths": [
+    "src/anka_app/historical_pcapng_bridge.py",
+    "src/anka_app/historical_pcapng_offline.py",
+    "tests/test_p49_pcapng_capture_research.py",
+    "tests/test_p49_pcapng_setup_smoke.py",
+    "docs/P49_SAVED_PCAPNG_HISTORICAL_REPLAY_UNCERTAINTY.md",
+    "verification/P49_offline_acceptance_receipt.json"
+  ],
+  "next_priority": "Current-build capture and independent gameplay witnesses; exact actor/window/flow bindings; controlled semantic certification before any authority",
+  "progress": {
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "not_quality_score": true,
+    "subjective_roadmap_scope_pct": 92
+  },
+  "safety": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "driver_drop_evidence_proven": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "saved_pcapng_always_blocked": true,
+    "source_completeness_verified": false,
+    "start_blocked": true
+  },
+  "scope": "OFFLINE HISTORICAL RESEARCH ONLY \u2014 NO LIVE AUTHORITY",
+  "source_sha256": {
+    "docs/P49_SAVED_PCAPNG_HISTORICAL_REPLAY_UNCERTAINTY.md": "fb7a365148cd4cf5bcc9a4e80566ba7c714dc81a76c02715af0c9f26a8f7f4e9",
+    "src/anka_app/cli.py": "2ce868c77e07da6224d9d9b5b2ddca7e74882d07c5208ba4f90700928d5ba379",
+    "src/anka_app/historical_pcapng_bridge.py": "7bdf257f799bd8d2a6a761ede124e0529a8be8ee86bd78dc47f887936075bc5c",
+    "src/anka_app/historical_pcapng_offline.py": "cacbb5c074c262300ae86db9642d56e9ddf1054e2585677a613804edce1bd44d",
+    "src/anka_app/historical_transport_bridge.py": "72b1379c5e17dfa3606fba6fe41933313a8e2584f345b7c331bc9acf096a0085",
+    "tests/test_p49_pcapng_capture_research.py": "2d7f2d43d8103bad281e56d877e242489491ce4437122c041c347e0ca3818346",
+    "tests/test_p49_pcapng_setup_smoke.py": "d18259e75bfb83e9c32f609395abb2b45830554b360c35c93fa6abf8a37a9e3f"
+  },
+  "title": "Actual bounded saved-PCAPNG to historical fight replay without manufactured driver or actor proof",
+  "verification": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 265,
+    "check_exit": 0,
+    "full_suite_note": "Large single-process test run was interrupted around early progress, no full-suite PASS claim",
+    "full_suite_status": "INCOMPLETE_OUTER_TIMEOUT",
+    "generated_incident_zip_integrity": "PASS",
+    "p49_and_p48_dedicated_subtests_passed": 6,
+    "p49_and_p48_dedicated_test_methods_passed": 31,
+    "reused_assets_verified": 165,
+    "selected_bootstrap_architecture_diagnostic_and_history_methods_passed": 128,
+    "selected_bootstrap_architecture_diagnostic_and_history_subtests_passed": 32,
+    "selected_capture_protocol_and_history_subtests_passed": 119,
+    "selected_capture_protocol_and_history_test_methods_passed": 342,
+    "selected_groups_overlap": true,
+    "setup_exit": 0,
+    "start_exit": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED"
+  }
+}

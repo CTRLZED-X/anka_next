@@ -1,0 +1,36 @@
+{
+  "milestone": "P10",
+  "scope": "HISTORICAL_SYNTHETIC_PROTOCOL_ADAPTER_QUALIFICATION",
+  "date_utc": "2026-10-20",
+  "environment": {
+    "os": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "baseline_test_count": 304,
+  "current_test_count": 337,
+  "added_tests": 33,
+  "unittest_status": "PASS",
+  "cli_verify_status": "PASS",
+  "cli_check_status": "PASS",
+  "historical_build": "Dofus 3.7.10.10",
+  "synthetic_cases_total": 14,
+  "synthetic_case_result": "14/14 PASS",
+  "mismatched_requested_build": "Dofus 3.7.11.11",
+  "mismatch_status": "QUALIFICATION_FAILED_LIVE_BLOCKED",
+  "fixture_sha256": "f7d730db6ec987bedcb97d237d142a9c5afd30acce4f0394682b288a071978a8",
+  "adapter_sha256": "adc8083b40654098bf3429383f72d85b95de112fddb60a9f1b76b3ffe69b4c0d",
+  "physical_input_sent": false,
+  "canonical_commits": 0,
+  "start_command": "BLOCKED/LIVE_RUNTIME_NOT_IMPLEMENTED",
+  "live_semantic_certified": false,
+  "current_client_evidence_available": false,
+  "remaining_gates": [
+    "independent real current-build capture",
+    "independent expected semantic oracle",
+    "Windows capture and window identity acceptance",
+    "authoritative Canonical admission readiness",
+    "integrated fight acceptance"
+  ],
+  "meaning": "A historical synthetic decoder contract test pass, NOT live compatibility certification"
+}

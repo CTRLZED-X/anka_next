@@ -1,0 +1,106 @@
+{
+  "milestone": "P28",
+  "title": "Strict protocol-evidence intake and biweekly update packaging",
+  "verification_date": "2026-10-20",
+  "source_project": "ANKA_NEXT_P27_IN_MEMORY_PROTOCOL_WIRE_DIAGNOSTICS_OFFLINE_CANDIDATE.zip",
+  "implementation": {
+    "system": "anka_protocol.evidence_intake",
+    "composition": "anka_app.protocol_updates",
+    "setup_integration": true,
+    "protocol_build_manifest_checked": true,
+    "archive_content_hashes_checked": true,
+    "oracle_and_case_linkage_checked": true,
+    "strict_zip_no_extraction": true,
+    "evidence_only_no_authority": true,
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "offline_test_result": {
+    "status": "PASS_INDIVIDUAL_MODULE_PROCESSES",
+    "test_modules": 44,
+    "tests_passed": 826,
+    "modules": [
+      "test_bootstrap",
+      "test_capture_architecture",
+      "test_capture_cli",
+      "test_capture_integration",
+      "test_capture_live",
+      "test_capture_parser",
+      "test_capture_transport",
+      "test_client_discovery",
+      "test_client_geometry",
+      "test_client_integration",
+      "test_configuration",
+      "test_diagnostics",
+      "test_foundation",
+      "test_invariants",
+      "test_kernel_reuse",
+      "test_p10_protocol_qualification",
+      "test_p11_fight_evidence",
+      "test_p12_decision_probe",
+      "test_p13_map_research",
+      "test_p14_tactical_research",
+      "test_p15_tactical_scoring",
+      "test_p16_sequence_research",
+      "test_p17_coordination_workflow",
+      "test_p18_execution_settlement",
+      "test_p19_offline_fake_driver",
+      "test_p20_cross_system_replay",
+      "test_p21_architecture_readiness",
+      "test_p22_causal_linkage",
+      "test_p23_semantic_transport_finality",
+      "test_p24_verification_runner",
+      "test_p25_host_readiness",
+      "test_p26_passive_ingress",
+      "test_p27_live_wire_observation",
+      "test_p28_protocol_evidence_intake",
+      "test_p8_integration",
+      "test_p8_state_journal",
+      "test_p9_quality",
+      "test_protocol_architecture",
+      "test_protocol_integration",
+      "test_protocol_wire",
+      "test_reference_assets",
+      "test_semantic_p7",
+      "test_semantic_p7_architecture",
+      "test_semantic_p7_cli"
+    ],
+    "P28_tests_passed": 37,
+    "method": "Each discovered test module executed in a fresh Python process; source inventory cross-checked.",
+    "single_process_full_suite": "NOT_CONFIRMED_INTERMITTENT_RUNNER_STALL"
+  },
+  "setup_test": {
+    "normal_no_pack": "PASS",
+    "synthetic_staged_pack": "PASS",
+    "pack_status": "RESEARCH_PACKS_AUDITED_NOT_ACTIVATED"
+  },
+  "architecture": {
+    "status": "PASS",
+    "packages": 13,
+    "forbidden_imports": 0
+  },
+  "safety": {
+    "start_exit_code": 40,
+    "live_ready": false,
+    "current_build_certified": false,
+    "canonical_from_current_build": false,
+    "physical_input_sent": false,
+    "adapter_activated": false
+  },
+  "acceptance_gaps": [
+    "Real Windows/Npcap host qualification",
+    "Current client protocol semantic decoding and independent oracle parity",
+    "Live turn epoch and actor authoritative state",
+    "Physical execution and outcome acceptance",
+    "End-to-end CRA/ENU mission tests",
+    "Single-process monolithic verifier stall remains"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 79,
+    "integrated_live_fight_acceptance_percent": 0,
+    "percent_type": "engineering planning estimate only"
+  },
+  "note": "Synthetic fixture packaging is NOT an independently certified current-client protocol. No source update or physical gameplay enablement."
+}

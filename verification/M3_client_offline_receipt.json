@@ -1,0 +1,61 @@
+{
+  "artifacts": {
+    "assets/calibration/shared_ui_1280x649.json": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+    "docs/M3_CLIENT_IDENTITY_CALIBRATION_PROJECTION.md": "1bdb53481304e8abc166b62cc439f9fca7d79f04a910f5f488d41d73d4a292a7",
+    "reference/m3/client_reuse_provenance.json": "453b2256f3bb01ec78190b10ee742d29d097233df661c1a8b92f50ddb67396e2"
+  },
+  "checks": [
+    {
+      "code": "M3_CALIBRATION_PROVENANCE",
+      "detail": "slots=22 historical_current_certified=False",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M3_BRIDGE_SOURCE_PARITY",
+      "detail": "native bridge exact=14/14",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M3_CLIENT_NO_INPUT_AUTHORITY",
+      "detail": "forbidden physical-input primitives=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M3_GENERATION_AND_LOADOUT_MODEL",
+      "detail": "calibration/loadout/generation/context proof contracts present",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M3_ZERO_INPUT_AMBIGUITY_MATRIX",
+      "detail": "client/offline regression cases passed=170",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "duration_ms": 2157,
+  "generated_utc": "2026-10-24T22:37:57.292978+00:00",
+  "known_limitations": [
+    "No current Windows host, Dofus process/window generation or DPI/occlusion behavior was live-accepted in M3.",
+    "Bundled 1280x649 calibration remains historical and cannot self-certify the current client.",
+    "Native bridge source parity and offline projection tests do not prove current-client loadability or semantic correctness.",
+    "No real current-client loadout evidence is bundled; TEST_FIXTURE loadouts are used only for the fail-closed proof model."
+  ],
+  "milestone_id": "M3",
+  "physical_input_count": 0,
+  "physical_input_state": "DISABLED",
+  "schema_version": 1,
+  "source_tree_sha256": "7dd6bf6b99d3222103fd0a5e1b7c371886a32e931082b5187e481ef4525b6e8c",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 170,
+    "skipped": 0
+  },
+  "verification_scope": "OFFLINE_OBSERVE_ONLY_CLIENT_FOUNDATION"
+}

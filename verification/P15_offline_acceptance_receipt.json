@@ -1,0 +1,49 @@
+{
+  "milestone": "P15",
+  "scope": "DETERMINISTIC_SYNTHETIC_TACTICAL_SCORING_RESEARCH_NO_EXECUTION",
+  "tested_at_utc": "2026-10-20",
+  "host": {
+    "platform": "Linux",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "P14_inherited_tests": 468,
+  "P15_new_tests": 20,
+  "full_test_count": 488,
+  "full_test_result": "PASS_488_TESTS_56.626_SECONDS",
+  "test_log_file": "p15_release_verbose.log (local validation log, not packaged)",
+  "offline_cli_check": "PASS_EXIT_0",
+  "offline_cli_scoring_demo": "RESEARCH_ONLY_EXIT_0",
+  "live_start": "BLOCKED_EXIT_40",
+  "independently_certified_current_client": false,
+  "physical_game_input_enabled": false,
+  "synthetic_priorities_only": true,
+  "full_sequence_legality_proven": false,
+  "limitations": [
+    "Synthetic target/exposure priorities are NOT measured damage, MP-removal or risk.",
+    "Only P14 single spell static legality is used; multi-cast sequences remain AP-cost-only and are unscored.",
+    "Windows Batch and Npcap have not been tested on Windows.",
+    "No current-client protocol semantics or authenticated live state.",
+    "No active FightAI/Workflow/Execution/physical input.",
+    "Historical intermittent test-run stalls not root-caused; 488-test direct suite completed."
+  ],
+  "reused_source_integrity": "CHECK_PASS_165_FILES",
+  "implementation_coverage_estimate_percent": 59,
+  "coverage_estimate_note": "Approximate weighted milestone coverage; NOT a verified quality or live-readiness score.",
+  "source_sha256": {
+    "src/anka_contracts/tactical_scoring.py": "e90c0c5301c470ceefcc69849cec49998993994c92c3e531a32910ad8bbaac32",
+    "src/anka_contracts/tactical_research.py": "41888ca31bd7a164fb9a83e1d083cae084a7609f890f0010c7c48049c8e7a660",
+    "src/anka_decision/tactical_scoring.py": "38dfc9747ef3632d5cc2f560596efdc24621bf2d1d14718468b5f7deefed9c36",
+    "src/anka_app/scoring_offline.py": "ea05f84382b1729373698029182e18a6be3852a31ba010bd31bc86f94a8d8663",
+    "src/anka_app/cli.py": "ed949d824d2918039841ae218c138c6e36fcdf7e7d600d3b657961c13b31addc",
+    "tests/test_p15_tactical_scoring.py": "10f39a47c53d0fd291ec70969234ae350bbc54cfc07e19361e5e69a0e93bc9f9",
+    "scoring_demo.bat": "a0e0a1525dae729cc59d865b39aaaef8eb79804d48ff7209aea4498263984bd1",
+    "docs/P15_SYNTHETIC_TACTICAL_SCORING.md": "b1dc4133835d87de02406341127be8f5a57c6b80835f8ebe131c4970aeaa3c22",
+    "README.md": "df328949a646942f72fbb17cb28b6d3b79f7789bbc81e49e94f70a8cc347d67c",
+    "IMPLEMENTATION_STATUS.md": "5aaed0301a8ce146ee362cd985cb45757a3be91f26769016adbcc0f7491ce8a0"
+  },
+  "fresh_zip_extraction_full_tests": "PASS_488_TESTS_59.080_SECONDS",
+  "fresh_zip_scoring_demo": "PASS_RESEARCH_ONLY_EXIT_0",
+  "fresh_zip_live_start": "BLOCKED_EXIT_40",
+  "fresh_zip_archive_integrity": "PASS_ZIPFILE_TESTZIP"
+}

@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "gate": "Q0_BASELINE",
+  "milestone": "M0",
+  "status": "PASS",
+  "source_tree_digest_sha256": "9267c8b7c88e7d17faac2d37b351cc8d6c3a06ff4a8722102758fa2fdef10d43",
+  "source_tree_file_count": 819,
+  "source_tree_bytes": 43635205,
+  "baseline_archive_hashes": {
+    "legacy_r5_198": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+    "starting_anka_next_p66": "9c0edf863de39be9479bbd25e39c22d089af088268f9cf0afcc87e37f7765297",
+    "definitive_master_specification": "69a3c3260a8dc20aeae2fe70e036c8bfcbfa2c275f9f370e1383419b3ff5461d"
+  },
+  "checks": [
+    {
+      "code": "Q0-MANIFEST-HASHES",
+      "status": "PASS",
+      "detail": "All M0 component manifests match the hashes frozen by baseline_sources.json.",
+      "metrics": {
+        "count": 8
+      }
+    },
+    {
+      "code": "Q0-ARCHIVE-IDENTITY",
+      "status": "PASS",
+      "detail": "Legacy R5.198, starting P66 and definitive specification archives are present byte-for-byte under reference/baselines.",
+      "metrics": {
+        "archives": {
+          "legacy_r5_198": {
+            "path": "reference/baselines/archives/R5_198_REFERENCE.zip",
+            "sha256": "f1a50a3555cbe89f27d58ef8411cfcb002ec3cd1cd5aefe4546b4285f47f62d6",
+            "ok": true
+          },
+          "starting_anka_next_p66": {
+            "path": "reference/baselines/archives/ANKA_NEXT_P66_STARTING_BASELINE.zip",
+            "sha256": "9c0edf863de39be9479bbd25e39c22d089af088268f9cf0afcc87e37f7765297",
+            "ok": true
+          },
+          "definitive_master_specification": {
+            "path": "reference/baselines/archives/ANKA_NEXT_DEFINITIVE_MASTER_SPECIFICATION.zip",
+            "sha256": "69a3c3260a8dc20aeae2fe70e036c8bfcbfa2c275f9f370e1383419b3ff5461d",
+            "ok": true
+          }
+        }
+      }
+    },
+    {
+      "code": "Q0-LEGACY-FILE-MANIFEST",
+      "status": "PASS",
+      "detail": "LEGACY complete file manifest is internally consistent and hash sealed.",
+      "metrics": {
+        "file_count": 1622,
+        "tree_digest": "83edd24d17bc41b20093207d0d503525d041035723cba19a9e812243bda624c0"
+      }
+    },
+    {
+      "code": "Q0-P66-FILE-MANIFEST",
+      "status": "PASS",
+      "detail": "P66 complete file manifest is internally consistent and hash sealed.",
+      "metrics": {
+        "file_count": 601,
+        "tree_digest": "ddcf9c75b7e198a2acee93ce04e343dcc82a9969f7f78e9f27937f753cc79913"
+      }
+    },
+    {
+      "code": "Q0-SPEC-FILE-MANIFEST",
+      "status": "PASS",
+      "detail": "SPEC complete file manifest is internally consistent and hash sealed.",
+      "metrics": {
+        "file_count": 33,
+        "tree_digest": "b23a40a8bd6b518f6bd325c07be161f543822d50d50f4de036de79e6f63a6a66"
+      }
+    },
+    {
+      "code": "Q0-LEGACY-ARCHIVE-CONTENTS",
+      "status": "PASS",
+      "detail": "LEGACY archive members exactly match the frozen file manifest.",
+      "metrics": {
+        "members": 1622
+      }
+    },
+    {
+      "code": "Q0-P66-ARCHIVE-CONTENTS",
+      "status": "PASS",
+      "detail": "P66 archive members exactly match the frozen file manifest.",
+      "metrics": {
+        "members": 601
+      }
+    },
+    {
+      "code": "Q0-SPEC-ARCHIVE-CONTENTS",
+      "status": "PASS",
+      "detail": "SPEC archive members exactly match the frozen file manifest.",
+      "metrics": {
+        "members": 33
+      }
+    },
+    {
+      "code": "Q0-SPEC-READABLE",
+      "status": "PASS",
+      "detail": "Authoritative master-spec documents are extracted verbatim and their own manifest validates.",
+      "metrics": {
+        "document_count": 32
+      }
+    },
+    {
+      "code": "Q0-STARTING-P66-FROZEN",
+      "status": "PASS",
+      "detail": "The exact immutable starting-P66 baseline remains present; current runtime evolution is verified by later milestone gates.",
+      "metrics": {
+        "frozen_files": 601
+      }
+    },
+    {
+      "code": "Q0-NO-LEGACY-RUNTIME",
+      "status": "PASS",
+      "detail": "No legacy anka_platform package was copied into the new runtime import tree."
+    },
+    {
+      "code": "Q0-OPERATOR-SURFACE",
+      "status": "PASS",
+      "detail": "Only setup.bat and start.bat are user-facing at project root; the existing private Windows launcher helper remains internal.",
+      "metrics": {
+        "root_bats": [
+          "setup.bat",
+          "start.bat"
+        ],
+        "internal_bats": [
+          "tools/windows/_entry.bat"
+        ]
+      }
+    },
+    {
+      "code": "Q0-REUSE-MANIFEST",
+      "status": "PASS",
+      "detail": "Reuse decisions are source-hash bound, mode constrained, scoped, limited and target-hash verified.",
+      "metrics": {
+        "rows": 171,
+        "unchanged_rows": 164
+      }
+    },
+    {
+      "code": "Q0-EVIDENCE-CATALOG",
+      "status": "PASS",
+      "detail": "Evidence classes are explicit and provenance hashes resolve to the frozen source manifests; missing evidence remains explicit.",
+      "metrics": {
+        "rows": 83,
+        "missing": 5
+      }
+    },
+    {
+      "code": "Q0-REGRESSION-CATALOG",
+      "status": "PASS",
+      "detail": "Historical root-cause regressions and recurring symptom families are frozen without inventing single causes.",
+      "metrics": {
+        "rows": 14
+      }
+    },
+    {
+      "code": "Q0-LIVE-PENDING",
+      "status": "PASS",
+      "detail": "Every M0 live/current-client boundary stays explicitly blocked pending named evidence.",
+      "metrics": {
+        "items": 10
+      }
+    },
+    {
+      "code": "Q0-LEGACY-INVENTORY",
+      "status": "PASS",
+      "detail": "Mandatory legacy Kernel/data/calibration/protocol/tests/docs and related reusable areas are inventoried.",
+      "metrics": {
+        "areas": 14
+      }
+    }
+  ],
+  "summary": {
+    "pass": 17,
+    "fail": 0,
+    "physical_input_count": 0,
+    "live_client_contact": false,
+    "known_live_blockers": 10
+  },
+  "environment": {
+    "python": "3.13.5",
+    "implementation": "CPython",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41"
+  },
+  "duration_seconds": 0.391095,
+  "scope": "M0 provenance/baseline gate only. Does not certify current client, Windows behavior, protocol semantics, or physical input."
+}

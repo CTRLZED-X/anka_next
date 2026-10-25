@@ -1,0 +1,78 @@
+{
+  "base_archive_name": "ANKA_NEXT_P38_CAUSAL_WINDOW_CONFOUNDER_GUARDS_OFFLINE_VERIFIED.zip",
+  "base_archive_sha256": "6892b7173ec61252b01b0a88cd028790f1c714c8d50419b1348a7216af39b691",
+  "blockers": [
+    "No independently witnessed current-build CRA/ENU protocol and outcome captures",
+    "No real Windows HWND/identity/calibration/Npcap acceptance",
+    "No authorized production Canonical admission or physical input",
+    "Full 56-module regression gate incomplete after outer timeout"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P39",
+  "new_tests": {
+    "before_fix": "3 targeted assertion failures, 5 passing; after fix all 8 passing",
+    "module": "tests/test_p39_target_context_integrity.py",
+    "tests_passed": 8
+  },
+  "notes": "No additional operator BAT commands or standalone continuation handoff. Complete previous P38 archive preserved.",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "complete_live_cra_enu_fight_acceptance_pct": 0,
+    "note": "Estimates separate from measured reliability; no P39 live readiness increase",
+    "weighted_roadmap_implementation_estimate_pct": 88
+  },
+  "safety": {
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "gameplay_readiness": "BLOCKED",
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "00_READ_FIRST_NEXT_CHAT.md": "7e558fcd10f7662495ba85efaff9c5ea7aaba9467bea298ac454d58fbe194fa7",
+    "IMPLEMENTATION_STATUS.md": "b80a917ac95181a45990f15a7abb020ab00201fafb0d491310f902e129d5262a",
+    "README.md": "35ec1d10120668977046ae8b71cc9eebc640baec7d03c108a37af50f6f0fa823",
+    "docs/P39_TARGET_CONTEXT_INTEGRITY.md": "14ddd4bbdc396feaa5a50996d29a4893f903444dfde4dc30fc74309afff2f586",
+    "pyproject.toml": "83b0fda2ab503997bdbad328d0ebf1cc8df014de89209b7a1da17f1322449772",
+    "src/anka_app/target_effect_research_offline.py": "cc09a5c4be7676c162fac453b9e8961d45951a0d5e06c3a748fb928bed88908e",
+    "tests/test_p39_target_context_integrity.py": "adcabb3827b3917714d767deee0b2a0f54cee5945982e5ceba2e0cfe83aa813d"
+  },
+  "title": "Turn-scoped target witness and pre-cast MP-movement research integrity",
+  "verification": {
+    "check_exit_code": 0,
+    "current_build_certified": false,
+    "current_client_tested": false,
+    "focus_test_modules": [
+      "test_p24_verification_runner",
+      "test_p31_fight_event_research",
+      "test_p32_protocol_capability_assessment",
+      "test_p33_shadow_projection_bridge",
+      "test_p34_reconstruction_gap_audit",
+      "test_p35_effect_reconciliation",
+      "test_p36_target_effect_research",
+      "test_p36_module_isolation",
+      "test_p37_checkpointed_verification",
+      "test_p38_causal_window_confounders",
+      "test_p39_target_context_integrity",
+      "test_protocol_architecture"
+    ],
+    "focused_subtests_passed": 12,
+    "focused_test_methods_passed": 235,
+    "full_suite_status": "NOT_VERIFIED",
+    "isolated_suite_status": "INCOMPLETE_OUTER_EXECUTION_TIMEOUT_MODULE_12",
+    "isolated_test_methods_completed": 189,
+    "isolated_test_module_inventory": 56,
+    "isolated_test_modules_completed": 11,
+    "isolated_tests_overlap_with_focused": true,
+    "physical_input_sent": false,
+    "setup_exit_code": 0,
+    "source_reuse_assets_verified": 165,
+    "start_exit_code": 40,
+    "start_expected_blocker": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_integrity": "PASS"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "milestone": "P27",
+  "date": "2026-10-20",
+  "status": "TARGETED_OFFLINE_VERIFIED_FULL_INHERITED_GATE_NOT_COMPLETED",
+  "scope": "read_only_in_memory_live_capture_to_protocol_wire_observation",
+  "source_archive": "ANKA_NEXT_P26_PASSIVE_STARTUP_NPCAP_DIAGNOSTICS_OFFLINE_VERIFIED.zip",
+  "environment": "Linux Python 3.13; native Windows/Npcap and Dofus client untested",
+  "verification": {
+    "new_p27_methods_passed": 14,
+    "targeted_execution_and_integration_group_passed": 209,
+    "additional_inherited_source_checks": {
+      "p26": 36,
+      "capture_live": 24,
+      "p21_architecture": 18,
+      "protocol_integration": 22
+    },
+    "full_suite": "NOT_COMPLETED: inherited P10-P17 combined run timed out",
+    "previous_p26_baseline_passed": 775,
+    "total_expected_test_inventory": 789,
+    "new_p27_combined_suite_certified": false,
+    "sqlite_resource_warnings_observed": true
+  },
+  "safety": {
+    "physical_input_sent": false,
+    "live_certified": false,
+    "current_build_semantics_certified": false,
+    "canonical_events_committed": false,
+    "raw_packet_payload_persisted": false,
+    "operator_bat_files": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "remaining_acceptance": [
+    "Current Dofus client protocol semantic certification",
+    "Real Windows/Npcap capture and driver-loss visibility",
+    "Authoritative CRA/ENU identity and state",
+    "Live calibration and physical execution",
+    "Confirmed complete autonomous fights",
+    "Intermittent inherited regression-suite stalls and SQLite resource warnings"
+  ]
+}

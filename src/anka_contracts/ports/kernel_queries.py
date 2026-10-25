@@ -1,0 +1,9 @@
+"""Pure mechanics query port implemented by an App-side Kernel adapter."""
+from typing import Protocol
+from anka_contracts.decision import ActionPlan, DecisionFrame
+from anka_contracts.mechanics import MechanicsResult
+
+class KernelQueries(Protocol):
+    def spell_grade_readiness(self, spell_id: int, grade: int) -> MechanicsResult: ...
+    def map_cell_walkability(self, map_id: int, cell_id: int) -> MechanicsResult: ...
+    def validate_plan(self, frame: DecisionFrame, plan: ActionPlan) -> MechanicsResult: ...

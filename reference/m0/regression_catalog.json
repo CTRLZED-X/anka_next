@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "regressions": [
+    {
+      "regression_id": "R5.142",
+      "title": "Action contract/quarantine/turn liveness",
+      "source_document": "R5_142_COMBAT_ACTION_CONTRACT_QUARANTINE_TURN_LIVENESS_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5142/test_r5142_combat_action_contract.py",
+        "tests/r5142/test_r5142_release_contract.py"
+      ],
+      "scenario_ids": [
+        "S-D04"
+      ],
+      "permanent_invariant": "One canonical ActionPlan codec/ActionKey; malformed/rejected same-frame actions cannot loop indefinitely.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "R5.151",
+      "title": "Delayed confirmation and scoped reconciliation",
+      "source_document": "R5_151_LATENCY_RECONCILIATION_FOUNDATION_READINESS_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5151/test_r5151_latency_reconciliation_foundation.py",
+        "tests/r5151/test_r5151_fight_ai_foundation_boundary.py"
+      ],
+      "scenario_ids": [
+        "S-E02",
+        "S-F04"
+      ],
+      "permanent_invariant": "Possible send plus delayed confirmation must not cause duplicate input or unjustified global disarm.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "R5.195",
+      "title": "Fight geometry authority and pre-DOWN revalidation",
+      "source_document": "R5_195_FIGHT_ENTRY_GEOMETRY_REPLAY_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5195/test_r5195_live_fight_geometry_authority.py",
+        "tests/r5195/test_r5195_placement_pre_down_authority.py",
+        "tests/r5195/test_r5195_incident_replay_and_placement_convergence.py"
+      ],
+      "scenario_ids": [
+        "S-Q03",
+        "S-I05"
+      ],
+      "permanent_invariant": "Fight-scoped server legality and static geometry are distinct; revalidate identity/state immediately before DOWN.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "R5.196",
+      "title": "Turn/resource causal freshness",
+      "source_document": "R5_196_TURN_HANDOFF_SYSTEMIC_SIMULATION_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5196/test_r5196_turn_handoff_and_replay_hardening.py",
+        "tests/r5196/test_r5196_systemic_simulation_suite.py"
+      ],
+      "scenario_ids": [
+        "S-S01",
+        "S-S02",
+        "S-S03",
+        "S-Q06",
+        "S-Q07",
+        "S-Q08"
+      ],
+      "permanent_invariant": "Freshness follows semantic causal windows; delayed/duplicate turn events cannot reopen old authority.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "R5.197",
+      "title": "Process/control ownership generation",
+      "source_document": "R5_197_CONTROL_PLANE_TAKEOVER_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5197/test_r5197_control_plane_takeover_hardening.py",
+        "tests/r5197/test_r5197_windows_process_metadata_fallback.py",
+        "tests/r5197/test_r5197_control_plane_preflight_consistency.py"
+      ],
+      "scenario_ids": [
+        "S-I02",
+        "S-F06"
+      ],
+      "permanent_invariant": "PID/HWND identity requires generation proof; stale or foreign ownership fails closed.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "R5.198",
+      "title": "Opaque protocol drift after successful action",
+      "source_document": "R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENING.md",
+      "legacy_test_paths": [
+        "tests/r5198/test_r5198_protocol_opaque_drift.py",
+        "tests/r5198/test_r5198_systemic_protocol_drift.py"
+      ],
+      "scenario_ids": [
+        "S-P02",
+        "S-P03",
+        "S-P04"
+      ],
+      "permanent_invariant": "Unknown traffic is capability-scoped and evidence-classified; exact opaque fingerprints never generalize to changed variants.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-ENU-NOT-JOINING",
+      "title": "ENU not joining",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-READY-STUCK",
+      "title": "Both click Ready / Ready stuck but no progression",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-END-TURN-HANDOFF",
+      "title": "End Turn attempted but next owner not proven",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-CAST-CELL",
+      "title": "CRA attempts cast on invalid/non-walkable cell",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-ROUTE-PM",
+      "title": "World route chooses farther 3-PM cell despite reachable 2-PM alternative",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-FOCUS",
+      "title": "Focus lost at turn start/before click",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-NO-ACTION",
+      "title": "Aucune action à réaliser / no action",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    },
+    {
+      "regression_id": "SYM-SEND-NO-OUTCOME",
+      "title": "Action appears sent but authoritative server outcome is absent",
+      "source_document": "master_specification/appendices/A_HISTORICAL_FAILURES.md",
+      "legacy_test_paths": [],
+      "scenario_ids": [],
+      "permanent_invariant": "Treat as a symptom family. Diagnose the first divergent boundary; do not encode a single assumed root cause.",
+      "source_present": true,
+      "legacy_tests_present": true
+    }
+  ]
+}

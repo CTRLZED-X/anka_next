@@ -1,0 +1,56 @@
+{
+  "milestone": "P33",
+  "title": "Research-to-synthetic-state shadow replay compatibility",
+  "verification_date": "2026-10-20",
+  "source_archive": "ANKA_NEXT_P32_PROTOCOL_CAPABILITY_MATRIX_OFFLINE_VERIFIED.zip",
+  "implemented": {
+    "contracts": "src/anka_contracts/shadow_replay.py",
+    "canonical_bridge": "src/anka_canonical/shadow_bridge.py",
+    "composition": "src/anka_app/shadow_replay_offline.py",
+    "setup_smoke": "src/anka_app/cli.py",
+    "new_tests": "tests/test_p33_shadow_projection_bridge.py",
+    "new_test_count": 30,
+    "windows_operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "verification": {
+    "status": "PASS_ALL_MODULES_IN_INDEPENDENT_PROCESS_RUNS",
+    "test_modules": 49,
+    "total_tests_passed": 966,
+    "inherited_p32_tests": 936,
+    "new_p33_tests": 30,
+    "single_process_monolithic": "NOT_PASSED: intermittent stall remains",
+    "first_parallel_attempt": "TIMED_OUT_AFTER_39_OF_49_MODULES; REMAINING_10_PASS_IN_BOUNDED_INDIVIDUAL_RUNS",
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_reason": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "architecture_packages": 13,
+    "forbidden_cross_imports": 0,
+    "reused_assets_verified": 165,
+    "native_windows_batch_execution": false,
+    "current_client_live_test": false
+  },
+  "safety": {
+    "research_only": true,
+    "current_build_certified": false,
+    "canonical_commits": 0,
+    "adapter_activated": false,
+    "actionable": false,
+    "physical_input_sent": false
+  },
+  "remaining": [
+    "Certify current-client wire semantics using real independent evidence",
+    "Implement genuine Canonical admission with source identity and server ordering",
+    "Implement real spell cast and outcome reducers",
+    "Verify Windows calibration/identity and physical input safely",
+    "Demonstrate complete CRA/ENU live mission and recovery",
+    "Resolve intermittent grouped verifier stalls"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 84,
+    "integrated_live_fight_acceptance_percent": 0,
+    "note": "Roadmap coverage estimate; NOT measured software-quality or reliability"
+  }
+}

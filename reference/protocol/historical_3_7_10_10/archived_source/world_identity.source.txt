@@ -1,0 +1,534 @@
+from __future__ import annotations
+
+import hashlib
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved, ActorDeathObserved, ActorEffectsObserved, ActorLookObserved, ActorStatesObserved,
+    ChallengeLifecycleObserved, DisplacementObserved, FightActorObserved, FightActorRosterObserved,
+    FightDiscoveryObserved, FightJoinLifecycleObserved, FightJoinPresentationObserved, FightLifecycleObserved,
+    FightMapContextObserved, FighterReadyObserved, FightMovementObserved, FightRoundObserved, FightStatsObserved,
+    FightTurnEndedObserved, FightTurnObserved, FightTurnOrderObserved, LegalPlacementCellsObserved, LocalPlayerObserved,
+    MonsterGroupObserved, MonsterGroupSnapshotObserved, MonsterGroupMovedObserved, ObservedEffect, ObservedMonsterGroup,
+    ObservedMonsterMember, ResourceChangedObserved, ShieldAbsorbedObserved, ShieldChangedObserved, SideRelationObserved,
+    SpellCastObserved, SpellCooldownEntry, SpellCooldownSnapshotObserved, SpellLoadoutObserved, SpellPropertyModifierObserved,
+    SummonCountObserved, SummonCreatedObserved, VitalityChangedObserved, WorldActorPositionObserved, WorldEntityRemovedObserved,
+    WorldMapObserved, WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.protocol.errors import ProtocolSchemaDriftError
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.protobuf import bytes_values, child, first_bytes, int_value, parse_direct_fields, read_varint, signed, signed_sum
+
+class WorldProtocolHandlersMixin:
+    """Version-local capability handler mixin; not a public protocol API."""
+
+    @staticmethod
+    def _character_name_matches_expected(observed: str, expected: str) -> bool:
+        """Conservatively match configured account name to world-entity name.
+
+        3.6.12.16 world snapshots carry the visible character name inside the
+        player entity.  The live Enutrof evidence uses ``Sosoking-[Fry]`` while
+        the account profile intentionally stores ``Sosoking``.  Accept only an
+        exact case-insensitive match or that exact guild-suffix form; never use
+        substring/fuzzy matching for ownership.
+        """
+        observed_norm = str(observed or "").strip().casefold()
+        expected_norm = str(expected or "").strip().casefold()
+        if not observed_norm or not expected_norm:
+            return False
+        if observed_norm == expected_norm:
+            return True
+        return observed_norm.startswith(expected_norm + "-[") and observed_norm.endswith("]")
+
+    @classmethod
+    def _world_entity(cls, raw: bytes) -> tuple[int | None, int | None, tuple[ObservedMonsterMember, ...], str | None]:
+        rec = parse_direct_fields(raw)
+        entity_id = int_value(rec, 1, signed_value=True)
+        cell = None
+        try:
+            pose = child(rec, 2)
+            cell = int_value(pose, 3)
+        except ValueError:
+            pass
+
+        character_name: str | None = None
+        # Controlled CRA/ENU jnj/jns player records prove the visible character
+        # name at entity.3.1.3.5.  Treat failure as absence, not as a fallback
+        # guess: monster-group records use different union branches.
+        try:
+            identity_branch = child(rec, 3, 1, 3)
+            raw_name = first_bytes(identity_branch, 5)
+            if raw_name is not None:
+                decoded = raw_name.decode("utf-8", errors="strict").strip()
+                character_name = decoded or None
+        except (ValueError, UnicodeDecodeError):
+            pass
+
+        members: list[ObservedMonsterMember] = []
+        # Controlled captures place monster members at entity.3[].1[].5[].6[].(3|4)[].
+        for l3 in bytes_values(rec, 3):
+            n3 = cls._nested(l3)
+            if n3 is None:
+                continue
+            for l1 in bytes_values(n3, 1):
+                n1 = cls._nested(l1)
+                if n1 is None:
+                    continue
+                for l5 in bytes_values(n1, 5):
+                    n5 = cls._nested(l5)
+                    if n5 is None:
+                        continue
+                    for l6 in bytes_values(n5, 6):
+                        n6 = cls._nested(l6)
+                        if n6 is None:
+                            continue
+                        for branch in (3, 4):
+                            for member_raw in bytes_values(n6, branch):
+                                member = cls._nested(member_raw)
+                                if member is None:
+                                    continue
+                                monster_id = int_value(member, 5)
+                                level = int_value(member, 4)
+                                if monster_id is None:
+                                    continue
+                                members.append(ObservedMonsterMember(
+                                    monster_id=int(monster_id),
+                                    level=cls._known(int(level)) if level is not None else cls._not_observed(),
+                                ))
+        # Some layouts duplicate member lists through alternate union branches.
+        dedup: dict[tuple[int, int | None], ObservedMonsterMember] = {}
+        for m in members:
+            lvl = int(m.level.value) if m.level.status is ValueStatus.KNOWN else None
+            dedup[(int(m.monster_id), lvl)] = m
+        return (
+            None if entity_id is None else int(entity_id),
+            None if cell is None else int(cell),
+            tuple(dedup.values()),
+            character_name,
+        )
+
+    def _jnj(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        map_id = int_value(node, 10)
+        if map_id is None:
+            raise ValueError("jnj complete world snapshot missing map id")
+        map_id = int(map_id)
+        self._current_map_id = map_id
+        self._last_map_load_id = map_id
+        self._pending_world_map_transition = False
+        groups: list[ObservedMonsterGroup] = []
+        local_position: tuple[int, int] | None = None
+        for raw in bytes_values(node, 3):
+            entity_id, cell, members, character_name = self._world_entity(raw)
+            if entity_id is None or cell is None:
+                continue
+            if members:
+                groups.append(ObservedMonsterGroup(group_id=entity_id, cell_id=self._known(cell), members=members))
+                continue
+            if (
+                character_name is not None
+                and self.expected_local_character_name
+                and self._character_name_matches_expected(character_name, self.expected_local_character_name)
+            ):
+                self._observe_local_actor(
+                    entity_id,
+                    rank=self._IDENTITY_RANK_WORLD_NAME,
+                    source="JNJ_CHARACTER_NAME",
+                )
+            if self._local_actor_id is not None and entity_id == self._local_actor_id:
+                local_position = (entity_id, cell)
+        new_map = {int(g.group_id): g for g in groups}
+        events: list[object] = [WorldMapObserved(map_id=self._known(map_id))]
+        local_event = self._local_event()
+        if local_event is not None and self._local_identity_source == "JNJ_CHARACTER_NAME":
+            events.append(local_event)
+        if local_position is not None:
+            actor_id, cell_id = local_position
+            events.append(
+                WorldActorPositionObserved(
+                    actor_id=actor_id,
+                    map_id=self._known(map_id),
+                    cell_id=self._known(cell_id),
+                    actor_kind=self._known("LOCAL_PLAYER"),
+                )
+            )
+        for missing in sorted(set(self._world_groups) - set(new_map)):
+            events.append(WorldEntityRemovedObserved(entity_id=int(missing)))
+        events.append(MonsterGroupSnapshotObserved(map_id=self._known(map_id), groups=tuple(groups), complete_snapshot=True))
+        self._world_groups = new_map
+        return tuple(events)
+
+    def _jns(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        raw = first_bytes(node, 1)
+        if raw is None:
+            return ()
+        entity_id, cell, members, character_name = self._world_entity(raw)
+        if entity_id is None or cell is None:
+            return ()
+        if members:
+            group = ObservedMonsterGroup(group_id=entity_id, cell_id=self._known(cell), members=members)
+            self._world_groups[entity_id] = group
+            return (MonsterGroupObserved(group_id=entity_id, map_id=self._map_semantic(), cell_id=self._known(cell), members=members),)
+        events: list[object] = []
+        if (
+            character_name is not None
+            and self.expected_local_character_name
+            and self._character_name_matches_expected(character_name, self.expected_local_character_name)
+        ):
+            if self._observe_local_actor(entity_id, rank=self._IDENTITY_RANK_WORLD_NAME, source="JNS_CHARACTER_NAME"):
+                local = self._local_event()
+                if local is not None:
+                    events.append(local)
+        if self._local_actor_id is not None and entity_id == self._local_actor_id:
+            events.append(WorldActorPositionObserved(actor_id=entity_id, map_id=self._map_semantic(), cell_id=self._known(cell), actor_kind=self._known("LOCAL_PLAYER")))
+        return tuple(events)
+
+    def _joc(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        if message.direction == "client_to_server" and not self._fight_active:
+            # Explicit world-transition intent wins over stale pre-fight causal
+            # hints.  This also gives ``jow`` a safe way to distinguish a real
+            # world map change from the tactical map load that precedes ``jxi``.
+            self._pending_world_map_transition = True
+            self._pending_world_attack_group_id = None
+            self._pending_join_request_fight_id = None
+            self._pending_join_request_leader_id = None
+            self._pending_join_presentation_fight_id = None
+            self._pending_fight_map_load_id = None
+        if (
+            message.direction == "client_to_server"
+            and not self._fight_active
+            and self._local_actor_id is None
+        ):
+            # Only needed as a bootstrap identity edge. Once local identity is
+            # established, actor-matching joo is sufficient and a pending latch
+            # would risk surviving a transition where the own socket receives
+            # jow/jnj but no joo (observed in the simultaneous capture).
+            self._awaiting_own_map_transition = True
+        return ()
+
+    def _jok(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        if message.direction == "client_to_server" and not self._fight_active and self._local_actor_id is None:
+            node = parse_direct_fields(message.payload)
+            raw_path = first_bytes(node, 1)
+            route = self._packed_varints(raw_path)
+            if route:
+                # The MOVE_REQUEST manifest independently proves that the last
+                # packed route token carries the destination in its low 12 bits.
+                # Keep a short queue rather than a boolean: the controlled
+                # multi-account capture contains monster jnz messages between a
+                # client jok and the player's own jnz, and can contain several
+                # jok requests before their acknowledgements.
+                self._pending_world_move_targets.append((message.packet_number, int(route[-1]) & 0xFFF))
+                self._pending_world_move_targets = self._pending_world_move_targets[-8:]
+        return ()
+
+    def _hms(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Remember a locally initiated monster-group attack causality edge.
+
+        hms is already exposed through the semantic wire manifest for execution
+        evidence.  The adapter additionally keeps the selected group id so that
+        a later matching ``jxi`` can safely prove the initiating actor is local.
+        This is intentionally not itself a canonical state mutation.
+        """
+        if message.direction != "client_to_server":
+            return ()
+        target = int_value(parse_direct_fields(message.payload), 2, signed_value=True)
+        self._pending_world_attack_group_id = None if target is None else int(target)
+        return ()
+
+    def _hnl(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Decode follower discovery of a leader-created fight.
+
+        Controlled multi-account evidence (two independent successful joins)
+        proves the nested structure carries the fight generation, the positive
+        leader actor, the negative origin monster-group entity and a packed pair
+        of team/world position cells.  No join UI authority is inferred here;
+        that arrives separately in ``iia``.
+        """
+        node = parse_direct_fields(message.payload)
+        events: list[object] = []
+        for raw_summary in bytes_values(node, 1):
+            summary = self._nested(raw_summary)
+            if summary is None:
+                continue
+            fight_id = int_value(summary, 2)
+            if fight_id is None:
+                continue
+            leader: int | None = None
+            origin: int | None = None
+            for raw_team in bytes_values(summary, 4):
+                team = self._nested(raw_team)
+                if team is None:
+                    continue
+                entity = int_value(team, 8, signed_value=True)
+                if entity is None:
+                    continue
+                entity = int(entity)
+                if entity > 0 and leader is None:
+                    leader = entity
+                elif entity < 0 and origin is None:
+                    origin = entity
+            if leader is None:
+                # Without the positive leader identity the downstream join
+                # correlation contract cannot be satisfied safely.
+                continue
+            try:
+                cells = tuple(
+                    int(value)
+                    for value in self._packed_varints(first_bytes(summary, 3))
+                    if 0 <= int(value) <= 559
+                )
+            except ValueError:
+                cells = ()
+            events.append(FightDiscoveryObserved(
+                fight_instance_id=int(fight_id),
+                leader_actor_id=int(leader),
+                origin_world_entity_id=self._known(int(origin)) if origin is not None else self._not_observed(),
+                team_position_cells=cells,
+                presentation_id=self._not_observed("join presentation is carried by iia"),
+            ))
+        return tuple(events)
+
+    def _iia(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Decode the follower's authoritative join presentation.
+
+        Across fight generations 176 and 130 the packet carries the exact fight
+        id, leader actor, join anchor cell, map identity and an opaque token in
+        field 2.  The token is generation-qualified by fight id in canonical
+        state; its internal Ankama meaning is deliberately not guessed.
+        """
+        node = parse_direct_fields(message.payload)
+        fight_id = int_value(node, 1)
+        presentation_id = int_value(node, 2)
+        anchor = int_value(node, 3)
+        leader = int_value(node, 5, signed_value=True)
+        if fight_id is None or presentation_id is None or leader is None:
+            raise ValueError("iia join presentation missing fight/token/leader")
+        world_map_id = None
+        raw_context = first_bytes(node, 6)
+        context = self._nested(raw_context)
+        if context is not None:
+            world_map_id = int_value(context, 6)
+        fight_id = int(fight_id)
+        presentation_id = int(presentation_id)
+        leader = int(leader)
+        self._join_presentation_by_fight[fight_id] = presentation_id
+        self._pending_join_presentation_fight_id = fight_id
+        # A follower can observe fights it never joins. Keep this diagnostic /
+        # correlation cache bounded so a long world session cannot accumulate
+        # stale presentation generations indefinitely.
+        while len(self._join_presentation_by_fight) > 64:
+            oldest = next(iter(self._join_presentation_by_fight))
+            self._join_presentation_by_fight.pop(oldest, None)
+        return (
+            FightJoinPresentationObserved(
+                fight_instance_id=fight_id,
+                presentation_id=presentation_id,
+                leader_actor_id=leader,
+                world_map_id=self._known(int(world_map_id)) if world_map_id is not None else self._not_observed(),
+                join_anchor_cell_id=self._known(int(anchor)) if anchor is not None else self._not_observed(),
+            ),
+            FightJoinLifecycleObserved(
+                fight_instance_id=fight_id,
+                joinable=True,
+                phase="PRESENTED",
+                presentation_id=self._known(presentation_id),
+            ),
+        )
+
+    def _jwz(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Track the exact follower join request for later server confirmation."""
+        if message.direction != "client_to_server":
+            return ()
+        node = parse_direct_fields(message.payload)
+        fight_id = int_value(node, 2)
+        leader = int_value(node, 3, signed_value=True)
+        if fight_id is None or leader is None:
+            raise ValueError("jwz join request missing fight/leader")
+        self._pending_join_request_fight_id = int(fight_id)
+        self._pending_join_request_leader_id = int(leader)
+        self._pending_join_presentation_fight_id = int(fight_id)
+        return ()
+
+    def _joo(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 2, signed_value=True)
+        code = int_value(node, 1, default=0)
+        if actor is None:
+            raise ValueError("joo transition actor missing")
+        actor = int(actor)
+        direction = {0: "RIGHT", 2: "BOTTOM", 4: "LEFT", 6: "TOP"}.get(int(code or 0))
+        if direction is None:
+            return ()
+        own_transition = bool(self._awaiting_own_map_transition and not self._fight_active)
+        self._awaiting_own_map_transition = False
+        events: list[object] = []
+        if own_transition:
+            if self._observe_local_actor(actor, rank=self._IDENTITY_RANK_MAP_TRANSITION, source="JOC_JOO_CAUSAL_MAP_TRANSITION"):
+                local = self._local_event()
+                if local is not None:
+                    events.append(local)
+        if own_transition or self._local_actor_id == actor:
+            events.append(WorldTransitionDirectionObserved(actor_id=actor, direction=direction))
+        return tuple(events)
+
+    def _jnz(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 4, signed_value=True)
+        raw_path = first_bytes(node, 1)
+        if actor is None or raw_path is None:
+            raise ValueError("jnz actor/path missing")
+        actor = int(actor)
+        path = self._packed_varints(raw_path)
+        if not path:
+            raise ValueError("jnz path empty")
+        if self._fight_active:
+            return (FightMovementObserved(actor_id=actor, from_cell_id=self._known(path[0]), to_cell_id=self._known(path[-1]), path=path),)
+
+        events: list[object] = []
+        destination = int(path[-1]) & 0xFFF
+        matched_pending_index: int | None = None
+        if self._local_actor_id is None and actor > 0:
+            for index, (_request_packet, target_cell) in enumerate(self._pending_world_move_targets):
+                if int(target_cell) == destination:
+                    matched_pending_index = index
+                    break
+        if matched_pending_index is not None:
+            if self._observe_local_actor(actor, rank=self._IDENTITY_RANK_WORLD_MOVE, source="JOK_JNZ_CAUSAL_WORLD_MOVEMENT"):
+                local = self._local_event()
+                if local is not None:
+                    events.append(local)
+            # Once the socket-local player is established, no further causal
+            # bootstrap is needed. Clearing all outstanding destinations also
+            # prevents an old click from becoming a future false identity edge.
+            self._pending_world_move_targets.clear()
+        if actor in self._world_groups:
+            previous = self._world_groups[actor]
+            updated = previous.model_copy(update={"cell_id": self._known(path[-1])})
+            self._world_groups[actor] = updated
+            events.append(MonsterGroupMovedObserved(group_id=actor, map_id=self._map_semantic(), cell_id=self._known(path[-1]), path=path))
+        elif self._local_actor_id == actor:
+            events.append(WorldActorPositionObserved(actor_id=actor, map_id=self._map_semantic(), cell_id=self._known(path[-1]), path=path, actor_kind=self._known("LOCAL_PLAYER")))
+        return tuple(events)
+
+    def _jow(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        map_id = int_value(parse_direct_fields(message.payload), 1)
+        if map_id is None:
+            raise ValueError("jow authoritative map id missing")
+        map_id = int(map_id)
+        if not self.separate_world_fight_map_ids:
+            # Preserve the sealed 3.6.12.16 replay contract exactly. The
+            # contextual map-load interpretation belongs to the current-build
+            # adapter, not to historical evidence.
+            self._current_map_id = map_id
+            self._awaiting_own_map_transition = False
+            return (WorldMapObserved(map_id=self._known(map_id)),)
+
+        self._last_map_load_id = map_id
+
+        # R5 current-wire correction: ``jow`` is a map-load observation, not a
+        # universal persistent-world MapChanged event.  Fight loading can emit
+        # the tactical MapId *before* ``jxi`` establishes ``fight_active``.  If
+        # we overwrite the persistent world map here, geometry authority loses
+        # the only valid Mapuse identity and placement fails before Ready.
+        explicit_world_transition = bool(self._pending_world_map_transition and not self._fight_active)
+        if self._fight_entry_pending() and not explicit_world_transition:
+            self._pending_fight_map_load_id = map_id
+            self._awaiting_own_map_transition = False
+            return ()
+
+        self._current_map_id = map_id
+        self._pending_world_map_transition = False
+        self._pending_fight_map_load_id = None
+        # The simultaneous capture proves a local joc can be completed by jow
+        # without any same-socket joo. Treat the authoritative map observation
+        # as the end of that identity-causality window so a much later broadcast
+        # joo from another player cannot be mistaken for our transition.
+        self._awaiting_own_map_transition = False
+        return (WorldMapObserved(map_id=self._known(map_id)),)
+
+    def _jxh(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        events: list[object] = []
+        for raw in bytes_values(node, 2):
+            team = parse_direct_fields(raw)
+            team_id = int(int_value(team, 1, default=0) or 0)
+            leader = int_value(team, 8, signed_value=True)
+            if leader is not None:
+                self._team_leaders[team_id] = int(leader)
+                if self._local_actor_id is not None and int(leader) == self._local_actor_id:
+                    self._local_team_id = team_id
+            members: list[int] = []
+            for l4 in bytes_values(team, 4):
+                n4 = self._nested(l4)
+                if n4 is None:
+                    continue
+                for l2 in bytes_values(n4, 2):
+                    n2 = self._nested(l2)
+                    if n2 is None:
+                        continue
+                    for actor in n2.get(3, ()):
+                        if isinstance(actor, int):
+                            members.append(int(signed(actor)))
+            if leader is not None and int(leader) > 0:
+                members.append(int(leader))
+            for actor in dict.fromkeys(members):
+                self._team_by_actor[int(actor)] = team_id
+                if self._local_actor_id is not None and int(actor) == self._local_actor_id:
+                    self._local_team_id = team_id
+            if self._local_team_id is not None:
+                for actor in dict.fromkeys(members):
+                    events.append(SideRelationObserved(actor_id=int(actor), relation="ALLY_SIDE" if team_id == self._local_team_id else "ENEMY_SIDE"))
+        return tuple(events)
+
+    def _iib(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Decode the 3.6.12.16 absolute party-member HP update.
+
+        The simultaneous CRA+ENU capture gives a strong independent cross-flow
+        proof for this structure.  Outer field 4 is the positive player actor
+        id.  Nested field 3.1 is current HP and 3.3 is current maximum HP.
+        Both sockets receive the same values.  During fight 130, ENU changes
+        2045 -> 2017 with the exact 28-damage action, max HP then changes
+        2045 -> 2043 with the exact 2-point erosion consequence; later 2017 ->
+        1984 and 2043 -> 2040 match the 33-damage / 3-erosion pair.
+
+        This is an absolute party-status observation, but the server may publish
+        the already-updated value *before* the corresponding fight ``jsq`` damage
+        consequence on the same socket.  Applying both as state mutations would
+        double-count damage/erosion.  Therefore ``iib`` is used as an independent
+        pre-entry/current-generation player HP baseline and cross-check, while
+        authoritative in-fight deltas continue to come from ``jsq``.  Pre-fight
+        updates are retained to seed fighter bootstrap without creating premature
+        canonical fight actors.
+        """
+        if message.direction != "server_to_client":
+            raise ValueError("iib party HP update is only certified server_to_client")
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 4, signed_value=True)
+        raw_stats = first_bytes(node, 3)
+        if actor is None or int(actor) <= 0 or raw_stats is None:
+            raise ValueError("iib party HP actor/stats missing")
+        stats = parse_direct_fields(raw_stats)
+        current_hp = int_value(stats, 1)
+        max_hp = int_value(stats, 3)
+        if current_hp is None or max_hp is None:
+            raise ValueError("iib current/max HP fields missing")
+        actor = int(actor)
+        current_hp = max(0, int(current_hp))
+        max_hp = max(0, int(max_hp))
+        if current_hp > max_hp:
+            # The controlled evidence never violates this invariant.  Fail
+            # closed rather than poisoning downstream health calculations if a
+            # future protocol revision reuses these positions.
+            raise ValueError("iib current HP exceeds max HP")
+        # Freeze the fight-generation baseline once combat becomes ACTIVE.
+        # Placement-stage observations are still safe: no combat consequence can
+        # have changed HP yet, and a late follower update may arrive after jxi.
+        if not self._fight_active or self._fight_phase != "ACTIVE":
+            self._party_hp_by_actor[actor] = (current_hp, max_hp)
+        # Do not mutate active fight HP here. Controlled packet ordering proves
+        # the party-status message can lead the matching jsq consequence. The
+        # baseline is consumed once by _fighter_events; fight-time health remains
+        # a single-authority jsq state machine and iib remains a cross-check.
+        return ()

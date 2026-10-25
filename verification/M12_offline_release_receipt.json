@@ -1,0 +1,94 @@
+{
+  "artifacts": {
+    "docs/M12_006_CAUSAL_DIAGNOSTIC_AND_FULL_CHAIN_HARDENING.md": "9c9b2da3076d3e17e57fb00b015637484a050525314f3770801b34273ad5aa34",
+    "docs/M12_RELEASE_AND_COMPOSITION.md": "2dd08a23629b1b143fc578106067e6021dd12e2f37817f59035b9d0515ed276d"
+  },
+  "calibration_sha256": "0591b6f5503091ea30e031257a2d819feff1581730fa8483f62fdda3dedc198f",
+  "check_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 7,
+    "skipped": 0
+  },
+  "checks": [
+    {
+      "code": "M12_COMPOSITION_DIAGNOSTIC_SYSTEMIC_TESTS",
+      "detail": "pytest_pass=202/202; files_pass=8/8; minimum_collected=50; subtests=21",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_FINAL_ARCHITECTURE",
+      "detail": "packages=13; modules=357; violations=0",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_LIVE_COMPOSITION_FAIL_CLOSED",
+      "detail": "blockers=9; physical_input=DISABLED",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_OPERATOR_SURFACE",
+      "detail": "top_level_bats=['setup.bat', 'start.bat']",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_RELEASE_CONTENT_MODEL",
+      "detail": "candidate_files_excluding_self=811; self_excluding_content_sha256=955dd59a564ec06b2974f4c4192780f23eb4d4d95d9b2a338e86d6df5ff80d60; final_manifest_verifier=tools/verify_release_offline.py",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_NO_DASHBOARD_UI_DEPENDENCY",
+      "detail": "ui_dependencies=[]",
+      "evidence": [],
+      "status": "PASS"
+    },
+    {
+      "code": "M12_ZERO_PHYSICAL_INPUT",
+      "detail": "M12 uses Q8/Q9 synthetic/fake paths only; no Windows physical driver is constructed.",
+      "evidence": [],
+      "status": "PASS"
+    }
+  ],
+  "config_schema_sha256": "48b1da7c7d5a2cd1a562b495ca336153ca2165e0c50ac907b0352b1eafafad12",
+  "dependency_manifest_sha256": "1369928a77d6d2346356db74dd72e0733d223d0a7c858cbb33c0b9c21d776a8a",
+  "duration_ms": 87699,
+  "effective_config_sha256": "524abe28736857564f429488985750fb2d2dd08efd270b28f4eb30d8ffc86a0e",
+  "environment": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture_manifest_sha256": "e5bf0cffd048dce08d7db12df536c2b835b53ebd3d1f1eceb39bd1085f6b8229",
+  "game_data_tree_sha256": "5eb6d7cd9066757f77baa545856c9ac74233a78a174127b8f302f8797ec65931",
+  "gate_id": "Q9-M12-OFFLINE",
+  "generated_utc": "2026-10-24T23:28:35.907483+00:00",
+  "kernel_tree_sha256": "6f504f0728086fda0f52f4f3a60e1dfa04d04579fd3ad96eda0760a95ef2e526",
+  "known_limitations": [
+    "This is M12 offline release acceptance, not Q10 Windows acceptance.",
+    "Q11 current-build observe-only, Q12 action scopes and Q13 live mission remain BLOCKED_MISSING_EVIDENCE.",
+    "Dependency artifact/wheel hashes are finalized only by the Windows release environment at Q10."
+  ],
+  "milestone": "M12",
+  "observed_client_build": null,
+  "physical_input_count": 0,
+  "physical_input_state": "DISABLED",
+  "protocol_adapter_release": null,
+  "python_version": "3.13.5",
+  "schema_version": 1,
+  "source_tree_sha256": "9f7d27d098bf70bbddac38cbfaaf441c278001c0ebe92d23e9b58039dd846c56",
+  "status": "PASS",
+  "test_counts": {
+    "failed": 0,
+    "missing_evidence": 0,
+    "not_run": 0,
+    "passed": 202,
+    "skipped": 0
+  }
+}

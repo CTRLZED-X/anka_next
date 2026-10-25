@@ -1,0 +1,57 @@
+{
+  "milestone": "P32",
+  "title": "Biweekly protocol research capability/role matrix, exact-build archive handoff and fail-closed comparison audits",
+  "verification_date": "2026-10-20",
+  "source_project": "ANKA_NEXT_P31_FIGHT_EVENT_RESEARCH_ORACLE_REPLAY_OFFLINE_VERIFIED.zip",
+  "implemented": {
+    "module": "src/anka_protocol/capability_matrix.py",
+    "intake_case_metadata": "src/anka_protocol/evidence_intake.py",
+    "exact_archive_hash_link": "src/anka_app/protocol_evidence_compare.py",
+    "setup_integration": "src/anka_app/protocol_updates.py",
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ],
+    "new_test_module": "tests/test_p32_protocol_capability_assessment.py",
+    "new_tests": 26,
+    "registered_current_build_research_recipes": 0
+  },
+  "verification": {
+    "status": "PASS_PER_MODULE_BOUNDED_ISOLATED_RUNS",
+    "total_tests_passed": 936,
+    "inherited_p31_tests": 910,
+    "new_p32_tests": 26,
+    "test_modules": 48,
+    "all_modules_passed_individually": true,
+    "single_process_monolithic": "NOT_PASSED: intermittent timeout in inherited suite",
+    "normal_eight_shard_verifier": "NOT_PASSED: three shards completed; fourth stalled",
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "reused_assets_verified": 165,
+    "architecture_packages": 13,
+    "forbidden_cross_imports": 0,
+    "windows_batch_scripts_executed_on_windows": false,
+    "protocol_pack_activation_tested_on_current_client": false
+  },
+  "safety": {
+    "research_only": true,
+    "current_build_certified": false,
+    "adapter_activated": false,
+    "authoritative_live_state": false,
+    "canonical_commits": 0,
+    "physical_input_sent": false
+  },
+  "remaining": [
+    "Current-client independent capture/oracle and identity evidence missing",
+    "Witness authenticity and role assertions not independently attested",
+    "Protocol decoder to authoritative Canonical admission not certified",
+    "Windows/Npcap/current client and game input end-to-end tests pending",
+    "Intermittent monolithic verifier stall unresolved"
+  ],
+  "progress": {
+    "estimated_roadmap_percent": 83,
+    "integrated_live_fight_acceptance_percent": 0,
+    "note": "Estimated development coverage, not measured project quality or reliability"
+  }
+}

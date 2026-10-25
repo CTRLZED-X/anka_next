@@ -1,0 +1,30 @@
+{
+  "milestone": "P9",
+  "created_utc": "2026-10-20T12:31:29.024955+00:00",
+  "scope": "read-only canonical evidence qualification, pure synthetic-state quality and read-transaction consistent audited snapshots",
+  "baseline_tests": 255,
+  "new_tests": 49,
+  "total_tests": 304,
+  "unittest_suite": "PASS (304 tests on Python 3.13/Linux)",
+  "cli_verify": "PASS (304 tests, one preceding invocation had timed out, bounded retry passed)",
+  "quality_demo": "PASS - 8 synthetic journal events, historical candidates never committed",
+  "journal_read_consistency": "TESTED with two SQLite WAL connections, writer advances while reader holds snapshot",
+  "preserved_assets": 165,
+  "historic_semantic_authority": "QUARANTINED",
+  "current_client_semantics_certified": false,
+  "live_state_authorized": false,
+  "windows_host_accepted": false,
+  "live_ready": false,
+  "physical_input_sent": false,
+  "implementation_coverage_estimate_percent": 42,
+  "score_note": "Roadmap-based estimate, not a reliability or quality measurement",
+  "source_sha256": {
+    "src/anka_canonical/qualification.py": "3e731c3ce55d4b3c0714472f36aa18a27c92b5be8dbb1fc344ea726347a716a0",
+    "src/anka_live_state/quality.py": "bb4c69ef24373e1d5721e1eba4d8e1ec1755de85b7329191a515c678de736bdc",
+    "src/anka_canonical/journal.py": "3035244958ec2e0a03c0e6b154ba098db42cfed4a76ebb422393f94f81962299",
+    "src/anka_app/quality_offline.py": "c05d2228512f411ba84e4ffac33826840193f7d4c16aeb96d1bdf39f99f865c7",
+    "src/anka_app/cli.py": "5f17a441e0c74ad1b46172aa56bab50c31b1b016f1b39f5e32511a08592e4a57",
+    "tests/test_p9_quality.py": "3c2cddb61d77449ab4b4a80678d6e49f7a8d44e45d9a53d0e3b3550e533d7551",
+    "docs/P9_EVIDENCE_QUALIFICATION_STATE_QUALITY.md": "0d06de986eec648b00763e4b10520b333abc311773e8bdbd337ce2cf6084f9d0"
+  }
+}

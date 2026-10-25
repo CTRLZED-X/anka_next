@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anka-next"
+version = "0.12.6"
+description = "ANKA_NEXT M12_006 causal diagnostics and full-chain hardening"
+requires-python = ">=3.13,<3.14"
+dependencies = ["pydantic>=2.13,<3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=9,<10"]
+
+[project.scripts]
+anka-next = "anka_app.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+anka_game_kernel = ["data/spell_mechanics/*.json"]

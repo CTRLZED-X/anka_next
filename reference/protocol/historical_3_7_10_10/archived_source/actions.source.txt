@@ -1,0 +1,311 @@
+from __future__ import annotations
+
+import hashlib
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved, ActorDeathObserved, ActorEffectsObserved, ActorLookObserved, ActorStatesObserved,
+    ChallengeLifecycleObserved, DisplacementObserved, FightActorObserved, FightActorRosterObserved,
+    FightDiscoveryObserved, FightJoinLifecycleObserved, FightJoinPresentationObserved, FightLifecycleObserved,
+    FightMapContextObserved, FighterReadyObserved, FightMovementObserved, FightRoundObserved, FightStatsObserved,
+    FightTurnEndedObserved, FightTurnObserved, FightTurnOrderObserved, LegalPlacementCellsObserved, LocalPlayerObserved,
+    MonsterGroupObserved, MonsterGroupSnapshotObserved, MonsterGroupMovedObserved, ObservedEffect, ObservedMonsterGroup,
+    ObservedMonsterMember, ResourceChangedObserved, ShieldAbsorbedObserved, ShieldChangedObserved, SideRelationObserved,
+    SpellCastObserved, SpellCooldownEntry, SpellCooldownSnapshotObserved, SpellLoadoutObserved, SpellPropertyModifierObserved,
+    SummonCountObserved, SummonCreatedObserved, VitalityChangedObserved, WorldActorPositionObserved, WorldEntityRemovedObserved,
+    WorldMapObserved, WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.protocol.errors import ProtocolSchemaDriftError
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.protobuf import bytes_values, child, first_bytes, int_value, parse_direct_fields, read_varint, signed, signed_sum
+
+class ActionProtocolHandlersMixin:
+    """Version-local capability handler mixin; not a public protocol API."""
+
+    def _jsq(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        action = int_value(node, 22)
+        source = int_value(node, 36, signed_value=True)
+        if action is None:
+            raise ValueError("jsq action id missing")
+        aid = int(action)
+        if aid not in self._SUPPORTED_JSQ_ACTIONS:
+            raise ProtocolSchemaDriftError(
+                f"unverified jsq action id {aid} for {self.protocol_build}"
+            )
+        if aid == 300:
+            branch = child(node, 2)
+            spell_box = child(branch, 2)
+            spell_level_id = int_value(spell_box, 1)
+            spell_id = int_value(spell_box, 2)
+            target_cell = int_value(branch, 5)
+            if source is None or spell_level_id is None or spell_id is None or target_cell is None:
+                raise ValueError("jsq/300 cast fields missing")
+            # Controlled CRA/ENU captures prove field 2.2.1 is the Static
+            # SpellLevel record id (for example spell 32435 -> 86146 and
+            # spell 13338 -> 41720). Canonical `grade_id` historically stores
+            # this SpellLevel id, not the small ordinal grade number.
+            return (SpellCastObserved(
+                caster_actor_id=int(source),
+                spell_id=int(spell_id),
+                target_cell_id=self._known(int(target_cell)),
+                grade_id=self._known(int(spell_level_id)),
+            ),)
+        if aid == 5:
+            branch = child(node, 5)
+            target = int_value(branch, 1, signed_value=True)
+            from_cell = int_value(branch, 2)
+            to_cell = int_value(branch, 3)
+            if None in (target, from_cell, to_cell):
+                raise ValueError("jsq/5 push fields missing")
+            return (DisplacementObserved(actor_id=int(target), from_cell_id=self._known(int(from_cell)), to_cell_id=self._known(int(to_cell))),)
+        if aid == 4:
+            branch = child(node, 20)
+            to_cell = int_value(branch, 1)
+            target = int_value(branch, 2, signed_value=True)
+            if target is None or to_cell is None:
+                raise ValueError("jsq/4 teleport fields missing")
+            return (DisplacementObserved(actor_id=int(target), from_cell_id=self._unknown("3.6.12.16 teleport action does not publish origin"), to_cell_id=self._known(int(to_cell))),)
+        if aid in self._DAMAGE_ACTIONS:
+            branch = child(node, 37)
+            target = int_value(branch, 5, signed_value=True)
+            amount = int_value(branch, 6)
+            if target is None or amount is None:
+                # Keep guarded variants classified but non-mutating.
+                return ()
+            target = int(target)
+            amount = max(0, int(amount))
+            # f37.1 is the permanent/max-HP loss caused by erosion for this
+            # damage consequence.  It is present throughout both controlled
+            # captures at the normal 10% erosion baseline (for example
+            # 50 HP damage -> 5 max-HP loss), and rises under Punitive's
+            # independently observed +15% erosion effect (55 HP damage ->
+            # f37.1=15 while characteristic 75 is 25, then returns to 10 when
+            # that effect expires).  This also preserves the same semantic
+            # consequence carried by the certified previous-revision damage
+            # family, but the field numbers are revision-local.
+            max_hp_loss_raw = int_value(branch, 1)
+            max_hp_loss = max(0, int(max_hp_loss_raw or 0))
+            previous = self._current_hp_by_actor.get(target)
+            current = None if previous is None else max(0, int(previous) - amount)
+            previous_max = self._max_hp_by_actor.get(target)
+            current_max = None if previous_max is None else max(0, int(previous_max) - max_hp_loss)
+            if current_max is not None:
+                self._max_hp_by_actor[target] = int(current_max)
+                if current is not None:
+                    current = min(int(current), int(current_max))
+            if current is not None:
+                self._current_hp_by_actor[target] = current
+            events: list[object] = [VitalityChangedObserved(
+                actor_id=target,
+                change_kind="DAMAGE",
+                source_actor_id=self._known(int(source)) if source is not None else self._unknown("damage source missing"),
+                amount=self._known(amount),
+                max_hp_loss=self._known(max_hp_loss) if max_hp_loss_raw is not None else self._not_observed("damage branch omitted erosion/max-HP loss field"),
+                previous_hp=self._known(previous) if previous is not None else self._unknown("damage target HP baseline was not observed"),
+                current_hp=self._known(current) if current is not None else self._unknown("damage target HP baseline was not observed"),
+            )]
+            # Damage branch field 2 is shield absorption, not HP damage. Two
+            # independent controlled cases cross-check it against the exact
+            # characteristic-96 transition to zero immediately before damage:
+            # CRA target -1: shield 33 -> 0, f37.2=33, HP damage=22;
+            # ENU target -4: shield 22 -> 0, f37.2=22, HP damage=36.
+            absorbed = int_value(branch, 2)
+            if absorbed is not None and int(absorbed) > 0:
+                events.append(ShieldAbsorbedObserved(
+                    actor_id=target,
+                    amount=int(absorbed),
+                    source_actor_id=self._known(int(source)) if source is not None else self._unknown("shield absorption source missing"),
+                ))
+            return tuple(events)
+        if aid in self._HEAL_ACTIONS:
+            branch = child(node, 39)
+            target = int_value(branch, 2, signed_value=True)
+            amount = int_value(branch, 4)
+            if target is None or amount is None:
+                return ()
+            target = int(target)
+            amount = max(0, int(amount))
+            previous = self._current_hp_by_actor.get(target)
+            current = None if previous is None else max(0, int(previous) + amount)
+            max_hp = self._max_hp_by_actor.get(target)
+            if current is not None and max_hp is not None:
+                current = min(current, int(max_hp))
+            if current is not None:
+                self._current_hp_by_actor[target] = current
+            return (VitalityChangedObserved(
+                actor_id=target,
+                change_kind="HEAL",
+                source_actor_id=self._known(int(source)) if source is not None else self._unknown("heal source missing"),
+                amount=self._known(amount),
+                previous_hp=self._known(previous) if previous is not None else self._unknown("heal target HP baseline was not observed"),
+                current_hp=self._known(current) if current is not None else self._unknown("heal target HP baseline was not observed"),
+            ),)
+        if aid == 103:
+            dead = int_value(child(node, 3), 2, signed_value=True)
+            if dead is None:
+                raise ValueError("jsq/103 dead actor missing")
+            dead = int(dead)
+            if dead in self._current_hp_by_actor:
+                self._current_hp_by_actor[dead] = 0
+            events: list[object] = [ActorDeathObserved(actor_id=dead)]
+            owner = self._known_summons.pop(dead, None)
+            if owner is not None:
+                self._summon_counts[owner] = max(0, int(self._summon_counts.get(owner, 0)) - 1)
+                events.append(SummonCountObserved(actor_id=int(owner), count=int(self._summon_counts[owner])))
+            return tuple(events)
+        if aid == 181:
+            # Controlled 3.6.12.16 summon path:
+            # jsq.12.2.1.5.3.1 actor, .2.3 cell, and .2.1.7.1 creature/template.
+            actor_box = child(node, 12, 2, 1)
+            spawn = child(actor_box, 5, 3)
+            summon_actor = int_value(spawn, 1, signed_value=True)
+            try:
+                cell = int_value(child(spawn, 2), 3)
+            except ValueError:
+                cell = None
+            controller = None
+            try:
+                controller = int_value(child(actor_box, 2), 3, signed_value=True)
+            except ValueError:
+                pass
+            creature = creature_grade = None
+            try:
+                # Summon static identity is embedded in actor_box.1.3.
+                # Controlled ENU evidence resolves:
+                #   Sac Animé   -> monster 5830, grade 3
+                #   Pelle Animée -> monster 5834, grade 3
+                #   Malle Animée -> monster 5839, grade 1
+                # actor_box.7.1 (4147/4156/4543 in these captures) is a
+                # different runtime/look namespace and must not be exposed as
+                # the Static monster id.
+                creature_identity = child(actor_box, 1, 3)
+                creature_grade = int_value(creature_identity, 1)
+                creature = int_value(creature_identity, 5)
+            except ValueError:
+                pass
+            if summon_actor is None or cell is None or controller is None:
+                raise ValueError("jsq/181 summon fields missing")
+            summon_actor = int(summon_actor)
+            controller = int(controller)
+            self._known_summons[summon_actor] = controller
+            self._known_fight_actors.add(summon_actor)
+            self._summon_counts[controller] = int(self._summon_counts.get(controller, 0)) + 1
+            events: list[object] = [
+                SummonCreatedObserved(
+                    summon_actor_id=summon_actor,
+                    summoner_actor_id=controller,
+                    cell_id=self._known(int(cell)),
+                    creature_id=self._known(int(creature)) if creature is not None else self._not_observed(),
+                    creature_grade=self._known(int(creature_grade)) if creature_grade is not None else self._not_observed(),
+                ),
+                SummonCountObserved(actor_id=controller, count=int(self._summon_counts[controller])),
+            ]
+            # Action 181 embeds the newly-created fighter's complete current
+            # characteristic block. Decode it immediately so a controllable
+            # summon turn never reaches FightAI with unknown AP/MP/HP.
+            summon_chars: dict[int, int] = {}
+            try:
+                summon_body = child(actor_box, 2)
+                for stat_raw in bytes_values(summon_body, 4):
+                    stat = parse_direct_fields(stat_raw)
+                    cid = int(int_value(stat, 2, default=0) or 0)
+                    value = int(self._new_characteristic_total(stat))
+                    summon_chars[cid] = value
+                    events.append(ActorCharacteristicObserved(actor_id=summon_actor, characteristic_id=cid, total_value=value))
+                    if cid == 96:
+                        events.append(ShieldChangedObserved(actor_id=summon_actor, current_shield=max(0, value)))
+            except ProtocolSchemaDriftError:
+                raise
+            except ValueError:
+                pass
+            if summon_chars:
+                self._char_totals_by_actor.setdefault(summon_actor, {}).update(summon_chars)
+                hp_base = summon_chars.get(0)
+                vitality = summon_chars.get(11)
+                max_hp = None if hp_base is None or vitality is None else max(0, hp_base + vitality)
+                if max_hp is not None:
+                    self._hp_initialized_actors.add(summon_actor)
+                    self._current_hp_by_actor[summon_actor] = int(max_hp)
+                    self._max_hp_by_actor[summon_actor] = int(max_hp)
+                resource_cache = self._current_resource_by_actor.setdefault(summon_actor, {})
+                if 1 in summon_chars:
+                    resource_cache["AP"] = int(summon_chars[1])
+                if 23 in summon_chars:
+                    resource_cache["MP"] = int(summon_chars[23])
+                if 19 in summon_chars:
+                    resource_cache["RANGE"] = int(summon_chars[19])
+                events.append(FightStatsObserved(
+                    actor_id=summon_actor,
+                    hp=self._known(max_hp) if max_hp is not None else self._not_observed(),
+                    max_hp=self._known(max_hp) if max_hp is not None else self._not_observed(),
+                    eroded_hp=self._known(0),
+                    ap=self._known(summon_chars[1]) if 1 in summon_chars else self._not_observed(),
+                    mp=self._known(summon_chars[23]) if 23 in summon_chars else self._not_observed(),
+                    range_bonus=self._known(summon_chars[19]) if 19 in summon_chars else self._not_observed(),
+                ))
+            # Creation is a fresh-lifecycle boundary for this actor: there are no
+            # pre-existing effect instances to recover. Subsequent juh/juu then
+            # keep the exact complete effect/state shadow authoritative.
+            self._effect_shadow[summon_actor] = {}
+            self._effects_complete_actors.add(summon_actor)
+            events.extend(self._complete_effect_events(summon_actor))
+            return tuple(events)
+        if aid == 149:
+            raw = first_bytes(node, 17)
+            if raw is None:
+                return ()
+            branch = parse_direct_fields(raw)
+            target = int_value(branch, 2, signed_value=True)
+            if target is None:
+                return ()
+            return (ActorLookObserved(actor_id=int(target), raw_payload_sha256=hashlib.sha256(raw).hexdigest()),)
+        if aid in self._REFERENCE_ONLY_ACTIONS:
+            return ()
+        raise ProtocolSchemaDriftError(f"certified jsq action id {aid} has no decoder disposition")
+
+    def _juo(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        records: list[dict] = []
+        for raw in bytes_values(node, 1):
+            try:
+                records.append(self._fighter_record(raw))
+            except ValueError:
+                continue
+        events: list[object] = []
+        actor_ids: list[int] = []
+        bootstrap_effects = not self._effect_bootstrap_done
+        for info in records:
+            actor_ids.append(int(info["actor_id"]))
+            events.extend(self._fighter_events(info, complete_bootstrap=bootstrap_effects))
+        if actor_ids:
+            events.append(FightActorRosterObserved(actor_ids=tuple(dict.fromkeys(actor_ids)), complete_snapshot=True, source="juo_active_fighter_snapshot"))
+        if bootstrap_effects:
+            self._effect_bootstrap_done = True
+        if self._local_actor_id is not None and self._local_actor_id not in self._summon_counts:
+            self._summon_counts[self._local_actor_id] = 0
+            events.append(SummonCountObserved(actor_id=int(self._local_actor_id), count=0))
+        return tuple(events)
+
+    def _jnv(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        map_id = int_value(node, 3)
+        if map_id is None:
+            raise ValueError("jnv fight map id missing")
+        x = y = None
+        try:
+            coords = child(node, 1)
+            y = int_value(coords, 1, signed_value=True)
+            x = int_value(coords, 3, signed_value=True)
+        except ValueError:
+            pass
+        if self.separate_world_fight_map_ids:
+            # Current-build rule: jnv is fight-map authority. It must never
+            # overwrite persistent world identity.
+            self._fight_map_id = int(map_id)
+            self._pending_fight_map_load_id = int(map_id)
+            self._last_map_load_id = int(map_id)
+        else:
+            # Historical 3.6.12.16 replay semantics are intentionally frozen.
+            self._current_map_id = int(map_id)
+        return (FightMapContextObserved(map_id=int(map_id), world_x=None if x is None else int(x), world_y=None if y is None else int(y)),)

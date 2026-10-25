@@ -1,0 +1,58 @@
+{
+  "milestone": "P16",
+  "scope": "DETERMINISTIC_STATEFUL_KERNEL_SEQUENCE_RESEARCH_NO_EXECUTION",
+  "host": {
+    "platform": "Linux",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "inherited_test_count": 488,
+  "new_tests": 29,
+  "full_test_count": 517,
+  "working_tree_direct_unittest": "PASS_517_TESTS_64.170_SECONDS",
+  "test_log": "local p16_verbose_diagnostic.log (not included)",
+  "offline_cli_check": "PASS",
+  "live_start": "BLOCKED_EXIT_40",
+  "current_client_certified": false,
+  "physical_game_input_enabled": false,
+  "live_fight_acceptance_completed": false,
+  "archived_kernel_modified": false,
+  "new_capabilities": [
+    "step-by-step kernel preview_cast",
+    "historical first cast stops on live requirements",
+    "hypothetical AP/MP/cast-history propagation if deterministic and complete",
+    "strict projection integrity",
+    "bounded 4-step requests",
+    "no action authority"
+  ],
+  "verification_timeout_seconds": 150,
+  "verification_timeout_note": "raised CLI bounded timeout from 80 to 150 seconds because full suite now requires ~64 seconds; intermittent stall root cause not proven",
+  "known_limitations": [
+    "Windows batch and Npcap not verified on Windows",
+    "current-build protocol semantics unavailable",
+    "no server-confirmed spell effects or physical action settlement",
+    "move/cast outcomes synthetic and non-authoritative",
+    "full mission coordination and execution pending"
+  ],
+  "fresh_zip_test_status": "PASS_517_TESTS_62.814_SECONDS",
+  "estimated_roadmap_coverage_percent": 62,
+  "source_sha256": {
+    "src/anka_contracts/sequence_research.py": "b88f9f849d8a4cbe934f03ff8476ff7b9c8aa24b6abd0d418ab2b022bef2d1f2",
+    "src/anka_decision/sequence_research.py": "ed80994ab35259d8a6a751e91167cdbd101b2b39d64487431194422ee9cfd635",
+    "src/anka_app/sequence_offline.py": "b7f4bb2e500ba9793c6112aff2cd56b433e1edb673e98a7afcc65d273d774ddf",
+    "src/anka_app/cli.py": "9105facc819e28045ffce6fb8f5a7d65615021022de54732bf819be744b6d7f8",
+    "src/anka_decision/README.md": "e4815718de830421a84de7857d54708ab12ec6f8d850a405160bae5652622d53",
+    "tests/test_p16_sequence_research.py": "a657aa69c808ef58a56dea787ea6ab511c373e942e022f1d03ae40b1764a9c27",
+    "sequence_demo.bat": "c78ca163ac890457345ace0eb092dfe6b7c09bc3af08cea8af63e352b95f6ad4",
+    "docs/P16_STATEFUL_KERNEL_SEQUENCE_RESEARCH.md": "23f5962142906d70898369716adbb6037c789f444350e89faa76444214fdeead",
+    "README.md": "b4826a6822e1681b36936ce1b7d5d05d625ded40382a78dc3b703f2cccf1a515",
+    "IMPLEMENTATION_STATUS.md": "c832c114db422b1979fee88b71b3f1bfc6b3c7fdc144d610245f55e9656a7416"
+  },
+  "fresh_zip_cli_verify": "PASS_517_TESTS_64.254_SECONDS",
+  "fresh_zip_sequence_demo": "STOPPED_UNCERTAIN_EXIT_0",
+  "fresh_zip_live_start": "BLOCKED_EXIT_40",
+  "fresh_zip_archive_integrity": "PASS_ZIPFILE_TESTZIP",
+  "fresh_zip_reused_asset_integrity": "PASS_165_FILES",
+  "regression_test_count": 517,
+  "testing_host": "Linux Python 3.13.5"
+}

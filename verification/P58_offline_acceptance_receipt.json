@@ -1,0 +1,56 @@
+{
+  "milestone": "P58",
+  "title": "Fail-closed untrusted canonical admission rehearsal and packet/capture provenance binding",
+  "date": "2026-10-21",
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "verification_fingerprint": "02712e6027b60bef6c83e7fa1a8832e2584437e55e639b798f9c769ee5a7fc75",
+  "tests": {
+    "new_p58_test_methods_passed": 29,
+    "focused_canonical_protocol_identity_tests_passed": 249,
+    "focused_subtests_passed": 40,
+    "full_isolated_test_modules": 85,
+    "full_isolated_test_modules_passed": 85,
+    "full_isolated_test_methods_passed": 1491
+  },
+  "preflight": {
+    "check": "PASS",
+    "setup": "PASS",
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "architecture_python_modules": 276,
+    "reused_assets_verified": "165/165",
+    "automatic_admission_rehearsal_smoke": "PASS_UNTRUSTED_ADMISSION_BLOCKED",
+    "start_expected_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "incident_bundle_integrity": "PASS"
+  },
+  "capabilities": {
+    "bounded_untrusted_packet_and_identity_claims": true,
+    "recomputed_message_sha256": true,
+    "per_packet_capture_snapshot_binding": true,
+    "exact_build_adapter_flow_transport_provenance": true,
+    "character_first_source_order_enforced": true,
+    "duplicate_fact_and_source_rejected": true,
+    "privacy_filtered_diagnostic_output": true,
+    "rehearsal_to_fixture_journal_write_rejected": true,
+    "trusted_capture_attestation": false,
+    "current_client_semantics_certified": false,
+    "current_character_breed_identity_verified": false,
+    "authoritative_canonical_writer_implemented": false
+  },
+  "authority": {
+    "current_build_certified": false,
+    "canonical_live_commits": 0,
+    "physical_input_sent": false,
+    "live_ready": false,
+    "historical_or_current_drafts_admitted": false
+  },
+  "limitations": [
+    "No Windows host/client tests performed in this Linux environment",
+    "Packet body bytes and capture digests are supplied by caller; structural match does not certify capture origin",
+    "No independent current-client build/semantic oracle or attested actor/breed/process/window mapping",
+    "No production Canonical admission or end-to-end live mission verification"
+  ],
+  "estimated_roadmap_scope_percent": 92,
+  "verified_complete_live_cra_enu_percent": 0
+}

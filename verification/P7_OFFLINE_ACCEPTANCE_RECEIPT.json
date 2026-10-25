@@ -1,0 +1,42 @@
+{
+  "release": "P7_HISTORICAL_SEMANTICS_CANONICAL_STAGING",
+  "date": "2026-10-20",
+  "test_framework": "unittest",
+  "python": "3.13.5",
+  "environment": "Linux; Windows runtime/Npcap untested",
+  "tests_passed": 218,
+  "tests_failed": 0,
+  "cli_verify": "PASS",
+  "cli_check": "PASS",
+  "semantic_demo": "PASS_SYNTHETIC_ONLY",
+  "protocol_demo": "PASS_SYNTHETIC_ONLY",
+  "start": "BLOCKED_AS_INTENDED",
+  "start_exit_code": 40,
+  "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+  "assets_integrity": {
+    "status": "PASS",
+    "count": 165
+  },
+  "provenance": "provenance/P7_historical_semantic_origin.json",
+  "canonical_research_drafts": "IMPLEMENTED_HISTORICAL_ONLY",
+  "canonical_commits": 0,
+  "live_state_mutations": 0,
+  "physical_input_sent": false,
+  "current_protocol_semantics_certified": false,
+  "live_windows_certified": false,
+  "known_gates": [
+    "Current-build real packet evidence / independent semantic mapping oracle not provided",
+    "Current client character/window/account binding not verified",
+    "Windows/Npcap and packet-drop truth not accepted on Windows host",
+    "Canonical journal and transactional live-state reducer not implemented",
+    "Decision/coordination/workflow/execution not integrated",
+    "Historical fields are synthetic-tested, never promoted from demonstration data"
+  ],
+  "historical_wire_regression": {
+    "change": "Preserve duplicate Any occurrences",
+    "test": "test_preserve_repeated_nested_any"
+  },
+  "verification_scope": "Source+offline scenario tests only; no live gameplay acceptance",
+  "roadmap_implementation_progress_estimate_percent": 35,
+  "integrated_live_acceptance_percent": 0
+}

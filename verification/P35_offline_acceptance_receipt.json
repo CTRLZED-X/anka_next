@@ -1,0 +1,58 @@
+{
+  "milestone": "P35",
+  "title": "Exact-source spell-effect and movement-snapshot research reconciliation",
+  "verification_date": "2026-10-21",
+  "source_archive": "ANKA_NEXT_P34_RECONSTRUCTION_GAP_AUDIT_OFFLINE_VERIFIED.zip",
+  "implemented": {
+    "contracts": "src/anka_contracts/effect_reconciliation.py",
+    "composition": "src/anka_app/effect_reconciliation_offline.py",
+    "setup_smoke": "src/anka_app/cli.py",
+    "test_module": "tests/test_p35_effect_reconciliation.py",
+    "operator_scripts": [
+      "setup.bat",
+      "start.bat"
+    ]
+  },
+  "verification": {
+    "status": "FULL_INVENTORY_MODULE_ISOLATED_PASS",
+    "tests_collected": 1033,
+    "test_modules": 51,
+    "module_isolated_passed_tests": 1033,
+    "module_isolated_failed_tests": 0,
+    "new_p35_tests_passed": 34,
+    "inherited_passed_tests": 999,
+    "focused_neighbor_regression_passed": 245,
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "architecture_packages": 13,
+    "architecture_status": "PASS",
+    "reused_assets_verified": 165,
+    "monolithic_verifier": "UNRESOLVED_INTERMITTENT_STALL",
+    "windows_native_tested": false,
+    "current_client_semantics_tested": false,
+    "full_live_fight_tested": false,
+    "note": "All 51 modules reported pass using bounded standalone test invocations; not a successful single-process full-suite run."
+  },
+  "safety": {
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "game_server_outcome_certified": false,
+    "canonical_commits": 0,
+    "actionable": false,
+    "physical_input_sent": false
+  },
+  "remaining": [
+    "Authoritative current-build protocol semantics and independent witnesses",
+    "Server-confirmed cast effects, damage/healing, AP/MP deltas, cooldowns and action outcomes",
+    "Real movement paths, current-fight walkability and displacement events",
+    "Cross-account server event ordering and verified live client/window identity",
+    "Windows calibration and physical execution acceptance",
+    "End-to-end autonomous CRA/ENU multi-fight acceptance",
+    "Intermittent combined verifier stall"
+  ],
+  "progress": {
+    "roadmap_estimate_pct": 86,
+    "live_fight_acceptance_pct": 0,
+    "meaning": "Roadmap coverage estimate, not a measured product-quality/reliability score"
+  }
+}

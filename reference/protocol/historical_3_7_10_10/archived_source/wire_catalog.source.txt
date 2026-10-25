@@ -1,0 +1,1029 @@
+{
+  "captures": {
+    "both_accounts_join_3_6_12_16.pcapng": {
+      "messages": 1785,
+      "sha256": "1b553fba6fa2cedb905efce8c73bac4c751c1e87fde58a5ad8fa619589baf6bb",
+      "types": {
+        "hkg|server_to_client": 68,
+        "hkk|server_to_client": 68,
+        "hms|client_to_server": 3,
+        "hnl|server_to_client": 2,
+        "igk|client_to_server": 4,
+        "igp|server_to_client": 4,
+        "ihm|server_to_client": 1,
+        "iht|server_to_client": 8,
+        "iia|server_to_client": 2,
+        "iib|server_to_client": 32,
+        "iiw|server_to_client": 2,
+        "ijd|server_to_client": 4,
+        "ije|server_to_client": 1,
+        "ijh|client_to_server": 1,
+        "ijs|server_to_client": 1,
+        "iks|client_to_server": 1,
+        "ilr|server_to_client": 4,
+        "iqq|server_to_client": 6,
+        "irx|server_to_client": 6,
+        "itw|server_to_client": 1,
+        "itx|server_to_client": 1,
+        "jnj|server_to_client": 10,
+        "jns|server_to_client": 18,
+        "jnv|server_to_client": 4,
+        "jny|client_to_server": 13,
+        "jnz|server_to_client": 49,
+        "joc|client_to_server": 11,
+        "jok|client_to_server": 16,
+        "joo|server_to_client": 6,
+        "jow|server_to_client": 14,
+        "jpc|server_to_client": 6,
+        "jpe|client_to_server": 10,
+        "jpj|client_to_server": 1,
+        "jpk|server_to_client": 13,
+        "jpp|server_to_client": 2,
+        "jqh|server_to_client": 182,
+        "jqk|server_to_client": 24,
+        "jsq|server_to_client": 138,
+        "jsr|client_to_server": 11,
+        "jst|client_to_server": 32,
+        "jsy|server_to_client": 182,
+        "jtd|client_to_server": 24,
+        "jte|server_to_client": 7,
+        "jti|server_to_client": 32,
+        "jtk|server_to_client": 96,
+        "juf|server_to_client": 4,
+        "jug|server_to_client": 24,
+        "juh|server_to_client": 172,
+        "jun|server_to_client": 4,
+        "juo|server_to_client": 4,
+        "jup|server_to_client": 20,
+        "juu|server_to_client": 14,
+        "jvi|server_to_client": 8,
+        "jvj|server_to_client": 24,
+        "jvu|server_to_client": 10,
+        "jwh|server_to_client": 4,
+        "jwj|server_to_client": 16,
+        "jwo|client_to_server": 5,
+        "jwp|server_to_client": 4,
+        "jww|server_to_client": 4,
+        "jwz|client_to_server": 2,
+        "jxb|client_to_server": 4,
+        "jxd|server_to_client": 8,
+        "jxh|server_to_client": 19,
+        "jxi|server_to_client": 4,
+        "jxj|client_to_server": 5,
+        "jxk|server_to_client": 4,
+        "jxm|server_to_client": 20,
+        "jxr|server_to_client": 4,
+        "kjl|server_to_client": 24,
+        "kjp|server_to_client": 8,
+        "kjt|client_to_server": 14,
+        "kjy|server_to_client": 8,
+        "kjz|server_to_client": 10,
+        "knb|server_to_client": 44,
+        "kne|client_to_server": 44,
+        "kqo|server_to_client": 4,
+        "kqw|server_to_client": 4,
+        "krg|server_to_client": 12,
+        "krm|server_to_client": 4,
+        "kth|server_to_client": 2,
+        "ktk|server_to_client": 4,
+        "ktl|server_to_client": 4,
+        "ktm|server_to_client": 4,
+        "ktn|server_to_client": 8,
+        "kto|client_to_server": 5,
+        "ktp|server_to_client": 2,
+        "ktr|client_to_server": 2,
+        "ktt|client_to_server": 4,
+        "ktx|server_to_client": 6,
+        "kua|client_to_server": 6,
+        "kub|server_to_client": 2,
+        "kue|server_to_client": 4,
+        "lnt|client_to_server": 1,
+        "lnu|server_to_client": 1,
+        "lof|server_to_client": 2,
+        "loj|client_to_server": 2,
+        "lok|server_to_client": 14,
+        "lou|server_to_client": 2,
+        "ltb|server_to_client": 18,
+        "lwy|server_to_client": 2,
+        "lxc|server_to_client": 2,
+        "lxg|server_to_client": 4
+      }
+    },
+    "enutfh(1).pcapng": {
+      "messages": 4123,
+      "sha256": "8d81320cccd1950d30382ba63ba62c85c7c48be3bc5b9864369faccc976d6573",
+      "types": {
+        "hms|client_to_server": 2,
+        "igk|client_to_server": 2,
+        "igp|server_to_client": 2,
+        "ilr|server_to_client": 2,
+        "iqq|server_to_client": 12,
+        "irx|server_to_client": 12,
+        "itw|server_to_client": 2,
+        "itx|server_to_client": 2,
+        "jnj|server_to_client": 7,
+        "jns|server_to_client": 6,
+        "jnv|server_to_client": 2,
+        "jny|client_to_server": 7,
+        "jnz|server_to_client": 87,
+        "joc|client_to_server": 5,
+        "jok|client_to_server": 26,
+        "joo|server_to_client": 7,
+        "jow|server_to_client": 9,
+        "jpe|client_to_server": 7,
+        "jpk|server_to_client": 7,
+        "jqh|server_to_client": 844,
+        "jqk|server_to_client": 29,
+        "jsq|server_to_client": 382,
+        "jsr|client_to_server": 33,
+        "jst|client_to_server": 103,
+        "jsy|server_to_client": 844,
+        "jtd|client_to_server": 94,
+        "jte|server_to_client": 32,
+        "jtg|server_to_client": 4,
+        "jti|server_to_client": 141,
+        "jtk|server_to_client": 521,
+        "juf|server_to_client": 5,
+        "jug|server_to_client": 94,
+        "juh|server_to_client": 107,
+        "jun|server_to_client": 2,
+        "juo|server_to_client": 2,
+        "jup|server_to_client": 115,
+        "juu|server_to_client": 88,
+        "jvi|server_to_client": 21,
+        "jvj|server_to_client": 117,
+        "jvu|server_to_client": 13,
+        "jwh|server_to_client": 2,
+        "jwj|server_to_client": 11,
+        "jwo|client_to_server": 31,
+        "jwp|server_to_client": 2,
+        "jww|server_to_client": 2,
+        "jxb|client_to_server": 2,
+        "jxd|server_to_client": 2,
+        "jxh|server_to_client": 6,
+        "jxi|server_to_client": 2,
+        "jxj|client_to_server": 2,
+        "jxk|server_to_client": 2,
+        "jxm|server_to_client": 8,
+        "jxr|server_to_client": 2,
+        "kjl|server_to_client": 24,
+        "kjp|server_to_client": 4,
+        "kjt|client_to_server": 9,
+        "kjy|server_to_client": 4,
+        "kjz|server_to_client": 4,
+        "knb|server_to_client": 69,
+        "kne|client_to_server": 69,
+        "kpu|client_to_server": 1,
+        "kpx|server_to_client": 2,
+        "kqo|server_to_client": 2,
+        "kqw|server_to_client": 2,
+        "krg|server_to_client": 6,
+        "krm|server_to_client": 2,
+        "kth|server_to_client": 1,
+        "ktk|server_to_client": 2,
+        "ktl|server_to_client": 2,
+        "ktm|server_to_client": 2,
+        "ktn|server_to_client": 4,
+        "kto|client_to_server": 3,
+        "ktr|client_to_server": 2,
+        "ktt|client_to_server": 2,
+        "ktx|server_to_client": 3,
+        "kua|client_to_server": 3,
+        "kue|server_to_client": 2,
+        "lnt|client_to_server": 1,
+        "lnu|server_to_client": 1,
+        "lof|server_to_client": 2,
+        "loj|client_to_server": 1,
+        "lok|server_to_client": 9,
+        "lou|server_to_client": 1,
+        "ltb|server_to_client": 11,
+        "lxg|server_to_client": 2
+      }
+    },
+    "mqkld(1).pcapng": {
+      "messages": 4629,
+      "sha256": "b8ff9c69f14becce672849b39e5ed0c6c2a342ac3a1dd6edb21b989634cb4024",
+      "types": {
+        "hkg|server_to_client": 142,
+        "hkk|server_to_client": 114,
+        "hms|client_to_server": 2,
+        "igk|client_to_server": 2,
+        "igp|server_to_client": 2,
+        "ilr|server_to_client": 2,
+        "iqq|server_to_client": 6,
+        "irx|server_to_client": 6,
+        "itv|server_to_client": 1,
+        "itw|server_to_client": 2,
+        "itx|server_to_client": 2,
+        "jnj|server_to_client": 7,
+        "jns|server_to_client": 7,
+        "jnv|server_to_client": 2,
+        "jny|client_to_server": 7,
+        "jnz|server_to_client": 91,
+        "joc|client_to_server": 5,
+        "jok|client_to_server": 20,
+        "joo|server_to_client": 5,
+        "jow|server_to_client": 9,
+        "jpe|client_to_server": 7,
+        "jpk|server_to_client": 7,
+        "jqh|server_to_client": 839,
+        "jqk|server_to_client": 35,
+        "jsq|server_to_client": 460,
+        "jsr|client_to_server": 32,
+        "jst|client_to_server": 95,
+        "jsy|server_to_client": 839,
+        "jtd|client_to_server": 72,
+        "jte|server_to_client": 19,
+        "jti|server_to_client": 135,
+        "jtk|server_to_client": 506,
+        "juf|server_to_client": 2,
+        "jug|server_to_client": 75,
+        "juh|server_to_client": 232,
+        "jun|server_to_client": 2,
+        "juo|server_to_client": 2,
+        "jup|server_to_client": 114,
+        "juu|server_to_client": 216,
+        "jvi|server_to_client": 19,
+        "jvj|server_to_client": 116,
+        "jvu|server_to_client": 11,
+        "jwh|server_to_client": 2,
+        "jwj|server_to_client": 13,
+        "jwo|client_to_server": 16,
+        "jwp|server_to_client": 2,
+        "jww|server_to_client": 2,
+        "jxb|client_to_server": 2,
+        "jxd|server_to_client": 2,
+        "jxh|server_to_client": 6,
+        "jxi|server_to_client": 2,
+        "jxj|client_to_server": 2,
+        "jxk|server_to_client": 2,
+        "jxm|server_to_client": 8,
+        "jxr|server_to_client": 2,
+        "kjl|server_to_client": 28,
+        "kjp|server_to_client": 4,
+        "kjt|client_to_server": 9,
+        "kjy|server_to_client": 4,
+        "kjz|server_to_client": 2,
+        "knb|server_to_client": 86,
+        "kne|client_to_server": 85,
+        "kob|server_to_client": 1,
+        "koc|client_to_server": 1,
+        "kof|client_to_server": 1,
+        "koh|server_to_client": 1,
+        "kpu|client_to_server": 1,
+        "kpx|server_to_client": 2,
+        "kqo|server_to_client": 2,
+        "kqw|server_to_client": 2,
+        "krg|server_to_client": 6,
+        "krm|server_to_client": 2,
+        "ktk|server_to_client": 2,
+        "ktl|server_to_client": 2,
+        "ktm|server_to_client": 2,
+        "ktn|server_to_client": 4,
+        "kto|client_to_server": 3,
+        "ktr|client_to_server": 2,
+        "ktt|client_to_server": 2,
+        "ktx|server_to_client": 3,
+        "kua|client_to_server": 3,
+        "kue|server_to_client": 2,
+        "lnt|client_to_server": 3,
+        "lnu|server_to_client": 3,
+        "lof|server_to_client": 3,
+        "loj|client_to_server": 3,
+        "lok|server_to_client": 9,
+        "lou|server_to_client": 3,
+        "ltb|server_to_client": 11,
+        "lxg|server_to_client": 2
+      }
+    },
+    "runtime_20261015_launch_protocol_window.jsonl": {
+      "messages": 172,
+      "sha256": "c8a629fdfa70e222c0d65885621eb5d9f9cf8b534f79d1f8cd62e34b7fc775e3",
+      "types": {
+        "hmp|server_to_client": 4,
+        "hnl|server_to_client": 2,
+        "itw|server_to_client": 8,
+        "itx|server_to_client": 8,
+        "jns|server_to_client": 32,
+        "jnz|server_to_client": 56,
+        "joo|server_to_client": 10,
+        "jpp|server_to_client": 4,
+        "jxh|server_to_client": 22,
+        "jxm|server_to_client": 2,
+        "kjz|server_to_client": 22,
+        "loj|client_to_server": 1,
+        "lou|server_to_client": 1
+      }
+    }
+  },
+  "catalog_role": "3.7.10.10 adapter wire inventory; historical captures are regression evidence only",
+  "protocol_build": "3.7.10.10",
+  "source": "historical controlled CRA/ENU captures plus exact-build Dofus 3.7.10.10 current-runtime evidence",
+  "wire_types": {
+    "hkg": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 210
+    },
+    "hkk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 182
+    },
+    "hmp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "evidence_policy": "EXACT_OPAQUE_PAYLOAD_FINGERPRINT",
+      "observed_count": 4,
+      "payload_sha256": [
+        "18b76964700a455ef192b52490315bb450e73924085d3dd28bafe90c9983e7ca"
+      ],
+      "payload_sizes": [
+        3
+      ]
+    },
+    "hms": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 7
+    },
+    "hnl": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 4
+    },
+    "icl": {
+      "directions": [
+        "server_to_client"
+      ],
+      "evidence_policy": "EXACT_OPAQUE_PAYLOAD_FINGERPRINT",
+      "observed_count": 2,
+      "payload_sha256": [
+        "7228bcfeef0e8f34ca49fd4d5d8465b3ec57ace52ba31224376c76d60dea1173"
+      ],
+      "payload_sizes": [
+        3
+      ]
+    },
+    "icw": {
+      "directions": [
+        "server_to_client"
+      ],
+      "evidence_policy": "EXACT_OPAQUE_PAYLOAD_FINGERPRINT",
+      "observed_count": 2,
+      "payload_sha256": [
+        "2f871dfb6ded80e3383650813ec97d764f5f963f517bba32ffe52bbdf7aea930"
+      ],
+      "payload_sizes": [
+        167
+      ]
+    },
+    "igk": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 8
+    },
+    "igp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "ihm": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "iht": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "iia": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "iib": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 32
+    },
+    "iiw": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "ijd": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 4
+    },
+    "ije": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "ijh": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 1
+    },
+    "ijs": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "iks": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 1
+    },
+    "ilr": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "iqq": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 24
+    },
+    "irx": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 24
+    },
+    "itv": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "itw": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 13
+    },
+    "itx": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 13
+    },
+    "jnj": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 24
+    },
+    "jns": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 63
+    },
+    "jnv": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jny": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 27
+    },
+    "jnz": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 283
+    },
+    "joc": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 21
+    },
+    "jok": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 62
+    },
+    "joo": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 28
+    },
+    "jow": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 32
+    },
+    "jpc": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 6
+    },
+    "jpe": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 24
+    },
+    "jpj": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 1
+    },
+    "jpk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 27
+    },
+    "jpp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 6
+    },
+    "jqh": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1865
+    },
+    "jqk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 88
+    },
+    "jsq": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 980
+    },
+    "jsr": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 76
+    },
+    "jst": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 230
+    },
+    "jsy": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1865
+    },
+    "jtd": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 190
+    },
+    "jte": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 58
+    },
+    "jtg": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 4
+    },
+    "jti": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 308
+    },
+    "jtk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1123
+    },
+    "juf": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 11
+    },
+    "jug": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 193
+    },
+    "juh": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 511
+    },
+    "jun": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "juo": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jup": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 249
+    },
+    "juu": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 318
+    },
+    "jvi": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 48
+    },
+    "jvj": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 257
+    },
+    "jvu": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 34
+    },
+    "jwh": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jwj": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 40
+    },
+    "jwo": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 52
+    },
+    "jwp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jww": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jwz": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 2
+    },
+    "jxb": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 8
+    },
+    "jxd": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 12
+    },
+    "jxh": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 53
+    },
+    "jxi": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jxj": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 9
+    },
+    "jxk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "jxm": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 38
+    },
+    "jxr": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "kjl": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 76
+    },
+    "kjp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 16
+    },
+    "kjt": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 32
+    },
+    "kjy": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 16
+    },
+    "kjz": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 38
+    },
+    "knb": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 199
+    },
+    "kne": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 198
+    },
+    "kob": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "koc": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 1
+    },
+    "kof": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 1
+    },
+    "koh": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 1
+    },
+    "kpu": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 2
+    },
+    "kpx": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 4
+    },
+    "kqo": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "kqw": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "krg": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 24
+    },
+    "krm": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "kth": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 3
+    },
+    "ktk": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "ktl": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "ktm": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "ktn": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 16
+    },
+    "kto": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 11
+    },
+    "ktp": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "ktr": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 6
+    },
+    "ktt": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 8
+    },
+    "ktx": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 12
+    },
+    "kua": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 12
+    },
+    "kub": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "kue": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    },
+    "lnt": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 5
+    },
+    "lnu": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 5
+    },
+    "lof": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 7
+    },
+    "loj": {
+      "directions": [
+        "client_to_server"
+      ],
+      "observed_count": 7
+    },
+    "lok": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 32
+    },
+    "lou": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 7
+    },
+    "ltb": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 40
+    },
+    "lwy": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "lxc": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 2
+    },
+    "lxg": {
+      "directions": [
+        "server_to_client"
+      ],
+      "observed_count": 8
+    }
+  }
+}

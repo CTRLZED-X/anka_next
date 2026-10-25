@@ -1,0 +1,73 @@
+{
+  "base_archive_name": "ANKA_NEXT_P37_CHECKPOINTED_VERIFICATION_AND_PROCESS_TREE_HARDENED_OFFLINE_VERIFIED.zip",
+  "base_archive_sha256": "bcd8d32cd2a2956f148ccf66633ce1197588cc06e22d24d6e21556dbf7b8ff5b",
+  "blockers": [
+    "Current-client CRA/ENU raw protocol and independent witness evidence not supplied",
+    "No production Canonical admission or real Windows identity/input/outcome acceptance",
+    "Full 55-module gate incomplete due execution limit",
+    "Windows process-tree termination not independently accepted on host"
+  ],
+  "changed_runtime_modules": [
+    "src/anka_app/effect_reconciliation_offline.py",
+    "src/anka_app/target_effect_research_offline.py"
+  ],
+  "date": "2026-10-21",
+  "milestone": "P38",
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "progress": {
+    "live_fight_acceptance_pct": 0,
+    "note": "Subjective weighted development scope unchanged from P37; not measured software quality",
+    "roadmap_estimate_pct": 88
+  },
+  "project_version": "0.38.0",
+  "safety": {
+    "authority": "RESEARCH_ONLY_NOT_CANONICAL",
+    "current_build_certified": false,
+    "physical_input_enabled": false,
+    "production_canonical_commits": 0,
+    "server_effect_proven": false
+  },
+  "source_file_sha256": {
+    "docs/P38_CAUSAL_OBSERVATION_WINDOW_HARDENING.md": "a84606112593e3f168a1b9089df273c717ff83051c1583bdd7aba46e6800ac8f",
+    "pyproject.toml": "da054ae2801f0ea3dcdf591b5fd550488889edbfc4c15146fe20247272b40161",
+    "src/anka_app/effect_reconciliation_offline.py": "f191fb29f0a198b41ae593eaaef7bb41647ab5ffeab46c8d9566796fb7fe8ace",
+    "src/anka_app/target_effect_research_offline.py": "726ca47ecf89d176d5ecadc337362090b31786f997877ff61da8ddc3a8b8a18c",
+    "tests/test_p38_causal_window_confounders.py": "fd6669b5c7adfe6ac77c6748f96ba248cb9d58a31096d53633dfe2928ee46f80"
+  },
+  "title": "Causal-window baseline and intermediate-evidence guards",
+  "verification": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 247,
+    "assets_verified": 165,
+    "check_exit_code": 0,
+    "focused_regression_modules": [
+      "test_p24_verification_runner",
+      "test_p32_protocol_capability_assessment",
+      "test_p33_shadow_projection_bridge",
+      "test_p34_reconstruction_gap_audit",
+      "test_p35_effect_reconciliation",
+      "test_p36_target_effect_research",
+      "test_p36_module_isolation",
+      "test_p37_checkpointed_verification",
+      "test_p38_causal_window_confounders",
+      "test_protocol_architecture"
+    ],
+    "focused_regression_tests_passed": 191,
+    "isolated_module_completed": 23,
+    "isolated_module_inventory": 55,
+    "isolated_module_status": "INCOMPLETE_SECOND_BATCH_OUTER_TIMEOUT",
+    "isolated_module_test_methods_passed": 449,
+    "live_tested": false,
+    "new_p38_tests_passed": 12,
+    "note": "Some 191 focused tests overlap the 449 module-method count; do not sum them. Remaining modules were not verified in this run. Module 24 started but not completed before outer timeout.",
+    "setup_exit_code": 0,
+    "start_exit_code": 40,
+    "start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "start_incident_bundle_integrity": "PASS",
+    "status": "FOCUSED_PASS_FULL_MODULE_INCOMPLETE",
+    "windows_tested": false
+  }
+}

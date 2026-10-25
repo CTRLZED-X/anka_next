@@ -1,0 +1,459 @@
+from __future__ import annotations
+
+import hashlib
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved, ActorDeathObserved, ActorEffectsObserved, ActorLookObserved, ActorStatesObserved,
+    ChallengeLifecycleObserved, DisplacementObserved, FightActorObserved, FightActorRosterObserved,
+    FightDiscoveryObserved, FightJoinLifecycleObserved, FightJoinPresentationObserved, FightLifecycleObserved,
+    FightMapContextObserved, FighterReadyObserved, FightMovementObserved, FightRoundObserved, FightStatsObserved,
+    FightTurnEndedObserved, FightTurnObserved, FightTurnOrderObserved, LegalPlacementCellsObserved, LocalPlayerObserved,
+    MonsterGroupObserved, MonsterGroupSnapshotObserved, MonsterGroupMovedObserved, ObservedEffect, ObservedMonsterGroup,
+    ObservedMonsterMember, ResourceChangedObserved, ShieldAbsorbedObserved, ShieldChangedObserved, SideRelationObserved,
+    SpellCastObserved, SpellCooldownEntry, SpellCooldownSnapshotObserved, SpellLoadoutObserved, SpellPropertyModifierObserved,
+    SummonCountObserved, SummonCreatedObserved, VitalityChangedObserved, WorldActorPositionObserved, WorldEntityRemovedObserved,
+    WorldMapObserved, WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.protocol.errors import ProtocolSchemaDriftError
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.protobuf import bytes_values, child, first_bytes, int_value, parse_direct_fields, read_varint, signed, signed_sum
+
+class FightProtocolHandlersMixin:
+    """Version-local capability handler mixin; not a public protocol API."""
+
+    def _jxi(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        initiator = int_value(node, 1, signed_value=True)
+        origin = int_value(node, 4, signed_value=True)
+        mode = int_value(node, 6)
+        fight_id = int_value(node, 7)
+        if initiator is None or fight_id is None:
+            raise ValueError("jxi fight relation missing initiator/fight identity")
+        initiator = int(initiator)
+        fight_id = int(fight_id)
+        origin_id = int(origin) if origin is not None else None
+
+        # Multi-account evidence changes a critical interpretation from the solo
+        # captures: field 1 is the actor that initiated/owns the fight relation,
+        # not necessarily this connection's local player. On the ENU follower
+        # flow it is Curseni in both joined fights. Only a locally observed hms
+        # against the same origin proves the initiator is local.
+        local_attack_matches = (
+            origin_id is not None
+            and self._pending_world_attack_group_id is not None
+            and int(self._pending_world_attack_group_id) == origin_id
+        )
+        if local_attack_matches:
+            self._observe_local_actor(
+                initiator,
+                rank=self._IDENTITY_RANK_FIGHT_RELATION,
+                source="HMS_JXI_CAUSAL_FIGHT_INITIATOR",
+            )
+        # Any authoritative fight-entry boundary closes the causal window for a
+        # preceding world-attack request, including a failed/stale request. Do
+        # not let an old hms be reused to identify a later unrelated jxi.
+        self._pending_world_attack_group_id = None
+        self._pending_world_move_targets.clear()
+        self._awaiting_own_map_transition = False
+
+        self._fight_active = True
+        self._fight_phase = "PLACEMENT"
+        self._fight_id = fight_id
+        # ``jow`` can publish the tactical map load before this lifecycle
+        # boundary. Promote that generation-local candidate into fight context;
+        # keep the persistent world map untouched.
+        if self.separate_world_fight_map_ids and self._pending_fight_map_load_id is not None:
+            self._fight_map_id = int(self._pending_fight_map_load_id)
+        self._origin_world_entity_id = origin_id
+        self._round = 0
+        self._active_turn_actor_id = None
+        self._turn_order = ()
+        self._known_fight_actors.clear()
+        self._known_summons.clear()
+        self._summon_counts.clear()
+        self._char_totals_by_actor.clear()
+        self._hp_initialized_actors.clear()
+        self._current_hp_by_actor.clear()
+        self._max_hp_by_actor.clear()
+        self._current_resource_by_actor.clear()
+        self._effect_shadow.clear()
+        self._effects_complete_actors.clear()
+        self._effect_bootstrap_done = False
+        self._last_cooldown_actor_id = None
+
+        # jxh team discovery can arrive *before* follower jxi, so preserve the
+        # team tables across this boundary and resolve the local team from the
+        # actual local principal rather than from the fight initiator.
+        self._local_team_id = None
+        if self._local_actor_id is not None:
+            local_actor = int(self._local_actor_id)
+            if local_actor in self._team_by_actor:
+                self._local_team_id = self._team_by_actor[local_actor]
+            else:
+                self._local_team_id = next(
+                    (team for team, leader in self._team_leaders.items() if int(leader) == local_actor),
+                    None,
+                )
+
+        events: list[object] = []
+        local = self._local_event()
+        if local is not None:
+            events.append(local)
+
+        # If this connection emitted the exact jwz request for this fight and
+        # leader, jxi is the authoritative entry boundary that closes the join
+        # presentation. Emit the closure *before* the fight lifecycle reset so
+        # the canonical reducer records the pre-entry generation as closed for
+        # one authoritative revision; the following PLACEMENT event then owns
+        # the normal transition into fight state.
+        join_matches = (
+            self._pending_join_request_fight_id == fight_id
+            and self._pending_join_request_leader_id == initiator
+        )
+        if join_matches:
+            presentation_id = self._join_presentation_by_fight.get(fight_id)
+            events.append(FightJoinLifecycleObserved(
+                fight_instance_id=fight_id,
+                joinable=False,
+                phase="BOUNDARY_CLOSED",
+                presentation_id=(
+                    self._known(int(presentation_id))
+                    if presentation_id is not None
+                    else self._not_observed("matching iia presentation token was not observed")
+                ),
+            ))
+        # A jxi is an authoritative generation boundary. Whether or not it
+        # matched the pending jwz, an older join request must not survive into a
+        # later fight id and accidentally close the wrong presentation.
+        self._pending_join_request_fight_id = None
+        self._pending_join_request_leader_id = None
+        if self.separate_world_fight_map_ids:
+            self._pending_join_presentation_fight_id = None
+
+        events.append(FightLifecycleObserved(
+            fight_id=self._known(fight_id),
+            phase="PLACEMENT",
+            map_id=self._fight_map_semantic() if self.separate_world_fight_map_ids else self._map_semantic(),
+            fight_type=self._unknown(f"wire fight mode code {mode!r} is not semantically named"),
+            fight_instance_id=fight_id,
+            origin_world_entity_id=self._known(origin_id) if origin_id is not None else self._not_observed(),
+            initiating_actor_id=self._known(initiator),
+        ))
+        events.append(SideRelationObserved(actor_id=initiator, relation="ALLY_SIDE"))
+        self._summon_counts[initiator] = 0
+        events.append(SummonCountObserved(actor_id=initiator, count=0))
+
+        pending_hp = self._consume_pending_local_hp()
+        if pending_hp is not None:
+            events.append(pending_hp)
+        return tuple(events)
+
+    @classmethod
+    def _fighter_record(cls, raw: bytes) -> dict:
+        rec = parse_direct_fields(raw)
+        actor_id = int_value(rec, 1, signed_value=True)
+        if actor_id is None:
+            raise ValueError("fighter record actor id missing")
+        cell = None
+        try:
+            cell = int_value(child(rec, 2), 3)
+        except ValueError:
+            pass
+        body = None
+        try:
+            body = child(rec, 3, 4)
+        except ValueError:
+            pass
+        static_id = level = grade = None
+        char_values: dict[int, int] = {}
+        if body is not None:
+            try:
+                monster = child(body, 6, 3)
+                grade = int_value(monster, 1)
+                level = int_value(monster, 2)
+                static_id = int_value(monster, 3)
+            except ValueError:
+                pass
+            try:
+                stat_container = child(body, 7)
+                for stat_raw in bytes_values(stat_container, 4):
+                    stat = parse_direct_fields(stat_raw)
+                    characteristic_id = int(int_value(stat, 2, default=0) or 0)
+                    char_values[characteristic_id] = cls._new_characteristic_total(stat)
+            except ProtocolSchemaDriftError:
+                raise
+            except ValueError:
+                pass
+        return {
+            "actor_id": int(actor_id),
+            "cell": None if cell is None else int(cell),
+            "static_id": None if static_id is None else int(static_id),
+            "level": None if level is None else int(level),
+            "grade": None if grade is None else int(grade),
+            "characteristics": char_values,
+        }
+
+    def _fighter_events(self, info: dict, *, complete_bootstrap: bool = False) -> tuple[object, ...]:
+        actor_id = int(info["actor_id"])
+        self._known_fight_actors.add(actor_id)
+        chars = dict(info.get("characteristics") or {})
+        if chars:
+            self._char_totals_by_actor.setdefault(actor_id, {}).update({int(k): int(v) for k, v in chars.items()})
+        static_id = info.get("static_id")
+        team_id = self._team_by_actor.get(actor_id)
+        if team_id is None:
+            if actor_id == self._local_actor_id and self._local_team_id is not None:
+                team_id = self._local_team_id
+            elif static_id is not None and self._local_team_id is not None:
+                # The controlled solo fixtures prove static monster fighters are
+                # on the opposing team. Keep team *id* unknown unless lobby data
+                # supplies it; side relation is still safe to publish.
+                team_id = next((tid for tid in self._team_leaders if tid != self._local_team_id), None)
+
+        events: list[object] = [FightActorObserved(
+            actor_id=actor_id,
+            team_id=self._known(int(team_id)) if team_id is not None else self._not_observed(),
+            cell_id=self._known(int(info["cell"])) if info.get("cell") is not None else self._not_observed(),
+            alive=self._known(True),
+            actor_type=self._known("MONSTER") if static_id is not None else (self._known("PLAYER") if actor_id > 0 else self._unknown("non-player fighter type not statically identified")),
+            static_id=self._known(int(static_id)) if static_id is not None else self._not_observed(),
+            level=self._known(int(info["level"])) if info.get("level") is not None else self._not_observed(),
+            grade=self._known(int(info["grade"])) if info.get("grade") is not None else self._not_observed(),
+        )]
+        if actor_id == self._local_actor_id:
+            events.append(SideRelationObserved(actor_id=actor_id, relation="ALLY_SIDE"))
+        elif static_id is not None:
+            events.append(SideRelationObserved(actor_id=actor_id, relation="ENEMY_SIDE"))
+        elif team_id is not None and self._local_team_id is not None:
+            events.append(SideRelationObserved(actor_id=actor_id, relation="ALLY_SIDE" if team_id == self._local_team_id else "ENEMY_SIDE"))
+
+        for characteristic_id, value in sorted(chars.items()):
+            events.append(ActorCharacteristicObserved(actor_id=actor_id, characteristic_id=int(characteristic_id), total_value=int(value)))
+            if characteristic_id == 96:
+                events.append(ShieldChangedObserved(actor_id=actor_id, current_shield=max(0, int(value))))
+
+        ap = chars.get(1)
+        mp = chars.get(23)
+        range_bonus = chars.get(19)
+        hp_base = chars.get(0)
+        vitality = chars.get(11)
+        derived_max_hp = None if hp_base is None or vitality is None else max(0, int(hp_base) + int(vitality))
+        # Fighter/bootstrap characteristic rows can be repeated after the actor
+        # has already entered the fight.  Once HP truth was initialized, never
+        # let a later bootstrap-shaped row overwrite an eroded authoritative
+        # max HP with the static base+vitality value.  In-fight max-HP changes
+        # are owned by the observed vitality/absolute-HP consequence paths.
+        if actor_id in self._hp_initialized_actors and actor_id in self._max_hp_by_actor:
+            max_hp = int(self._max_hp_by_actor[actor_id])
+        else:
+            max_hp = derived_max_hp
+            if max_hp is not None:
+                self._max_hp_by_actor[actor_id] = int(max_hp)
+        current_hp_sv = self._not_observed()
+        party_hp = self._party_hp_by_actor.get(actor_id) if actor_id > 0 else None
+        if party_hp is not None and actor_id not in self._hp_initialized_actors:
+            party_current, party_max = party_hp
+            current_hp_sv = self._known(int(party_current))
+            self._hp_initialized_actors.add(actor_id)
+            self._current_hp_by_actor[actor_id] = int(party_current)
+            # Party status is an absolute max-HP authority and is fresher than
+            # a characteristic-derived bootstrap if erosion changed the value.
+            max_hp = int(party_max)
+            self._max_hp_by_actor[actor_id] = int(party_max)
+        elif max_hp is not None and static_id is not None and actor_id not in self._hp_initialized_actors:
+            # At the complete fresh fighter bootstrap in the supplied fights,
+            # monsters have not yet taken damage. This gives the absolute enemy
+            # HP baseline required by downstream combat truth.
+            current_hp_sv = self._known(max_hp)
+            self._hp_initialized_actors.add(actor_id)
+            self._current_hp_by_actor[actor_id] = int(max_hp)
+        resource_cache = self._current_resource_by_actor.setdefault(actor_id, {})
+        if ap is not None:
+            resource_cache["AP"] = int(ap)
+        if mp is not None:
+            resource_cache["MP"] = int(mp)
+        if range_bonus is not None:
+            resource_cache["RANGE"] = int(range_bonus)
+        events.append(FightStatsObserved(
+            actor_id=actor_id,
+            hp=current_hp_sv,
+            max_hp=self._known(max_hp) if max_hp is not None else self._not_observed(),
+            eroded_hp=self._known(0) if complete_bootstrap else self._not_observed(),
+            ap=self._known(int(ap)) if ap is not None else self._not_observed(),
+            mp=self._known(int(mp)) if mp is not None else self._not_observed(),
+            range_bonus=self._known(int(range_bonus)) if range_bonus is not None else self._not_observed(),
+        ))
+        if complete_bootstrap:
+            self._effect_shadow.setdefault(actor_id, {})
+            self._effects_complete_actors.add(actor_id)
+            events.extend(self._complete_effect_events(actor_id))
+        return tuple(events)
+
+    def _jwj(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        raw = first_bytes(parse_direct_fields(message.payload), 1)
+        if raw is None:
+            return ()
+        return self._fighter_events(self._fighter_record(raw), complete_bootstrap=False)
+
+    def _kjl(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        events: list[object] = []
+        for raw in bytes_values(node, 2):
+            rec = parse_direct_fields(raw)
+            actor = int_value(rec, 2, signed_value=True)
+            cell = int_value(rec, 3)
+            if actor is not None and cell is not None:
+                events.append(FightActorObserved(actor_id=int(actor), cell_id=self._known(int(cell)), alive=self._known(True)))
+        return tuple(events)
+
+    def _jxk(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        root = child(parse_direct_fields(message.payload), 1)
+        defender = self._packed_varints(first_bytes(root, 1))
+        challenger = self._packed_varints(first_bytes(root, 2))
+        return (LegalPlacementCellsObserved(defender_cells=defender, challenger_cells=challenger, complete_snapshot=True),)
+
+    def _jvu(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actors: list[int] = []
+        for raw in bytes_values(node, 1):
+            rec = parse_direct_fields(raw)
+            try:
+                actor = int_value(child(rec, 2), 1, signed_value=True)
+            except ValueError:
+                actor = None
+            if actor is not None:
+                actors.append(int(actor))
+        self._turn_order = tuple(actors)
+        return (FightTurnOrderObserved(actor_ids=self._turn_order, complete_snapshot=True),)
+
+    def _jvi(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        round_no = int_value(parse_direct_fields(message.payload), 1)
+        if round_no is None:
+            raise ValueError("jvi round missing")
+        self._round = int(round_no)
+        events: list[object] = []
+        if self._fight_active and self._fight_phase != "ACTIVE":
+            self._fight_phase = "ACTIVE"
+            events.append(FightLifecycleObserved(
+                fight_id=self._known(self._fight_id) if self._fight_id is not None else self._unknown("fight id missing"),
+                phase="ACTIVE",
+                map_id=self._fight_map_semantic() if self.separate_world_fight_map_ids else self._map_semantic(),
+                fight_instance_id=self._fight_id,
+                origin_world_entity_id=self._known(self._origin_world_entity_id) if self._origin_world_entity_id is not None else self._not_observed(),
+            ))
+        events.append(FightRoundObserved(round=self._round))
+        return tuple(events)
+
+    def _jvj(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 3, signed_value=True)
+        round_no = int_value(node, 7, default=self._round)
+        wire_index = int_value(node, 6)
+        if actor is None:
+            raise ValueError("jvj active actor missing")
+        actor = int(actor)
+        self._active_turn_actor_id = actor
+        if round_no is not None:
+            self._round = int(round_no)
+        if wire_index is not None:
+            index = int(wire_index)
+        elif actor in self._turn_order:
+            index = self._turn_order.index(actor)
+        else:
+            index = 0
+        return (FightTurnObserved(round=max(0, int(self._round)), turn_index=max(0, index), active_actor_id=self._known(actor)),)
+
+    def _jup(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        actor = int_value(parse_direct_fields(message.payload), 2, signed_value=True)
+        if actor is None:
+            raise ValueError("jup turn-ended actor missing")
+        actor = int(actor)
+        if self._active_turn_actor_id == actor:
+            self._active_turn_actor_id = None
+        return (FightTurnEndedObserved(actor_id=actor),)
+
+    def _jxd(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        actor = int_value(node, 2, signed_value=True)
+        ready = int_value(node, 3)
+        if actor is None or ready is None:
+            raise ValueError("jxd ready state missing")
+        return (FighterReadyObserved(actor_id=int(actor), ready=bool(ready)),)
+
+    def _jxb(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        """Observe account-local placement identity without trusting the request as state.
+
+        Controlled 3.6.12.16 evidence proves C>S ``jxb`` is the placement
+        request with field 1 = requested cell and field 2 = the *local account
+        fighter*.  The requested cell is deliberately not projected here: the
+        server bootstrap/position messages remain authoritative for actor cells.
+
+        This boundary is especially important for followers.  ``jxi`` field 1
+        names the fight initiator (CRA) on both sockets, while pre-fight ``kqo``
+        already carries the follower's local HP.  jxb lets us bind that pending
+        HP to ENU before Ready even when no configured character name is present.
+        """
+        if message.direction != "client_to_server":
+            raise ValueError("jxb placement identity is only certified client_to_server")
+        node = parse_direct_fields(message.payload)
+        requested_cell = int_value(node, 1)
+        actor = int_value(node, 2, signed_value=True)
+        if actor is None or int(actor) <= 0:
+            raise ValueError("jxb local placement actor missing")
+        if requested_cell is None or not 0 <= int(requested_cell) <= 559:
+            raise ValueError("jxb requested placement cell is outside the Dofus board")
+        self._observe_local_actor(
+            int(actor),
+            rank=self._IDENTITY_RANK_PLACEMENT_REQUEST,
+            source="JXB_LOCAL_PLACEMENT_ACTOR",
+        )
+        events: list[object] = []
+        local = self._local_event()
+        if local is not None:
+            events.append(local)
+        pending_hp = self._consume_pending_local_hp()
+        if pending_hp is not None:
+            events.append(pending_hp)
+        return tuple(events)
+
+    def _juf(self, message: RawProtocolMessage) -> tuple[object, ...]:
+        node = parse_direct_fields(message.payload)
+        principal = int_value(node, 4, signed_value=True)
+        if principal is None:
+            raise ValueError("juf principal actor id missing")
+        principal = int(principal)
+        self._observe_local_actor(principal, rank=self._IDENTITY_RANK_SPELLBAR, source="JUF_PRINCIPAL_CONTROLLER")
+        spells: list[int] = []
+        slots: list[int] = []
+        for raw in bytes_values(node, 2):
+            slot = parse_direct_fields(raw)
+            slot_no = int(int_value(slot, 3, default=0) or 0)
+            try:
+                spell_id = int_value(child(slot, 2), 1)
+            except ValueError:
+                spell_id = None
+            if spell_id is None or int(spell_id) <= 0:
+                continue
+            # Canonical executable spellbar is exactly the 22 visual slots.
+            # ENU capture also carries a duplicate spell in wire slot 24; that
+            # auxiliary slot has no stable UI-slot mapping and must not leak into
+            # execution/FightAI loadout truth.
+            if slot_no not in {*range(0, 11), *range(12, 23)}:
+                continue
+            spells.append(int(spell_id))
+            slots.append(slot_no)
+        # Summon turns can replace the controlled spellbar while juf field4 keeps
+        # the account principal. A preceding jti identifies the controlled summon.
+        loadout_actor = principal
+        if self._last_cooldown_actor_id in self._known_summons:
+            loadout_actor = int(self._last_cooldown_actor_id)
+        events: list[object] = []
+        local = self._local_event()
+        if local is not None:
+            events.append(local)
+        pending_hp = self._consume_pending_local_hp()
+        if pending_hp is not None:
+            events.append(pending_hp)
+        events.append(SpellLoadoutObserved(actor_id=loadout_actor, spell_ids=tuple(spells), slot_numbers=tuple(slots), complete_snapshot=True))
+        return tuple(events)

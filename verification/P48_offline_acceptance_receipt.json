@@ -1,0 +1,73 @@
+{
+  "baseline": "P47",
+  "baseline_archive_sha256": "ea10dc44e2827b8bebe816dece6a0982dc29ecc70570099217c7154788a40341",
+  "date": "2026-10-21",
+  "falsified_before_fix": [
+    "P48_NON_GAME_OR_UNCLASSIFIED_FRAME",
+    "P48_SEGMENT_TYPE_INVALID"
+  ],
+  "limitations": [
+    "P48 is research-only, historical Dofus 3.7.10.10",
+    "SYN/no detected gaps does not establish capture completeness",
+    "LegacyFightScope is supplied by caller; not Windows identity or account attestation",
+    "No current build adapters, server-effect witnesses, Windows bridge install or physical driver acceptance"
+  ],
+  "milestone": "P48",
+  "modified_baseline_file_paths": [
+    "src/anka_app/cli.py",
+    "00_READ_FIRST_NEXT_CHAT.md",
+    "IMPLEMENTATION_STATUS.md",
+    "README.md"
+  ],
+  "new_file_paths": [
+    "src/anka_app/historical_transport_bridge.py",
+    "src/anka_app/historical_transport_offline.py",
+    "tests/test_p48_capture_to_historical_research.py",
+    "tests/test_p48_historical_transport_setup_smoke.py",
+    "docs/P48_CAPTURE_TRANSPORT_TO_HISTORICAL_RESEARCH.md",
+    "verification/P48_offline_acceptance_receipt.json"
+  ],
+  "next_priority": "Authentic current-client PCAPNG, independent witnessed semantics, flow+window account binding and exact-build certification before authoritative Canonical admission",
+  "progress": {
+    "complete_live_cra_enu_acceptance_pct": 0,
+    "not_a_quality_score": true,
+    "subjective_roadmap_scope_pct": 92
+  },
+  "safety": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_build_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "source_completeness_verified": false,
+    "start_blocked": true
+  },
+  "scope": "OFFLINE HISTORICAL RESEARCH ONLY; NO CURRENT-CLIENT LIVE AUTHORITY",
+  "source_sha256": {
+    "docs/P48_CAPTURE_TRANSPORT_TO_HISTORICAL_RESEARCH.md": "16990a802998a670a8d033696c9704a10349208152375df43b8d14e04ef37ce5",
+    "src/anka_app/cli.py": "88ec71117df1bced5ec3d2d703af6a400cd443c10903cd2f7e2e385ae91b341a",
+    "src/anka_app/historical_transport_bridge.py": "6049a65a386ec03baf8d490fbbf946691b72b76cf06f2db537362b6d8e91799c",
+    "src/anka_app/historical_transport_offline.py": "d95776a8c33c66197995645dd69c22f3b480a10938b795484e4f8f2fbccd6624",
+    "tests/test_p48_capture_to_historical_research.py": "653d02480b9780f3461f3801b56c11803ad80513690083d59a065bad6183e3bd",
+    "tests/test_p48_historical_transport_setup_smoke.py": "ab9f2fdcb814a0c620f249d5f1cc54fef1a4ae1274315798e3e853d45d05e329"
+  },
+  "title": "CapturePoll TCP framing to historical fight replay, exact evidence/transport gap visibility",
+  "verification": {
+    "architecture_packages": 13,
+    "architecture_python_modules": 263,
+    "architecture_status": "PASS",
+    "check_exit": 0,
+    "diagnostic_incident_zip_integrity": "PASS",
+    "focused_warning_count": 1,
+    "full_70_module_suite_completed": false,
+    "full_suite_limitation": "Combined run timed out after partial progress; no full PASS claim",
+    "p48_and_direct_capture_protocol_regression_passed": 84,
+    "p48_and_direct_capture_protocol_subtests_passed": 24,
+    "reference_assets_verified": 165,
+    "selected_p28_to_p48_capture_protocol_regressions_passed": 557,
+    "selected_p28_to_p48_capture_protocol_subtests_passed": 142,
+    "setup_exit": 0,
+    "start_exit": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED"
+  }
+}

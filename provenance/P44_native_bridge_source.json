@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "source_release": "R5.198",
+  "source_component": "unity_bridge",
+  "source_archive_original_filename": "ANKA_R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENED_LEAN_OFFLINE_VERIFIED_FINAL(3)(1).zip",
+  "mode": "SOURCE_ONLY_NO_BUILD_NO_INSTALL_NO_INPUT",
+  "files": [
+    {
+      "path": "native/unity_bridge/AuthoritativeCellPositionSource.cs",
+      "sha256": "5d5af4c574c0719e12523c34e4c00439ab66d86218adc54ddb9932c1b21bec0c",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/AutomaticMapAdapter.cs",
+      "sha256": "446d239040ca7d9a9e4d109c7a9289e87933415e0674fe1463527e1106e8a301",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/CompilerServicesCompat.cs",
+      "sha256": "56d3737754543c1b752e605cc45dfa049846ce53e2095a4e35a75dce76235a26",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/Contracts.cs",
+      "sha256": "15a1a598480e15cb42dd4d77c0bbc364ae1ca17290d7697ed5b1c651c6c7f685",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/CoordinateBridgeBehaviour.cs",
+      "sha256": "2aeba04a1f1e2638b38a7582114778190f32feaea401a591411428ebff3a9dda",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/CoordinateProjection.cs",
+      "sha256": "e93a13b9ce3de2f8d039be49198d146ddadfb0c2b0c6cb5d497bfbb7226b66c7",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/DofusCoordinateBridge.csproj",
+      "sha256": "0f7699288f1ba501bd33d46103470f2eb656bbb764640ef472030b3a4b88669b",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/IDofusMapAdapter.cs",
+      "sha256": "18dd4809dcc6f7cac0aedda4855aead375a827c91363a27b2ff2940dc957594d",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/Json.cs",
+      "sha256": "e572ccde85f8cb7acba21f54a1d9133066797c7870a98ddc30a42090899fd67b",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/LocalHttpServer.cs",
+      "sha256": "01e3832511dc33756f94083dd328cf3e9eea74164f4ca6371e0a27a29d8e7bd0",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/Plugin.cs",
+      "sha256": "71bae1ccea1b3b260a6638a4a62cbab1f2683f2d901a6cf4d0136e23f9821975",
+      "legacy_provenance_matches": true
+    },
+    {
+      "path": "native/unity_bridge/README.md",
+      "sha256": "e19067ed6e4e47f6dd44785756052394d11299c4c4b497174d54b6e2a260fd92",
+      "legacy_provenance_matches": null
+    },
+    {
+      "path": "native/unity_bridge/README_UPSTREAM_PROVEN.md",
+      "sha256": "60e7fee0b7d3db96f026da96859858ee2b9f0f0b40274e922892b0d2ea88911e",
+      "legacy_provenance_matches": null
+    },
+    {
+      "path": "native/unity_bridge/RuntimeSceneScanner.cs",
+      "sha256": "fdd0b25e4c8ac04b93e10e71dbbcb28041af088df568a886e7dc85c561667655",
+      "legacy_provenance_matches": true
+    }
+  ],
+  "excluded_operator_bat": "BUILD_BRIDGE.bat intentionally not imported (two operator BAT restriction)",
+  "live_certified": false
+}

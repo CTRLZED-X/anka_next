@@ -1,0 +1,80 @@
+{
+  "milestone": "P25",
+  "date": "2026-10-20",
+  "scope": "passive_windows_host_readiness_observations",
+  "status": "PASS_GROUPED_OFFLINE_WINDOWS_PENDING",
+  "environment": "Linux Python 3.13; Windows/Npcap not executed",
+  "test_inventory": {
+    "files": 41,
+    "tests": 739,
+    "shards": 8,
+    "shard_results": [
+      {
+        "shard": 1,
+        "tests_passed": 92,
+        "status": "PASS"
+      },
+      {
+        "shard": 2,
+        "tests_passed": 92,
+        "status": "PASS"
+      },
+      {
+        "shard": 3,
+        "tests_passed": 92,
+        "status": "PASS"
+      },
+      {
+        "shard": 4,
+        "tests_passed": 93,
+        "status": "PASS"
+      },
+      {
+        "shard": 5,
+        "tests_passed": 93,
+        "status": "PASS"
+      },
+      {
+        "shard": 6,
+        "tests_passed": 93,
+        "status": "PASS"
+      },
+      {
+        "shard": 7,
+        "tests_passed": 92,
+        "status": "PASS"
+      },
+      {
+        "shard": 8,
+        "tests_passed": 92,
+        "status": "PASS"
+      }
+    ]
+  },
+  "new_tests": 13,
+  "inherited_tests": 726,
+  "combined_verifier_status": "UNRESOLVED_INTERMITTENT_STALL_AFTER_2_SHARDS",
+  "per_group_verification": "ALL_8_GROUPS_PASSED_IN_SEPARATE_BOUNDED_RUNS",
+  "architecture": {
+    "status": "PASS",
+    "packages": 13,
+    "modules": 230,
+    "forbidden_imports": 0
+  },
+  "operator_bat_files": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "physical_input_enabled": false,
+  "current_build_certified": false,
+  "windows_host_acceptance": "PENDING",
+  "live_fight_acceptance_percent_complete": 0,
+  "estimated_weighted_roadmap_progress_percent": 76,
+  "known_limitations": [
+    "Windows-native backends not exercised",
+    "Current-client protocol not certified",
+    "Live account identity and calibration unverified",
+    "Full live fight execution disabled",
+    "Combined verifier may stall"
+  ]
+}

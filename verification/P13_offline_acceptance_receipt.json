@@ -1,0 +1,51 @@
+{
+  "milestone": "P13",
+  "scope": "KERNEL_MAP_AWARE_SYNTHETIC_NON_EXECUTABLE_RESEARCH",
+  "date_utc": "2026-10-20T14:37:21.934974+00:00",
+  "host": {
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "windows_host_verified": false
+  },
+  "previous_P12_tests": 417,
+  "new_P13_tests": 31,
+  "total_test_count": 448,
+  "focused_test_result": "PASS_31_TESTS",
+  "all_tests_result": "PASS_448_TESTS_FROM_WORKING_TREE_WITH_FULL_CLI_VERIFY",
+  "asset_integrity_check": "PASS_165_REFERENCE_ASSETS",
+  "static_kernel_api": "GameKernel.spell_decisions.evaluate_cast_cell + GameKernel.fight_queries.reachable_cells + shortest_path",
+  "verified_fixture_cases": [
+    "STATIC_LEGAL_CAST_ON_OCCUPIED_TARGET",
+    "OUT_OF_RANGE_CAST_REJECTED",
+    "LOS_OBSTACLE_REJECTED",
+    "UNKNOWN_HISTORY_REMAINS_UNKNOWN",
+    "MOVEMENT_OCCUPANCY_AND_MP_BUDGET",
+    "PARTIAL_MAP_AND_STALE_GEOMETRY_REJECTED",
+    "CROSS_SNAPSHOT_ACTOR_AND_MAP_ID_CONFLICT_REJECTED"
+  ],
+  "caveats": [
+    "all scenario map and state evidence synthetic",
+    "preserved static spell/game geometry historical",
+    "no certified live protocol",
+    "no executable action plans or input",
+    "Windows script not host-tested",
+    "physical movement lock/tackle not verified"
+  ],
+  "current_protocol_certified": false,
+  "live_ready": false,
+  "physical_input_sent": false,
+  "implementation_coverage_estimate_percent": 53,
+  "coverage_estimate_note": "Approximate weighted roadmap estimate, not measured project quality or production-readiness.",
+  "source_sha256": {
+    "src/anka_contracts/map_research.py": "17de8298b883471a743b6da6a151234aa9ce90a3ac8130bac77821675d296f4e",
+    "src/anka_decision/map_research.py": "ae3c25a3afab91da6c4059ff652850eca959e3c1929ad54f779fb80471bb46a0",
+    "src/anka_app/map_research_offline.py": "8c079a33fe53325fc9c0e832daa2ccde0acbf822a05613de49e1a4416057943f",
+    "src/anka_app/cli.py": "587e66fbf2061d3004d77573a1c16d8a999596f9fb5bc655f80f5c8e2f8e327c",
+    "tests/test_p13_map_research.py": "c47fd03e79efe3a0adea02334f98c477e887724d8baa207e10b295016da166ba",
+    "map_demo.bat": "4317c3c2362c9e6da853f1506fde6785678663d28e13d20dd7ac60fca0ce637e",
+    "src/anka_decision/README.md": "16abb1e1232be10ec4444071790f79db6204914f8c82127f25eb16586c335d61",
+    "docs/P13_KERNEL_MAP_AWARE_OFFLINE_RESEARCH.md": "c77aab40c02dcc6db11c57d822a3c568a2791d6ecc7c0b6d687650909176a736",
+    "README.md": "2637b46f92d77069d818dd65be36679cd829aa5e0ca70b406973814d32baa0cd",
+    "IMPLEMENTATION_STATUS.md": "445df7851dcb34200283c681fe6393f87facfd5aa6cad79817fe80dba5b81d59"
+  }
+}

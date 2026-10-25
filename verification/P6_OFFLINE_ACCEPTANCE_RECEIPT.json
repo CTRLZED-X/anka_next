@@ -1,0 +1,35 @@
+{
+  "release": "ANKA_NEXT_P6_READ_ONLY_PROTOCOL_BOUNDARY_OFFLINE_VERIFIED",
+  "date_utc": "2026-10-20",
+  "scope": "P6 historical wire catalog observation and bounded TCP/protobuf framing; no semantic decoding",
+  "full_unittest_count": 178,
+  "full_unittest_status": "PASS",
+  "cli_verify": "PASS",
+  "check": "PASS",
+  "protocol_demo": "PASS",
+  "reused_assets_verified": 165,
+  "wire_catalog_reference_keys": 112,
+  "live_input_enabled": false,
+  "canonical_events_emitted": 0,
+  "readiness": {
+    "offline_wire_inspection": "PASS",
+    "protocol_semantic_decoding": "NOT_IMPLEMENTED",
+    "current_client_build_certified": "PENDING",
+    "real_windows_live_capture": "PENDING",
+    "account_identity_attested": "PENDING",
+    "live_gameplay": "BLOCKED_BY_DESIGN"
+  },
+  "architecture": {
+    "protocol_imports_capture_implementation": false,
+    "application_composes_capture_and_protocol": true
+  },
+  "known_limits": [
+    "No current-client PCAP evidence in archived R5.198 reference ZIP",
+    "R5.198 historical protocol catalog is not certification of the current client",
+    "TCP strict-order parser rejects out-of-order TCP segments instead of buffering/reordering them",
+    "No real semantic adapter, gameplay Canonical event emitter, or state projection in this milestone",
+    "Windows batch launch/actual network driver require Windows acceptance"
+  ],
+  "verification_limit": "Passing synthetic tests does not prove real protocol compatibility or live performance",
+  "source_unchanged": "Original R5.198 archive never modified"
+}

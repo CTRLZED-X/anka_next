@@ -1,0 +1,72 @@
+{
+  "baseline": "P49",
+  "baseline_zip_sha256": "3f28c394ae6287fbef02aef0df8acfb8dcd7f02b46962ac52dc6dc7431b1f1ef",
+  "changes": {
+    "modified_baseline_paths": [
+      "src/anka_app/cli.py",
+      "README.md",
+      "IMPLEMENTATION_STATUS.md",
+      "00_READ_FIRST_NEXT_CHAT.md"
+    ],
+    "new_file_paths": [
+      "src/anka_app/historical_pcapng_inventory.py",
+      "src/anka_app/historical_pcapng_inventory_offline.py",
+      "tests/test_p50_flow_inventory.py",
+      "tests/test_p50_flow_setup_smoke.py",
+      "docs/P50_PCAPNG_MULTIFLOW_DISCOVERY_AND_EXACT_SNAPSHOT_SELECTION.md",
+      "verification/P50_offline_acceptance_receipt.json"
+    ]
+  },
+  "date": "2026-10-21",
+  "limitations": [
+    "No current-build protocol capture or independent current-client oracle supplied",
+    "A flow digest is not a verified CRA/ENU actor or Windows PID/HWND/socket binding",
+    "PCAPNG cannot attest driver-drop accounting or source completeness",
+    "Read-only Unity bridge source not compiled/installed/certified on Windows",
+    "No real physical executor or complete live mission acceptance"
+  ],
+  "milestone": "P50",
+  "next_priority": "Independent current-build actor/process/socket/window witness, semantic adapter and Canonical admission qualification",
+  "progress": {
+    "end_to_end_live_cra_enu_acceptance_pct": 0,
+    "not_a_quality_or_readiness_metric": true,
+    "subjective_historical_roadmap_pct": 92
+  },
+  "provenance_sha256": {
+    "docs/P50_PCAPNG_MULTIFLOW_DISCOVERY_AND_EXACT_SNAPSHOT_SELECTION.md": "1a1c4f0ed17869a3812e37cc70e83fa220b58935b54770f5894e6841b36c8a7e",
+    "src/anka_app/cli.py": "bc407ce7704c9e489f5d8a65f4f203c1b6277dfaed681a242fa3f32e9f0c8805",
+    "src/anka_app/historical_pcapng_inventory.py": "6c6c998c8331c31f23b37048b01ea60ec50f8ab8168abaeb3450e171662cee77",
+    "src/anka_app/historical_pcapng_inventory_offline.py": "cc0a03ca59ff1297018d4dda694b27958c2e516850fbbcf4e463ca5df9189452",
+    "tests/test_p50_flow_inventory.py": "85016f2b4b5a68790a6408fdaa30503469550c45573a536bca7b2c76cca4c9d9",
+    "tests/test_p50_flow_setup_smoke.py": "6e00876b87362e85e1843e9c1859042ed3f944e650574d3e9ff4b5de46887429"
+  },
+  "safety": {
+    "account_binding_verified": false,
+    "canonical_commits": 0,
+    "current_client_certified": false,
+    "live_ready": false,
+    "physical_input_sent": false,
+    "source_completeness_verified": false,
+    "start_blocked": true
+  },
+  "scope": "OFFLINE HISTORICAL RESEARCH ONLY \u2014 NO LIVE AUTHORITY",
+  "title": "Bounded privacy-preserving per-flow discovery and source-bound PCAPNG historical replay",
+  "verification": {
+    "architecture_modules": 267,
+    "architecture_packages": 13,
+    "check_exit": 0,
+    "checkpoint_matches_source": true,
+    "fingerprint": "25c90b2bfbfc5c8bf1455907710b24f7d59bd5aabd4c7ee867d583e873b52b49",
+    "incident_bundle_integrity": "PASS",
+    "module_isolated_full_regression": "PASS",
+    "modules_completed": 75,
+    "modules_discovered": 75,
+    "new_p50_test_methods": 16,
+    "reused_assets_verified": 165,
+    "setup_exit": 0,
+    "start_exit": 40,
+    "start_failure_code": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "test_execution": "checkpointed P37 verifier, all 75 modules verified with exact source+fixture fingerprint",
+    "tests_passed": 1306
+  }
+}

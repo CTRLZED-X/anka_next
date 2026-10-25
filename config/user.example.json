@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "players": [
+    {"name": "Curseni", "role": "leader"},
+    {"name": "Sosoking", "role": "follower"}
+  ],
+  "mission": {
+    "route_id": "sufokia_direction_cycle",
+    "min_monsters": 6,
+    "max_monsters": 8,
+    "target_wins": 5,
+    "max_attempts": 10,
+    "stop_on_loss": true,
+    "stop_on_unknown": true
+  }
+}

@@ -1,0 +1,675 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+
+from anka_platform.contracts.canonical_events import (
+    ActorCharacteristicObserved,
+    ActorDeathObserved,
+    ActorEffectsObserved,
+    ActorLookObserved,
+    ActorStatesObserved,
+    CanonicalEventEnvelope,
+    ChallengeLifecycleObserved,
+    DisplacementObserved,
+    EventIdentity,
+    EventProvenance,
+    FightActorObserved,
+    FightActorRosterObserved,
+    FightDiscoveryObserved,
+    FightJoinLifecycleObserved,
+    FightJoinPresentationObserved,
+    FightLifecycleObserved,
+    FightMapContextObserved,
+    FighterReadyObserved,
+    FightMovementObserved,
+    FightRoundObserved,
+    FightStatsObserved,
+    FightTurnEndedObserved,
+    FightTurnObserved,
+    FightTurnOrderObserved,
+    LegalPlacementCellsObserved,
+    LocalPlayerObserved,
+    MonsterGroupObserved,
+    MonsterGroupSnapshotObserved,
+    MonsterGroupMovedObserved,
+    ObservedEffect,
+    ObservedMonsterGroup,
+    ObservedMonsterMember,
+    ResourceChangedObserved,
+    ShieldAbsorbedObserved,
+    ShieldChangedObserved,
+    SideRelationObserved,
+    SpellCastObserved,
+    SpellCooldownEntry,
+    SpellCooldownSnapshotObserved,
+    SpellLoadoutObserved,
+    SpellPropertyModifierObserved,
+    SummonCountObserved,
+    SummonCreatedObserved,
+    VitalityChangedObserved,
+    WorldActorPositionObserved,
+    WorldEntityRemovedObserved,
+    WorldMapObserved,
+    WorldTransitionDirectionObserved,
+)
+from anka_platform.contracts.common import SemanticValue, ValueStatus
+from anka_platform.contracts.versions import ContractVersion
+from anka_platform.protocol.adapter import ProtocolAdapter
+from anka_platform.protocol.models import RawProtocolMessage
+from anka_platform.protocol.errors import ProtocolSchemaDriftError, ProtocolTransformError
+from anka_platform.protocol.handlers import ProtocolHandlerRegistry
+from anka_platform.protocol.adapters.dofus_3_7_10_10.context import Dofus371010RuntimeContext, RuntimeContextField
+from anka_platform.protocol.adapters.dofus_3_7_10_10.handler_modules import (
+    ActionProtocolHandlersMixin,
+    FightProtocolHandlersMixin,
+    LifecycleProtocolHandlersMixin,
+    ResourceProtocolHandlersMixin,
+    WorldProtocolHandlersMixin,
+)
+from anka_platform.protocol.adapters.dofus_3_7_10_10.handler_modules.registry import build_handler_registry
+from anka_platform.protocol.protobuf import (
+    bytes_values,
+    child,
+    first_bytes,
+    int_value,
+    parse_direct_fields,
+    read_varint,
+    signed,
+    signed_sum,
+)
+
+
+class Dofus371010Adapter(
+    WorldProtocolHandlersMixin,
+    FightProtocolHandlersMixin,
+    ResourceProtocolHandlersMixin,
+    ActionProtocolHandlersMixin,
+    LifecycleProtocolHandlersMixin,
+    ProtocolAdapter,
+):
+    """Evidence-backed Dofus 3.7.10.10 -> Canonical Contract v1 adapter.
+
+    The adapter is intentionally revision-local. Canonical mutations preserve the
+    current-build evidence contract plus explicitly retained historical regression semantics. Wire
+    traffic whose semantics are not yet proven is classified through the bundled
+    observed-wire catalog but remains non-mutating.
+
+    Critical authority rules:
+      * server ``jsq`` action 300 owns spell-caster identity; C>S ``jsr`` does not
+        carry a caster and must never be used as one;
+      * ``jtk`` absolute characteristics reconcile AP/MP/Range/Shield; action
+        deltas are not applied a second time;
+      * ``jti`` is a complete cooldown snapshot;
+      * ``juh`` + exact ``juu`` removals are maintained in an adapter-local
+        effect shadow and projected as complete snapshots after fight bootstrap;
+      * ``jnj`` is a complete world/group snapshot; ``jns``/``jnz`` are
+        incremental authority;
+      * client requests are causal hints only, never authoritative state.
+    """
+
+    adapter_id = "dofus_3_7_10_10"
+    protocol_build = "Dofus 3.7.10.10"
+    evidence_confidence = "3.7.10.10_R5_CURRENT_WIRE_PLUS_CONTROLLED_REGRESSION"
+    canonical_contract_major = 1
+    # Historical adapter semantics stay frozen for certified replay. Current
+    # builds can opt into the R5.190 world/fight MapId separation below.
+    separate_world_fight_map_ids = True
+    certification_attestation_path = Path(__file__).resolve().parent / "certification_attestation.json"
+
+    # R5.176: all mutable cross-handler inference state has one explicit owner.
+    _sequence = RuntimeContextField[int]()
+    _current_map_id = RuntimeContextField[int | None]()
+    _fight_map_id = RuntimeContextField[int | None]()
+    _pending_fight_map_load_id = RuntimeContextField[int | None]()
+    _last_map_load_id = RuntimeContextField[int | None]()
+    _pending_world_map_transition = RuntimeContextField[bool]()
+    _pending_join_presentation_fight_id = RuntimeContextField[int | None]()
+    _local_actor_id = RuntimeContextField[int | None]()
+    _local_identity_rank = RuntimeContextField[int]()
+    _local_identity_source = RuntimeContextField[str]()
+    _fight_active = RuntimeContextField[bool]()
+    _fight_phase = RuntimeContextField[str | None]()
+    _fight_id = RuntimeContextField[int | None]()
+    _origin_world_entity_id = RuntimeContextField[int | None]()
+    _round = RuntimeContextField[int]()
+    _active_turn_actor_id = RuntimeContextField[int | None]()
+    _turn_order = RuntimeContextField[tuple[int, ...]]()
+    _known_fight_actors = RuntimeContextField[set[int]]()
+    _known_summons = RuntimeContextField[dict[int, int]]()
+    _summon_counts = RuntimeContextField[dict[int, int]]()
+    _world_groups = RuntimeContextField[dict]()
+    _team_by_actor = RuntimeContextField[dict[int, int]]()
+    _team_leaders = RuntimeContextField[dict[int, int]]()
+    _local_team_id = RuntimeContextField[int | None]()
+    _char_totals_by_actor = RuntimeContextField[dict[int, dict[int, int]]]()
+    _hp_initialized_actors = RuntimeContextField[set[int]]()
+    _current_hp_by_actor = RuntimeContextField[dict[int, int]]()
+    _max_hp_by_actor = RuntimeContextField[dict[int, int]]()
+    _party_hp_by_actor = RuntimeContextField[dict[int, tuple[int, int]]]()
+    _current_resource_by_actor = RuntimeContextField[dict[int, dict[str, int]]]()
+    _pending_local_hp = RuntimeContextField[tuple[int, int] | None]()
+    _pending_world_attack_group_id = RuntimeContextField[int | None]()
+    _pending_join_request_fight_id = RuntimeContextField[int | None]()
+    _pending_join_request_leader_id = RuntimeContextField[int | None]()
+    _join_presentation_by_fight = RuntimeContextField[dict[int, int]]()
+    _last_cooldown_actor_id = RuntimeContextField[int | None]()
+    _effect_shadow = RuntimeContextField[dict]()
+    _effects_complete_actors = RuntimeContextField[set[int]]()
+    _effect_bootstrap_done = RuntimeContextField[bool]()
+    _awaiting_own_map_transition = RuntimeContextField[bool]()
+    _pending_world_move_targets = RuntimeContextField[list[tuple[int | None, int]]]()
+
+    _IDENTITY_RANK_WORLD_MOVE = 30
+    _IDENTITY_RANK_MAP_TRANSITION = 35
+    _IDENTITY_RANK_FIGHT_RELATION = 40
+    # C>S jxb is the local client's placement request.  In every controlled
+    # CRA/ENU fight its field 2 is the account fighter that is actually being
+    # placed (CRA on the leader socket, ENU on the follower socket).  This is
+    # stronger account-local evidence than the shared fight relation in jxi and
+    # arrives before Ready/juf, but remains below the principal identity in juf.
+    _IDENTITY_RANK_PLACEMENT_REQUEST = 55
+    # juf field 4 is the account/principal fighter identity.  The controlled
+    # multi-account capture proves it stays on Sosoking while summon turns use
+    # a different controlled fighter.  Treat it as stronger than contextual
+    # fight-relation/movement evidence.
+    _IDENTITY_RANK_SPELLBAR = 60
+    # Exact configured-name matching against the authoritative world entity
+    # record is account-specific evidence and is therefore stronger than
+    # movement/transition causality.  This lets the world layer know the local
+    # actor and cell immediately after a snapshot, before the first movement.
+    _IDENTITY_RANK_WORLD_NAME = 50
+
+    _DAMAGE_ACTIONS = frozenset({80, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1092})
+    _HEAL_ACTIONS = frozenset({108, 2998, 3000, 3001})
+    _REFERENCE_ONLY_ACTIONS = frozenset({101, 102, 104, 105, 107, 127, 129, 132, 140, 308, 309, 406, 514, 1075, 1406, 3793})
+    # Every jsq action id observed across the retained CRA, ENU and simultaneous
+    # 3.6.12.16 captures is covered below; a small number of additional stable
+    # action semantics already carried by the protocol dictionary are supported
+    # generically as well. An action id outside this explicit set is semantic
+    # drift, not permission to keep driving from potentially incomplete state.
+    _SUPPORTED_JSQ_ACTIONS = frozenset({4, 5, 103, 149, 181, 300}) | _DAMAGE_ACTIONS | _HEAL_ACTIONS | _REFERENCE_ONLY_ACTIONS
+
+    def __init__(
+        self,
+        *,
+        expected_local_spell_ids=None,
+        expected_local_character_name: str | None = None,
+    ) -> None:
+        self._runtime_context = Dofus371010RuntimeContext()
+        self.expected_local_character_name = str(expected_local_character_name or "").strip()
+        root = Path(__file__).resolve().parent
+        self.evidence_dir = root / "evidence"
+        catalog_path = root / "wire_catalog.json"
+        raw_catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.exists() else {}
+        wire_types = raw_catalog.get("wire_types") or {}
+        self._directions: dict[str, frozenset[str]] = {
+            str(name): frozenset(str(item) for item in entry.get("directions", ()))
+            for name, entry in wire_types.items()
+        }
+        # Catalog-only current-build traffic may optionally carry an exact
+        # payload allow-list.  This is deliberately narrower than trusting the
+        # wire name forever: if a future build reuses the same opaque name with
+        # a new payload shape, classification fails closed and the runtime emits
+        # precise protocol evidence instead of silently treating new semantics as
+        # harmless.  Mutating/semantic handlers are not constrained here because
+        # their schema validators own payload compatibility.
+        self._opaque_payload_sha256: dict[str, frozenset[str]] = {
+            str(name): frozenset(str(item).lower() for item in entry.get("payload_sha256", ()))
+            for name, entry in wire_types.items() if entry.get("payload_sha256")
+        }
+        self._opaque_payload_sizes: dict[str, frozenset[int]] = {
+            str(name): frozenset(int(item) for item in entry.get("payload_sizes", ()))
+            for name, entry in wire_types.items() if entry.get("payload_sizes")
+        }
+        self.expected_local_spell_ids = frozenset(int(x) for x in (expected_local_spell_ids or ()))
+        self._sequence = 0
+        self._current_map_id: int | None = None
+        self._fight_map_id: int | None = None
+        self._pending_fight_map_load_id: int | None = None
+        self._last_map_load_id: int | None = None
+        self._pending_world_map_transition = False
+        self._pending_join_presentation_fight_id: int | None = None
+        self._local_actor_id: int | None = None
+        self._local_identity_rank = 0
+        self._local_identity_source = "NONE"
+        self._fight_active = False
+        self._fight_phase: str | None = None
+        self._fight_id: int | None = None
+        self._origin_world_entity_id: int | None = None
+        self._round = 0
+        self._active_turn_actor_id: int | None = None
+        self._turn_order: tuple[int, ...] = ()
+        self._known_fight_actors: set[int] = set()
+        self._known_summons: dict[int, int] = {}
+        self._summon_counts: dict[int, int] = {}
+        self._world_groups: dict[int, ObservedMonsterGroup] = {}
+        self._team_by_actor: dict[int, int] = {}
+        self._team_leaders: dict[int, int] = {}
+        self._local_team_id: int | None = None
+        self._char_totals_by_actor: dict[int, dict[int, int]] = {}
+        self._hp_initialized_actors: set[int] = set()
+        self._current_hp_by_actor: dict[int, int] = {}
+        self._max_hp_by_actor: dict[int, int] = {}
+        # Absolute party-member HP observed on the shared party-status channel
+        # (3.6.12.16 ``iib``).  Keep this separate from fight-local arithmetic:
+        # it survives the jxi reset so pre-entry party updates can seed both
+        # players, and is cleared at jwp before post-fight updates establish the
+        # next generation's baseline.
+        self._party_hp_by_actor: dict[int, tuple[int, int]] = {}
+        self._current_resource_by_actor: dict[int, dict[str, int]] = {}
+        self._pending_local_hp: tuple[int, int] | None = None  # (current, max)
+        self._pending_world_attack_group_id: int | None = None
+        self._pending_join_request_fight_id: int | None = None
+        self._pending_join_request_leader_id: int | None = None
+        self._join_presentation_by_fight: dict[int, int] = {}
+        self._last_cooldown_actor_id: int | None = None
+        self._effect_shadow: dict[int, dict[tuple, ObservedEffect]] = {}
+        self._effects_complete_actors: set[int] = set()
+        self._effect_bootstrap_done = False
+        self._awaiting_own_map_transition = False
+        # Outstanding client world-move destinations used only while local
+        # identity is still unknown. A single boolean is unsafe because server
+        # monster movement can interleave before the player acknowledgement and
+        # multiple client move requests can be outstanding.
+        self._pending_world_move_targets: list[tuple[int | None, int]] = []
+        self._handler_registry = build_handler_registry(self)
+
+    @property
+    def local_actor_id(self) -> int | None:
+        return self._local_actor_id
+
+    @property
+    def local_actor_identity_rank(self) -> int:
+        return int(self._local_identity_rank)
+
+    @property
+    def local_actor_identity_source(self) -> str:
+        return str(self._local_identity_source)
+
+    def synchronize_sequence(self, last_sequence: int) -> None:
+        self._sequence = max(0, int(last_sequence))
+
+    def checkpoint_runtime_context(self) -> Dofus371010RuntimeContext:
+        """Snapshot all mutable decoder inference state for one live message.
+
+        Handler mixins access state exclusively through ``_runtime_context``;
+        replacing that object therefore rolls back sequence counters, pending
+        causal hints, effect/resource shadows and fight/world inference as one
+        unit without rebuilding handler bindings.
+        """
+        return self._runtime_context.clone_for_transaction()
+
+    def restore_runtime_context(self, checkpoint) -> None:
+        if not isinstance(checkpoint, Dofus371010RuntimeContext):
+            raise TypeError("invalid 3.7.10.10 runtime-context checkpoint")
+        self._runtime_context = checkpoint
+
+    def hydrate_runtime_context(self, snapshot) -> None:
+        world_map = snapshot.world.map_id
+        fight_map = snapshot.fight.map_id
+        self._current_map_id = int(world_map.value) if world_map.status is ValueStatus.KNOWN else None
+        self._fight_map_id = (
+            int(fight_map.value)
+            if snapshot.fight.present and fight_map.status is ValueStatus.KNOWN
+            else None
+        )
+        self._pending_fight_map_load_id = None
+        self._last_map_load_id = self._fight_map_id if self._fight_map_id is not None else self._current_map_id
+        self._pending_world_map_transition = False
+        self._pending_join_presentation_fight_id = None
+
+        local = snapshot.local_player_actor_id
+        if local.status is ValueStatus.KNOWN:
+            self._local_actor_id = int(local.value)
+            self._local_identity_rank = int(snapshot.local_player_identity_rank or 20)
+            source = snapshot.local_player_identity_source
+            self._local_identity_source = str(source.value) if source.status is ValueStatus.KNOWN else "HYDRATED"
+        else:
+            self._local_actor_id = None
+            self._local_identity_rank = 0
+            self._local_identity_source = "NONE"
+
+        self._fight_active = bool(snapshot.fight.present)
+        self._fight_id = int(snapshot.fight.fight_instance_id) if snapshot.fight.fight_instance_id is not None else None
+        phase = snapshot.fight.phase
+        self._fight_phase = str(phase.value) if phase.status is ValueStatus.KNOWN else None
+        round_value = snapshot.fight.round
+        self._round = int(round_value.value) if round_value.status is ValueStatus.KNOWN else 0
+        active = snapshot.fight.active_actor_id
+        self._active_turn_actor_id = int(active.value) if active.status is ValueStatus.KNOWN else None
+        self._turn_order = tuple(int(x) for x in snapshot.fight.turn_order)
+        self._known_fight_actors = {int(a.actor_id) for a in snapshot.fight.actors}
+        self._known_summons = {
+            int(a.actor_id): int(a.summoner_actor_id.value)
+            for a in snapshot.fight.actors
+            if a.summoner_actor_id.status is ValueStatus.KNOWN
+        }
+        self._summon_counts = {
+            int(a.actor_id): int(a.summon_count.value)
+            for a in snapshot.fight.actors
+            if a.summon_count.status is ValueStatus.KNOWN
+        }
+        self._char_totals_by_actor = {
+            int(a.actor_id): {int(c.characteristic_id): int(c.total_value) for c in a.characteristics_total}
+            for a in snapshot.fight.actors
+        }
+        self._hp_initialized_actors = {
+            int(a.actor_id) for a in snapshot.fight.actors
+            if a.hp.status is ValueStatus.KNOWN or a.max_hp.status is ValueStatus.KNOWN
+        }
+        self._current_hp_by_actor = {
+            int(a.actor_id): int(a.hp.value)
+            for a in snapshot.fight.actors
+            if a.hp.status is ValueStatus.KNOWN
+        }
+        self._max_hp_by_actor = {
+            int(a.actor_id): int(a.max_hp.value)
+            for a in snapshot.fight.actors
+            if a.max_hp.status is ValueStatus.KNOWN
+        }
+        self._party_hp_by_actor = {
+            int(a.actor_id): (int(a.hp.value), int(a.max_hp.value))
+            for a in snapshot.fight.actors
+            if int(a.actor_id) > 0
+            and a.hp.status is ValueStatus.KNOWN
+            and a.max_hp.status is ValueStatus.KNOWN
+        }
+        self._current_resource_by_actor = {}
+        for actor in snapshot.fight.actors:
+            values: dict[str, int] = {}
+            if actor.ap.status is ValueStatus.KNOWN:
+                values["AP"] = int(actor.ap.value)
+            if actor.mp.status is ValueStatus.KNOWN:
+                values["MP"] = int(actor.mp.value)
+            if actor.range_bonus.status is ValueStatus.KNOWN:
+                values["RANGE"] = int(actor.range_bonus.value)
+            if values:
+                self._current_resource_by_actor[int(actor.actor_id)] = values
+        self._effect_shadow.clear()
+        self._effects_complete_actors.clear()
+        for actor in snapshot.fight.actors:
+            actor_id = int(actor.actor_id)
+            shadow: dict[tuple, ObservedEffect] = {}
+            for effect in actor.effects:
+                observed = ObservedEffect(
+                    effect_id=int(effect.effect_id),
+                    effect_instance_id=effect.effect_instance_id,
+                    source_spell_id=effect.source_spell_id,
+                    state_id=effect.state_id,
+                    source_actor_id=effect.source_actor_id,
+                    remaining_turns=effect.remaining_turns,
+                    stack_count=effect.stack_count,
+                )
+                shadow[self._effect_key(observed)] = observed
+            self._effect_shadow[actor_id] = shadow
+            if bool(actor.effects_complete):
+                self._effects_complete_actors.add(actor_id)
+        self._effect_bootstrap_done = bool(self._effects_complete_actors) if self._fight_active else False
+
+        self._world_groups = {
+            int(group.group_id): ObservedMonsterGroup(
+                group_id=int(group.group_id),
+                cell_id=group.cell_id,
+                members=tuple(
+                    ObservedMonsterMember(monster_id=int(m.monster_id), level=m.level, grade=m.grade)
+                    for m in group.members
+                ),
+            )
+            for group in snapshot.world.monster_groups
+        }
+
+    def classify(self, message: RawProtocolMessage) -> bool:
+        directions = self._directions.get(message.name)
+        if directions is None:
+            # All mutating handlers remain classified even if an evidence catalog
+            # is accidentally omitted during a stripped-down deployment.
+            return self._handler_registry.supports(message.name)
+        if message.direction not in directions:
+            return False
+        # Semantic handlers validate their own schema in transform().  For an
+        # opaque catalog-only wire, optional exact-build fingerprints keep the
+        # evidence boundary narrow and prevent a future payload variant from
+        # being silently accepted as non-mutating.
+        if not self._handler_registry.supports(message.name):
+            allowed_sizes = self._opaque_payload_sizes.get(message.name)
+            if allowed_sizes and len(message.payload) not in allowed_sizes:
+                return False
+            allowed_hashes = self._opaque_payload_sha256.get(message.name)
+            if allowed_hashes:
+                digest = hashlib.sha256(message.payload).hexdigest().lower()
+                if digest not in allowed_hashes:
+                    return False
+        return True
+
+    def transform(self, message: RawProtocolMessage) -> tuple[CanonicalEventEnvelope, ...]:
+        binding = self._handler_registry.binding(message.name)
+        if binding is None:
+            return ()
+        try:
+            events = binding.handler(message)
+        except ProtocolTransformError as exc:
+            # R5.176: keep drift localized to the owning canonical capability.
+            # Older handler code may raise a typed transform error without
+            # attaching capability metadata; the version-local binding is the
+            # authority that can safely supply that missing context.
+            if exc.capability is None and binding.capability:
+                exc.capability = str(binding.capability)
+            if exc.wire_semantic is None:
+                exc.wire_semantic = str(message.name)
+            raise
+        wire_action_id = None
+        if message.name == "jsq":
+            try:
+                wire_action_id = int_value(parse_direct_fields(message.payload), 22)
+            except ValueError:
+                wire_action_id = None
+        return self._wrap_events(message, events, confidence=self.evidence_confidence, wire_action_id=wire_action_id)
+
+    def _wrap_events(
+        self,
+        message: RawProtocolMessage,
+        events: tuple[object, ...],
+        *,
+        confidence: str | None = None,
+        wire_action_id: int | None = None,
+    ) -> tuple[CanonicalEventEnvelope, ...]:
+        envelopes: list[CanonicalEventEnvelope] = []
+        payload_sha = hashlib.sha256(message.payload).hexdigest()
+        for index, event in enumerate(events, start=1):
+            self._sequence += 1
+            envelopes.append(CanonicalEventEnvelope(
+                contract=ContractVersion(major=1, minor=0),
+                identity=EventIdentity(
+                    event_id=f"{message.source}:{message.capture_id or 'session'}:f{message.frame_number}:e{index}:s{self._sequence}",
+                    sequence=self._sequence,
+                ),
+                provenance=EventProvenance(
+                    adapter_id=self.adapter_id,
+                    protocol_build=self.protocol_build,
+                    source="live" if message.source == "live" else "replay",
+                    capture_id=message.capture_id,
+                    account_id=message.account_id,
+                    client_instance_id=message.client_instance_id,
+                    flow_id=message.flow_id,
+                    packet_number=message.packet_number,
+                    frame_number=message.frame_number,
+                    wire_name=message.name,
+                    wire_action_id=wire_action_id,
+                    confidence=confidence,
+                    payload_sha256=payload_sha,
+                ),
+                event=event,
+            ))
+        return tuple(envelopes)
+
+    @staticmethod
+    def _known(value):
+        return SemanticValue.known(value)
+
+    @staticmethod
+    def _unknown(detail: str):
+        return SemanticValue.unknown(detail)
+
+    @staticmethod
+    def _not_observed(detail: str | None = None):
+        return SemanticValue.not_observed(detail)
+
+    @staticmethod
+    def _packed_varints(raw: bytes | None, *, signed_values: bool = False) -> tuple[int, ...]:
+        if not raw:
+            return ()
+        out: list[int] = []
+        pos = 0
+        while pos < len(raw):
+            value, nxt = read_varint(raw, pos)
+            if value is None or nxt <= pos:
+                raise ValueError("invalid packed varint field")
+            out.append(int(signed(value) if signed_values else value))
+            pos = nxt
+        return tuple(out)
+
+    @staticmethod
+    def _nested(raw: bytes | None) -> dict[int, list[int | bytes]] | None:
+        if raw is None:
+            return None
+        try:
+            return parse_direct_fields(raw)
+        except ValueError:
+            return None
+
+    @classmethod
+    def _new_characteristic_total(cls, row: dict[int, list[int | bytes]]) -> int:
+        """Decode only evidence-certified 3.6.12.16 composition branches.
+
+        Controlled AP/MP fixtures prove branch 1 uses fields 1..6 while field 7
+        mirrors spent/current bookkeeping and must not be added a second time.
+        Branches 3 and 5 retain the additive composition used by the previous
+        revision. A truly empty composition remains a legitimate observed zero.
+
+        A *new length-delimited branch*, however, is schema drift. Returning zero
+        for that shape could silently turn current AP/MP/range/shield into a false
+        value, so it must fail closed and preserve the last authoritative state.
+        """
+        supported = (1, 3, 5)
+        byte_fields = tuple(sorted(
+            field for field, values in row.items()
+            if any(isinstance(value, bytes) for value in values)
+        ))
+        unknown = tuple(field for field in byte_fields if field not in supported)
+        if unknown:
+            raise ProtocolSchemaDriftError(
+                f"unsupported jtk characteristic composition branch(es) {unknown}; fields={tuple(sorted(row))}"
+            )
+        present = tuple(branch for branch in supported if first_bytes(row, branch) is not None)
+        if len(present) > 1:
+            raise ProtocolSchemaDriftError(
+                f"ambiguous jtk characteristic composition branches {present}; fields={tuple(sorted(row))}"
+            )
+        if not present:
+            return 0
+        branch = present[0]
+        raw = first_bytes(row, branch)
+        assert raw is not None
+        nested = parse_direct_fields(raw)
+        numbers = (1, 2, 3, 4, 5, 6) if branch == 1 else (1, 2, 3, 4, 5, 7)
+        return int(signed_sum(nested, numbers))
+
+    @staticmethod
+    def _effect_key(effect: ObservedEffect) -> tuple:
+        if effect.effect_instance_id.status is ValueStatus.KNOWN:
+            return ("instance", int(effect.effect_instance_id.value))
+        source_spell = int(effect.source_spell_id.value) if effect.source_spell_id.status is ValueStatus.KNOWN else None
+        source_actor = int(effect.source_actor_id.value) if effect.source_actor_id.status is ValueStatus.KNOWN else None
+        state = int(effect.state_id.value) if effect.state_id.status is ValueStatus.KNOWN else None
+        return ("semantic", int(effect.effect_id), source_spell, source_actor, state)
+
+    def _observe_local_actor(self, actor_id: int, *, rank: int, source: str) -> bool:
+        actor_id = int(actor_id)
+        if actor_id <= 0:
+            return False
+        current = self._local_actor_id
+        if current is None or current == actor_id and rank >= self._local_identity_rank or current != actor_id and rank > self._local_identity_rank:
+            self._local_actor_id = actor_id
+            self._local_identity_rank = int(rank)
+            self._local_identity_source = str(source)
+            return True
+        return current == actor_id
+
+    def _local_event(self) -> LocalPlayerObserved | None:
+        if self._local_actor_id is None:
+            return None
+        return LocalPlayerObserved(
+            actor_id=int(self._local_actor_id),
+            identity_rank=int(self._local_identity_rank),
+            identity_source=str(self._local_identity_source),
+        )
+
+    def _consume_pending_local_hp(self) -> FightStatsObserved | None:
+        """Bind pre-fight kqo HP only after local principal identity is proven.
+
+        In the two-account 3.6.12.16 evidence, ``kqo`` arrives before ``jxi``.
+        Crucially, follower ``jxi`` field 1 is the *leader/initiating* actor,
+        not the follower's local character.  Binding pending HP at that point
+        would put Sosoking's 2045 HP on Curseni.  The pending value is therefore
+        consumed only against ``self._local_actor_id`` after identity has been
+        established by account-specific world-name evidence, leader attack
+        causality, the local ``jxb`` placement request, or authoritative ``juf``
+        principal identity.
+        """
+        if self._pending_local_hp is None or self._local_actor_id is None:
+            return None
+        actor = int(self._local_actor_id)
+        current, max_hp = self._pending_local_hp
+        self._hp_initialized_actors.add(actor)
+        self._current_hp_by_actor[actor] = int(current)
+        self._max_hp_by_actor[actor] = int(max_hp)
+        self._pending_local_hp = None
+        return FightStatsObserved(
+            actor_id=actor,
+            hp=self._known(int(current)),
+            max_hp=self._known(int(max_hp)),
+            eroded_hp=self._known(0),
+        )
+
+    def _map_semantic(self):
+        return self._known(int(self._current_map_id)) if self._current_map_id is not None else self._unknown(f"{self.protocol_build} world map not yet observed")
+
+    def _fight_map_semantic(self):
+        map_id = self._fight_map_id
+        if map_id is None:
+            map_id = self._pending_fight_map_load_id
+        return self._known(int(map_id)) if map_id is not None else self._not_observed("fight map not yet confirmed")
+
+    def _fight_entry_pending(self) -> bool:
+        """Whether a map-load observation belongs to an in-progress fight entry.
+
+        Current-wire evidence proves the tactical-map ``jow`` may arrive before
+        ``jxi``.  The causal anchors below are therefore intentionally broader
+        than ``fight_active`` but remain bounded by explicit local attack/join
+        intent or the current join presentation generation.
+        """
+        return bool(
+            self._fight_active
+            or self._pending_world_attack_group_id is not None
+            or self._pending_join_request_fight_id is not None
+            or self._pending_join_presentation_fight_id is not None
+        )
+
+    @property
+    def protocol_runtime_context(self) -> Dofus371010RuntimeContext:
+        return self._runtime_context
+
+    def protocol_runtime_context_snapshot(self) -> dict[str, object]:
+        return self._runtime_context.diagnostic_snapshot()
+
+    @property
+    def protocol_handler_registry(self) -> ProtocolHandlerRegistry:
+        """Version-local handler registry for diagnostics/certification tooling."""
+        return self._handler_registry
+
+    @property
+    def protocol_handler_modules(self):
+        return self._handler_registry.modules()

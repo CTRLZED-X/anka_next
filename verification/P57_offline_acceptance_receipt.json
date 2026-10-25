@@ -1,0 +1,54 @@
+{
+  "authority": {
+    "canonical_live_commits": 0,
+    "current_client_certified": false,
+    "historical_or_current_drafts_admitted": false,
+    "live_ready": false,
+    "physical_input_enabled": false,
+    "scope": "SYNTHETIC_FIXTURE_ONLY"
+  },
+  "complete_live_cra_enu_acceptance_percent": 0,
+  "date": "2026-10-21",
+  "limitations": [
+    "Linux only: no actual Windows/current-client test performed",
+    "No current client schema certification or actionable Canonical admission",
+    "No CRA/ENU live fight acceptance"
+  ],
+  "milestone": "P57",
+  "preflight": {
+    "architecture": "PASS",
+    "architecture_packages": 13,
+    "check": "PASS",
+    "incident_zip_integrity": "PASS",
+    "live_start_exit_code": 40,
+    "live_start_failure": "LIVE_RUNTIME_NOT_IMPLEMENTED",
+    "reused_assets_verified": "165/165",
+    "setup": "PASS"
+  },
+  "roadmap_scope_estimate_percent": 92,
+  "schema_hardening": {
+    "automatic_setup_fault_smoke": "PASS_SYNTHETIC_SCHEMA_ATOMIC",
+    "fresh_schema_and_version_single_transaction": true,
+    "p55_atomic_batch_and_p56_receipt_preserved": true,
+    "partially_created_tables_rolled_back": true,
+    "reproduced_p56_partial_schema_fault": true,
+    "schema_columns_and_uniqueness_verified": true,
+    "schema_version": 2,
+    "unversioned_partial_schema_rejected": true,
+    "v1_migration_atomic_under_fault": true,
+    "v1_validation_precedes_migration": true,
+    "wal_startup_retries_bounded_lock_contention_only": true
+  },
+  "status": "FULLY_OFFLINE_VERIFIED",
+  "tests": {
+    "focused_canonical_state_tests_passed": 83,
+    "focused_subtests_passed": 3,
+    "isolated_test_methods_passed": 1462,
+    "isolated_test_modules_discovered": 84,
+    "isolated_test_modules_passed": 84,
+    "new_p57_tests_passed": 13,
+    "physical_input_sent": false
+  },
+  "title": "Crash-atomic SQLite schema bootstrap and guarded migration",
+  "verification_fingerprint": "e8d8cd8cc151cc921f85665f2755fa4757650b362140059e1fff6848ef772948"
+}

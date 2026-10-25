@@ -1,0 +1,87 @@
+{
+  "milestone": "P5 Windows live capture candidate; offline verification only",
+  "date_utc": "2026-10-20",
+  "host": "Linux (not Windows/Npcap)",
+  "tests": {
+    "new_project_suite": 137,
+    "status": "PASS",
+    "testing_type": "unittest with simulated capture callbacks and fault injection"
+  },
+  "implemented": [
+    "bounded packet queue",
+    "queue loss overflow receipts",
+    "incremental TCP continuity audit",
+    "Scapy AsyncSniffer optional Windows adapter",
+    "Win32 TCP_OWNER_PID snapshot",
+    "conservative flow-to-window PID candidate correlation",
+    "CLI capture-live with explicit ports and interface",
+    "GPT-friendly failure diagnostics",
+    "privacy-preserving metadata receipts"
+  ],
+  "explicitly_unverified": [
+    "Windows/Npcap host capture",
+    "driver drop visibility",
+    "authoritative window->character->flow binding",
+    "byte-exact current build protocol",
+    "Unity calibration on host",
+    "decision/coordination/workflow/execution",
+    "any live game mission"
+  ],
+  "input_authority": "DISABLED",
+  "program_start": "BLOCKED_BY_DESIGN",
+  "progress_model": {
+    "description": "Engineering planning estimate only; weights are an explicit roadmap decomposition, not measured likelihood of no bugs.",
+    "dimensions": {
+      "foundation_diagnostics_contracts": [
+        11,
+        15
+      ],
+      "kernel_reuse": [
+        8,
+        10
+      ],
+      "client_identity": [
+        3,
+        8
+      ],
+      "capture": [
+        7,
+        12
+      ],
+      "protocol": [
+        0,
+        12
+      ],
+      "canonical": [
+        0,
+        7
+      ],
+      "live_state": [
+        0,
+        8
+      ],
+      "decision": [
+        0,
+        8
+      ],
+      "coordination": [
+        0,
+        5
+      ],
+      "workflow": [
+        0,
+        5
+      ],
+      "execution": [
+        0,
+        7
+      ],
+      "end_to_end_acceptance": [
+        0,
+        3
+      ]
+    },
+    "weighted_completion_pct": 29,
+    "current_build_end_to_end_live_acceptance_pct": 0
+  }
+}

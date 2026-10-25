@@ -1,0 +1,416 @@
+{
+  "bindings": {
+    "hkg": {
+      "capabilities": [
+        "SPELL_CAST",
+        "CHARACTERISTICS"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "hkk": {
+      "capabilities": [
+        "SPELL_CAST",
+        "CHARACTERISTICS"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "hms": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "hnl": {
+      "capabilities": [
+        "FIGHT_JOIN",
+        "FIGHT_IDENTITY"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "iia": {
+      "capabilities": [
+        "FIGHT_JOIN",
+        "FIGHT_IDENTITY"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "iib": {
+      "capabilities": [
+        "CURRENT_HP",
+        "MAX_HP"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jnj": {
+      "capabilities": [
+        "WORLD_MAP",
+        "MONSTER_GROUPS",
+        "LOCAL_ACTOR",
+        "CELL"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jns": {
+      "capabilities": [
+        "MONSTER_GROUPS"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jnv": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "combat_actions",
+      "observation_only": true
+    },
+    "jnz": {
+      "capabilities": [
+        "CELL",
+        "MONSTER_GROUPS",
+        "LOCAL_ACTOR"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "joc": {
+      "capabilities": [
+        "WORLD_MAP",
+        "CELL"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jok": {
+      "capabilities": [
+        "CELL"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "joo": {
+      "capabilities": [
+        "MONSTER_GROUPS"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jow": {
+      "capabilities": [
+        "WORLD_MAP"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jsq": {
+      "capabilities": [
+        "SPELL_CAST",
+        "CURRENT_HP",
+        "ERODED_HP",
+        "SHIELD",
+        "DEATH",
+        "SUMMON",
+        "DISPLACEMENT",
+        "CURRENT_AP",
+        "CURRENT_MP"
+      ],
+      "group": "combat_actions",
+      "observation_only": true
+    },
+    "jti": {
+      "capabilities": [
+        "COOLDOWN"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "jtk": {
+      "capabilities": [
+        "CURRENT_AP",
+        "CURRENT_MP",
+        "RANGE",
+        "SHIELD",
+        "CHARACTERISTICS"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "juf": {
+      "capabilities": [
+        "LOCAL_ACTOR",
+        "SPELL_CAST"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "juh": {
+      "capabilities": [
+        "EFFECTS",
+        "STATES"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "juo": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "combat_actions",
+      "observation_only": true
+    },
+    "jup": {
+      "capabilities": [
+        "TURN_OWNER"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "juu": {
+      "capabilities": [
+        "EFFECTS",
+        "STATES"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "jvi": {
+      "capabilities": [
+        "ROUND",
+        "TURN_OWNER"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jvj": {
+      "capabilities": [
+        "TURN_OWNER",
+        "ROUND"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jvu": {
+      "capabilities": [
+        "ROUND",
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jwj": {
+      "capabilities": [
+        "CELL",
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jwp": {
+      "capabilities": [
+        "FIGHT_END",
+        "WORLD_MAP"
+      ],
+      "group": "fight_lifecycle",
+      "observation_only": true
+    },
+    "jwz": {
+      "capabilities": [
+        "FIGHT_JOIN"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jxb": {
+      "capabilities": [
+        "CELL"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jxd": {
+      "capabilities": [
+        "FIGHT_JOIN"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jxh": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "world_identity",
+      "observation_only": true
+    },
+    "jxi": {
+      "capabilities": [
+        "FIGHT_IDENTITY",
+        "FIGHT_JOIN"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "jxk": {
+      "capabilities": [
+        "CELL"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "kjl": {
+      "capabilities": [
+        "CELL"
+      ],
+      "group": "fight_state",
+      "observation_only": true
+    },
+    "kqo": {
+      "capabilities": [
+        "CURRENT_HP",
+        "MAX_HP"
+      ],
+      "group": "resources_effects",
+      "observation_only": true
+    },
+    "kth": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_lifecycle",
+      "observation_only": true
+    },
+    "ktk": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_lifecycle",
+      "observation_only": true
+    },
+    "ktl": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_lifecycle",
+      "observation_only": true
+    },
+    "ktm": {
+      "capabilities": [
+        "FIGHT_IDENTITY"
+      ],
+      "group": "fight_lifecycle",
+      "observation_only": true
+    }
+  },
+  "current_client_certified": false,
+  "groups": {
+    "combat_actions": [
+      "jnv",
+      "jsq",
+      "juo"
+    ],
+    "fight_lifecycle": [
+      "jwp",
+      "kth",
+      "ktk",
+      "ktl",
+      "ktm"
+    ],
+    "fight_state": [
+      "juf",
+      "jup",
+      "jvi",
+      "jvj",
+      "jvu",
+      "jwj",
+      "jxb",
+      "jxd",
+      "jxi",
+      "jxk",
+      "kjl"
+    ],
+    "resources_effects": [
+      "hkg",
+      "hkk",
+      "jti",
+      "jtk",
+      "juh",
+      "juu",
+      "kqo"
+    ],
+    "world_identity": [
+      "hms",
+      "hnl",
+      "iia",
+      "iib",
+      "jnj",
+      "jns",
+      "jnz",
+      "joc",
+      "jok",
+      "joo",
+      "jow",
+      "jwz",
+      "jxh"
+    ]
+  },
+  "live_adapter_activated": false,
+  "protocol_build": "Dofus 3.7.10.10",
+  "research_decoder_names": [
+    "jup",
+    "jvi",
+    "jvj",
+    "jxd"
+  ],
+  "schema_version": 1,
+  "source_assets": {
+    "actions": {
+      "original_relative_path": "handler_modules/actions.py",
+      "sha256": "63738ad976456dcd74b60a4bd79e457920bd4d3429d2441293a27df6c1b42fd0",
+      "size": 17782,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/actions.source.txt"
+    },
+    "adapter": {
+      "original_relative_path": "adapter.py",
+      "sha256": "92e7a9d0b5dfadd252548e400c64196279fb7a428d5633f0365fa53f3697a392",
+      "size": 31983,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/adapter.source.txt"
+    },
+    "fight": {
+      "original_relative_path": "handler_modules/fight.py",
+      "sha256": "b7d81931425531df1f1be590717b000766fe014af6415ed32fbf1a7892998d98",
+      "size": 23919,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/fight.source.txt"
+    },
+    "lifecycle": {
+      "original_relative_path": "handler_modules/lifecycle.py",
+      "sha256": "c66eed97c5ea1d223f456760a4865dcded098d9c70903e3d22ed23cb87f84060",
+      "size": 7630,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/lifecycle.source.txt"
+    },
+    "registry": {
+      "original_relative_path": "handler_modules/registry.py",
+      "sha256": "82874466135ad5f7be82a5c8f092868655ab59fbd4c189b2fd4bf23182680786",
+      "size": 5740,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/registry.source.txt"
+    },
+    "resources": {
+      "original_relative_path": "handler_modules/resources.py",
+      "sha256": "a82077527b26a7c3b751bf05f5c3763302e11cf1359a4fba135acdbaea121416",
+      "size": 9908,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/resources.source.txt"
+    },
+    "wire_catalog": {
+      "original_relative_path": "wire_catalog.json",
+      "sha256": "44b204bffa1888b2306714d89fd4693bb013720dd2c98f3ff7299b0f40651a92",
+      "size": 23883,
+      "stored_path": "reference/protocol/historical_3_7_10_10/archived_source/wire_catalog.source.txt"
+    }
+  },
+  "source_role": "R5_198_HISTORICAL_REFERENCE_ONLY"
+}

@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "milestone": "M2",
+  "strategy": "UNCHANGED_REUSE",
+  "file_count": 27,
+  "files": [
+    {
+      "legacy_path": "gamedata/COMPATIBILITY.json",
+      "legacy_sha256": "19ba6bf31b3b0e92ac6b727ec00b890e71d4d88fbc1665320a9b290b8c0a44c3",
+      "target_path": "assets/game_data/COMPATIBILITY.json",
+      "target_sha256": "19ba6bf31b3b0e92ac6b727ec00b890e71d4d88fbc1665320a9b290b8c0a44c3",
+      "bytes": 709,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190580738.json",
+      "legacy_sha256": "c62c67bdc8735ea9e4f3dbee315fb0c71c14422b0925d868b59c427b9547905a",
+      "target_path": "assets/game_data/Mapuse/map_190580738.json",
+      "target_sha256": "c62c67bdc8735ea9e4f3dbee315fb0c71c14422b0925d868b59c427b9547905a",
+      "bytes": 98349,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190580739.json",
+      "legacy_sha256": "675517e3959ba3d1c522c8d71311c0ef668113fa5f7906feb7eb67d1298cfd8f",
+      "target_path": "assets/game_data/Mapuse/map_190580739.json",
+      "target_sha256": "675517e3959ba3d1c522c8d71311c0ef668113fa5f7906feb7eb67d1298cfd8f",
+      "bytes": 98200,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190581250.json",
+      "legacy_sha256": "d3e01a3a5e9abed1646067c986521ebec3379ae0d893e544780dc359722fed7a",
+      "target_path": "assets/game_data/Mapuse/map_190581250.json",
+      "target_sha256": "d3e01a3a5e9abed1646067c986521ebec3379ae0d893e544780dc359722fed7a",
+      "bytes": 98267,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Mapuse/map_190581251.json",
+      "legacy_sha256": "250822625c6a38134433d53786baf847ffa1561ce9ff6c8130b86ef8e9095bd9",
+      "target_path": "assets/game_data/Mapuse/map_190581251.json",
+      "target_sha256": "250822625c6a38134433d53786baf847ffa1561ce9ff6c8130b86ef8e9095bd9",
+      "bytes": 98280,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/AlignmentSides.json",
+      "legacy_sha256": "dac50fca9139c6c4b50c3c7f520377396cd03a9772f6af1c4cf14777273efb6c",
+      "target_path": "assets/game_data/Static/AlignmentSides.json",
+      "target_sha256": "dac50fca9139c6c4b50c3c7f520377396cd03a9772f6af1c4cf14777273efb6c",
+      "bytes": 184,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Areas.json",
+      "legacy_sha256": "e36cf947c8bd29cae240d0c1144d0c43d9ced8a0a3f8852be3f010f7a2f9d408",
+      "target_path": "assets/game_data/Static/Areas.json",
+      "target_sha256": "e36cf947c8bd29cae240d0c1144d0c43d9ced8a0a3f8852be3f010f7a2f9d408",
+      "bytes": 4970,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Breeds.json",
+      "legacy_sha256": "fd5f704a249ae3a0989b45388704ce162f1563e8227f9ed03a449a2046e388b7",
+      "target_path": "assets/game_data/Static/Breeds.json",
+      "target_sha256": "fd5f704a249ae3a0989b45388704ce162f1563e8227f9ed03a449a2046e388b7",
+      "bytes": 6510,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Challenges.json",
+      "legacy_sha256": "a9620e912a1d91ac0901652ca0faf786c17db63763ff3a5cc78c5fd1c259ee3f",
+      "target_path": "assets/game_data/Static/Challenges.json",
+      "target_sha256": "a9620e912a1d91ac0901652ca0faf786c17db63763ff3a5cc78c5fd1c259ee3f",
+      "bytes": 44602,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/CompanionSpells.json",
+      "legacy_sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
+      "target_path": "assets/game_data/Static/CompanionSpells.json",
+      "target_sha256": "9d196faaf50190f76c559bae00b98045a74d71b43eaccc748d7d58d7ceb92f84",
+      "bytes": 26605,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Companions.json",
+      "legacy_sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "target_path": "assets/game_data/Static/Companions.json",
+      "target_sha256": "7396cfed99e53b33ac3716896b1d9ec3f558ab76be65d4123a3895256bcaf0a4",
+      "bytes": 4686,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Dungeons.json",
+      "legacy_sha256": "808a5f6dd78bfe60caca90d39fdce24f901914bded2d8d51cc263f87e8ddc9dc",
+      "target_path": "assets/game_data/Static/Dungeons.json",
+      "target_sha256": "808a5f6dd78bfe60caca90d39fdce24f901914bded2d8d51cc263f87e8ddc9dc",
+      "bytes": 13189,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Effects.json",
+      "legacy_sha256": "13415603cec072f8ea0637ac7d309da4ddb32b5cd20333ec18ac56298ed21bed",
+      "target_path": "assets/game_data/Static/Effects.json",
+      "target_sha256": "13415603cec072f8ea0637ac7d309da4ddb32b5cd20333ec18ac56298ed21bed",
+      "bytes": 85336,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/InfoMessages.json",
+      "legacy_sha256": "af1e33428a751975cbd41fc16e064bdc9e872f04e8c89aa2921c9f3e980c7f8f",
+      "target_path": "assets/game_data/Static/InfoMessages.json",
+      "target_sha256": "af1e33428a751975cbd41fc16e064bdc9e872f04e8c89aa2921c9f3e980c7f8f",
+      "bytes": 157528,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/MapCoordinates.json",
+      "legacy_sha256": "c151bc947f59affeaebc631fdb6c6a81415575834f378841b60d036245fb31de",
+      "target_path": "assets/game_data/Static/MapCoordinates.json",
+      "target_sha256": "c151bc947f59affeaebc631fdb6c6a81415575834f378841b60d036245fb31de",
+      "bytes": 573394,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/MapPositions.json",
+      "legacy_sha256": "90846bc4d37db23fe951beac535a6ffefc0f40aae23a0c7d2be4e7b67ae40952",
+      "target_path": "assets/game_data/Static/MapPositions.json",
+      "target_sha256": "90846bc4d37db23fe951beac535a6ffefc0f40aae23a0c7d2be4e7b67ae40952",
+      "bytes": 12062646,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/MonsterRaces.json",
+      "legacy_sha256": "ee63f070d04e767d8b872b636d8053b1491c09f09193c6ea9ab791c55607c9e3",
+      "target_path": "assets/game_data/Static/MonsterRaces.json",
+      "target_sha256": "ee63f070d04e767d8b872b636d8053b1491c09f09193c6ea9ab791c55607c9e3",
+      "bytes": 15427,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/MonsterSuperRaces.json",
+      "legacy_sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
+      "target_path": "assets/game_data/Static/MonsterSuperRaces.json",
+      "target_sha256": "3b5c5e5f393d5b9196818c422dcc046ac9885ad48d054a33ddde5dac87fde8e2",
+      "bytes": 2292,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Monsters.json",
+      "legacy_sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "target_path": "assets/game_data/Static/Monsters.json",
+      "target_sha256": "52b260ef69e85092bd60eb4bb9b58efc350ecd10db00c42a8d335da5bd20fcaf",
+      "bytes": 998292,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/PointOfInterest.json",
+      "legacy_sha256": "11284881ffc0b272d6c14505fbf1577046a6229bd7dc90d0d0a734a55010068c",
+      "target_path": "assets/game_data/Static/PointOfInterest.json",
+      "target_sha256": "11284881ffc0b272d6c14505fbf1577046a6229bd7dc90d0d0a734a55010068c",
+      "bytes": 5974,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Skills.json",
+      "legacy_sha256": "b37919e660addf316d5ec026ab99eb62b75b045dad6d189b06628ffb1499d206",
+      "target_path": "assets/game_data/Static/Skills.json",
+      "target_sha256": "b37919e660addf316d5ec026ab99eb62b75b045dad6d189b06628ffb1499d206",
+      "bytes": 19033,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellLevels.json",
+      "legacy_sha256": "4ca21db4c23fcaae31ebde808b1d4fd0b9069458dc6ebace5d39c35145b8f440",
+      "target_path": "assets/game_data/Static/SpellLevels.json",
+      "target_sha256": "4ca21db4c23fcaae31ebde808b1d4fd0b9069458dc6ebace5d39c35145b8f440",
+      "bytes": 12176041,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellStates.json",
+      "legacy_sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
+      "target_path": "assets/game_data/Static/SpellStates.json",
+      "target_sha256": "b3dd725e36366cd32f357fb37c063456ec71d6552b897e201e3ebd6ffaf68650",
+      "bytes": 391845,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/SpellVariants.json",
+      "legacy_sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
+      "target_path": "assets/game_data/Static/SpellVariants.json",
+      "target_sha256": "2417c3adfd09d0dae0f69859f327ba70640758e1c08922290c110df41f42cbf8",
+      "bytes": 17996,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/Spells.json",
+      "legacy_sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "target_path": "assets/game_data/Static/Spells.json",
+      "target_sha256": "0505aaabff263eef72063536e83da469bc79d72a488d8a83067c142433b4adea",
+      "bytes": 1933321,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/SubAreas.json",
+      "legacy_sha256": "accbb60f645fe66401766911db653545986239b482bac84d122cc5c593f903a0",
+      "target_path": "assets/game_data/Static/SubAreas.json",
+      "target_sha256": "accbb60f645fe66401766911db653545986239b482bac84d122cc5c593f903a0",
+      "bytes": 42783,
+      "byte_identical": true
+    },
+    {
+      "legacy_path": "gamedata/Static/SuperAreas.json",
+      "legacy_sha256": "8d908b1f61d30df55f0a740effea1db97d8dbc1d56be690702b357592c26ae55",
+      "target_path": "assets/game_data/Static/SuperAreas.json",
+      "target_sha256": "8d908b1f61d30df55f0a740effea1db97d8dbc1d56be690702b357592c26ae55",
+      "bytes": 653,
+      "byte_identical": true
+    }
+  ],
+  "scope_note": "Historical static/Mapuse data remains version 3.6.10.10; COMPATIBILITY.json does not certify the current live client."
+}

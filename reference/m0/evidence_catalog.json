@@ -1,0 +1,751 @@
+{
+  "schema_version": 1,
+  "allowed_classifications": [
+    "ARCHIVED_RAW",
+    "ARCHIVED_JOURNAL",
+    "ARCHIVED_DIAGNOSTIC",
+    "DERIVED",
+    "SYNTHETIC",
+    "MISSING"
+  ],
+  "policy": "Evidence classification describes provenance, not trust or live certification. Missing evidence is never inferred as negative evidence.",
+  "evidence": [
+    {
+      "evidence_id": "P66-examples_SYNTHETIC_CAPTURE_P4.pcapng",
+      "classification": "SYNTHETIC",
+      "source": "P66",
+      "description": "Synthetic offline fixture retained for deterministic regression/qualification.",
+      "limitation": "Not primary live-client evidence and must never certify current client behavior.",
+      "path": "examples/SYNTHETIC_CAPTURE_P4.pcapng",
+      "sha256": "a18cc382dbeb03598a702ce1c2b3c4d352d42e453b6cf8bf636200e6a4eca979"
+    },
+    {
+      "evidence_id": "P66-examples_SYNTHETIC_READY_NO_TURN_OWNER.zip",
+      "classification": "SYNTHETIC",
+      "source": "P66",
+      "description": "Synthetic offline fixture retained for deterministic regression/qualification.",
+      "limitation": "Not primary live-client evidence and must never certify current client behavior.",
+      "path": "examples/SYNTHETIC_READY_NO_TURN_OWNER.zip",
+      "sha256": "6fae704d999e03f1ca11d6b83df84aece6688296d0d0b04c3ae179e217f16352"
+    },
+    {
+      "evidence_id": "P66-examples_SYNTHETIC_SETUP_DEPENDENCY_FAILED.zip",
+      "classification": "SYNTHETIC",
+      "source": "P66",
+      "description": "Synthetic offline fixture retained for deterministic regression/qualification.",
+      "limitation": "Not primary live-client evidence and must never certify current client behavior.",
+      "path": "examples/SYNTHETIC_SETUP_DEPENDENCY_FAILED.zip",
+      "sha256": "c96a6a63d88af566d5df5027ecaeb6c86679e1863cdeabefeee2089b3bc9903a"
+    },
+    {
+      "evidence_id": "P66-P10_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P10_offline_acceptance_receipt.json",
+      "sha256": "06b2f971dae46b2817481d60c1f5f811b4309a46d9a533ff8dd22ccec1a94d45"
+    },
+    {
+      "evidence_id": "P66-P11_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P11_offline_acceptance_receipt.json",
+      "sha256": "8a279a3b0e462dfb2e1b863e2afbc5a11c54f99f2beb98eafa6fa5c2b0fba82e"
+    },
+    {
+      "evidence_id": "P66-P12_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P12_offline_acceptance_receipt.json",
+      "sha256": "fe020c77b5fd741fa2808a08ef3cd6163e340c05eaaa69a1f4fe0624a0a44030"
+    },
+    {
+      "evidence_id": "P66-P13_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P13_offline_acceptance_receipt.json",
+      "sha256": "9e9fd895857081a06acab666926fbf8bb4b46ae70f9fc2e8d24bdbf440d3c347"
+    },
+    {
+      "evidence_id": "P66-P14_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P14_offline_acceptance_receipt.json",
+      "sha256": "974a576ac5375ad03339d0f2c5451b9cfecc41696c3664ad68eb2972fb3a673f"
+    },
+    {
+      "evidence_id": "P66-P15_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P15_offline_acceptance_receipt.json",
+      "sha256": "dc7748bb5ab3547218bf016ae869e04c879d5353c649ebb91ec9d060ed4ce4e3"
+    },
+    {
+      "evidence_id": "P66-P16_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P16_offline_acceptance_receipt.json",
+      "sha256": "d28312fe487b54442edae3751e67e7110c51fb8e0ee83bb7fa5e54eb3899ef0e"
+    },
+    {
+      "evidence_id": "P66-P17_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P17_offline_acceptance_receipt.json",
+      "sha256": "5453db6aac1fc3a5513c50edb33908a337daa3e97c33366326f3d8311422138a"
+    },
+    {
+      "evidence_id": "P66-P18_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P18_offline_acceptance_receipt.json",
+      "sha256": "89a56d64bba22a4bf0f78317535c317350ddccec356dd5562ad16741bc808f75"
+    },
+    {
+      "evidence_id": "P66-P19_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P19_offline_acceptance_receipt.json",
+      "sha256": "ee2bb852812dfaf54e072b173e92815ce5e057cd24847e493a910b02d5d9b9ec"
+    },
+    {
+      "evidence_id": "P66-P1_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P1_acceptance_receipt.json",
+      "sha256": "f9133af5d2ea48d42477fcc7b2597ee226fe9727c7c2d93e06ccaed64aedd05d"
+    },
+    {
+      "evidence_id": "P66-P20_RELEASE_RECEIPT",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P20_RELEASE_RECEIPT.json",
+      "sha256": "361613dc0248a80cd71c769f59c1784ae10a4ebfd4e0ea711ba77c01bbe06966"
+    },
+    {
+      "evidence_id": "P66-P21_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P21_offline_acceptance_receipt.json",
+      "sha256": "edbd5ab15add0a409b4af6d93a6f6dfb7ccaf281ffbb59eeee27f68808c7e29f"
+    },
+    {
+      "evidence_id": "P66-P22_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P22_offline_acceptance_receipt.json",
+      "sha256": "89fbfafadcfe4490951ddb779cd0545f707c5714303da4910279dcc7e8387379"
+    },
+    {
+      "evidence_id": "P66-P23_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P23_offline_acceptance_receipt.json",
+      "sha256": "8813335550335f7ad7cf576cf2b8915e4b54db91cd2dfd3deda80bfe640e4d8a"
+    },
+    {
+      "evidence_id": "P66-P24_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P24_offline_acceptance_receipt.json",
+      "sha256": "074b5aed755495c95055b5992d7ab886c1b2c597a3cb279aebd4de957914fb4f"
+    },
+    {
+      "evidence_id": "P66-P25_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P25_offline_acceptance_receipt.json",
+      "sha256": "0fb19055d6e90d1132dc85cf3b66c95112a7c005db499b8484e3f016f2888b59"
+    },
+    {
+      "evidence_id": "P66-P26_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P26_offline_acceptance_receipt.json",
+      "sha256": "8a4bb780bd57b85cf2e969727ccb089b4505da416a81701637f1058d67b7155d"
+    },
+    {
+      "evidence_id": "P66-P27_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P27_offline_acceptance_receipt.json",
+      "sha256": "034f078e94c9cdab7ba225d0ac7132db1ac0e5c433d93fc7b0ff379496eb0d68"
+    },
+    {
+      "evidence_id": "P66-P28_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P28_offline_acceptance_receipt.json",
+      "sha256": "0296ac1055577ceeb5157ff79f554a297051368b21be7f95a1499883735d2973"
+    },
+    {
+      "evidence_id": "P66-P29_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P29_offline_acceptance_receipt.json",
+      "sha256": "456167e6864aa0667330f2c4d987f1b694026eb4c0b22fda6413e6ec110d239a"
+    },
+    {
+      "evidence_id": "P66-P30_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P30_offline_acceptance_receipt.json",
+      "sha256": "a5a61b040505484588b4c4636ad74021245b82a8126d5acc237f1e45430d0338"
+    },
+    {
+      "evidence_id": "P66-P31_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P31_offline_acceptance_receipt.json",
+      "sha256": "093231803799117777cf1e7001674755be913b124809bf9eef69fe48eb1757b4"
+    },
+    {
+      "evidence_id": "P66-P32_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P32_offline_acceptance_receipt.json",
+      "sha256": "b5a7d50d258a27bd76613615152da2483af9374c6d1a2ab02288e663d0c10f0b"
+    },
+    {
+      "evidence_id": "P66-P33_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P33_offline_acceptance_receipt.json",
+      "sha256": "ed13a941947dec951f868acf8df3dfdaa214843fb46b7b3418259cede9367d70"
+    },
+    {
+      "evidence_id": "P66-P34_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P34_offline_acceptance_receipt.json",
+      "sha256": "d7c963b18098339a1d3b294cb8c3a1939f1dcbec618fefd0caa5162dde4b8c3b"
+    },
+    {
+      "evidence_id": "P66-P35_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P35_offline_acceptance_receipt.json",
+      "sha256": "8d0d62e23e9dbfb49f6e01f43f34d3becc3e00367b9028beb36d2eedb3b70c50"
+    },
+    {
+      "evidence_id": "P66-P36_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P36_offline_acceptance_receipt.json",
+      "sha256": "88d49d4efc26ba05177c08095296c1b6f2946e4cd7521e59abc22257e581654c"
+    },
+    {
+      "evidence_id": "P66-P37_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P37_offline_acceptance_receipt.json",
+      "sha256": "31eea0bd4ecf155d98eb0041440236a2be683c309196ed58dfba752248e0cac6"
+    },
+    {
+      "evidence_id": "P66-P38_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P38_offline_acceptance_receipt.json",
+      "sha256": "1f177287e9c9d11c69b922e267cac630e8ebc2b3d31949b6c88271b0fc891cf9"
+    },
+    {
+      "evidence_id": "P66-P39_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P39_offline_acceptance_receipt.json",
+      "sha256": "f6c481ca8a101df09d4501ea7bff9abe27a9ed008a180abd4740a73818a11e65"
+    },
+    {
+      "evidence_id": "P66-P3_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P3_offline_acceptance_receipt.json",
+      "sha256": "cbeb9fd1130700198afd7ef254fa10040c07fb5471f224976b04777cf32d4ff7"
+    },
+    {
+      "evidence_id": "P66-P40_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P40_offline_acceptance_receipt.json",
+      "sha256": "32069503ce7ac08083a4e140658be56688fa9e208f1c5fe2420d931f5762f5f1"
+    },
+    {
+      "evidence_id": "P66-P41_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P41_offline_acceptance_receipt.json",
+      "sha256": "a8a83d47e68087d280163a20905d72109739f2d133cbff072688bb4d5662c18e"
+    },
+    {
+      "evidence_id": "P66-P42_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P42_offline_acceptance_receipt.json",
+      "sha256": "a4b0a1854d70f7476e0cc016194d73361a258c8049d8e894c3440a00a3245fee"
+    },
+    {
+      "evidence_id": "P66-P43_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P43_offline_acceptance_receipt.json",
+      "sha256": "2f69a592014511a6960613f8b6e7212e7f442d24472705209e8566d9cb5ed662"
+    },
+    {
+      "evidence_id": "P66-P44_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P44_offline_acceptance_receipt.json",
+      "sha256": "1d2d70158ed578f1ada496965da445018bfdb14930f1c85e523bea4026c61860"
+    },
+    {
+      "evidence_id": "P66-P45_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P45_offline_acceptance_receipt.json",
+      "sha256": "88fc619bf4128e8d5634183b1ffe5b09d2febe4387f18f2a1a09e59bbec1b51c"
+    },
+    {
+      "evidence_id": "P66-P46_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P46_offline_acceptance_receipt.json",
+      "sha256": "944ac47a6e4babcd5a8f74f32f6c16d028e3e94f6fce4d1dafb5ecce1dc2e7c2"
+    },
+    {
+      "evidence_id": "P66-P47_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P47_offline_acceptance_receipt.json",
+      "sha256": "74de82178e09e95ceb4c18e5db74a083df5a49ddd69c4a32b748fafa60c3704e"
+    },
+    {
+      "evidence_id": "P66-P48_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P48_offline_acceptance_receipt.json",
+      "sha256": "a1edf5918d130211418d9ef01d5571446cc26a58872cca45739525c860cad3e1"
+    },
+    {
+      "evidence_id": "P66-P49_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P49_offline_acceptance_receipt.json",
+      "sha256": "aebca91640da32ba8a1c522acc14980de3da6a2f46fb996ff57cfd4a0f88f073"
+    },
+    {
+      "evidence_id": "P66-P4_OFFLINE_ACCEPTANCE_RECEIPT",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P4_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "78a4d0d8a9727762f3ed6c37dddf01914c75ff3349af863373c04dcaa7b49129"
+    },
+    {
+      "evidence_id": "P66-P50_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P50_offline_acceptance_receipt.json",
+      "sha256": "35eab98e1da0a7e137712d5a47b04344adbd40361a56f0436d96d4601e03faf3"
+    },
+    {
+      "evidence_id": "P66-P51_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P51_offline_acceptance_receipt.json",
+      "sha256": "fa9783488d066a7a48c4681be8d4f89484a2a336776f331df2f5d98cc18f6a59"
+    },
+    {
+      "evidence_id": "P66-P52_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P52_offline_acceptance_receipt.json",
+      "sha256": "562a94ccb3716252ab296f40374bfb8544ae53f3c83eafc53d59091b640e62f4"
+    },
+    {
+      "evidence_id": "P66-P53_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P53_offline_acceptance_receipt.json",
+      "sha256": "7513216b09dcdcf107090d389a3dc2dde3df3a771ccac866ed4002c83ad9294b"
+    },
+    {
+      "evidence_id": "P66-P54_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P54_offline_acceptance_receipt.json",
+      "sha256": "568b8dbb5ee7205db05d26f747131511ed22275159c9be946c715d03b382a6bb"
+    },
+    {
+      "evidence_id": "P66-P55_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P55_offline_acceptance_receipt.json",
+      "sha256": "044a1d1dd928c10fadfcf9cedf1fae832535d9607cbf5ec09eefe708b4c9de7d"
+    },
+    {
+      "evidence_id": "P66-P56_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P56_offline_acceptance_receipt.json",
+      "sha256": "287fd2ca6049027b625921f06592b0d81bd559736e03d2e00acd9a991b39f3c8"
+    },
+    {
+      "evidence_id": "P66-P57_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P57_offline_acceptance_receipt.json",
+      "sha256": "0b1e563cd4828b919d1bf5cf69cc10cc86c906b38e18b9433591c27e91d488fa"
+    },
+    {
+      "evidence_id": "P66-P58_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P58_offline_acceptance_receipt.json",
+      "sha256": "08cd0c752cd365616b3ff65d8bc95cb4e31df9b7b016d83f7b4537276fc289f8"
+    },
+    {
+      "evidence_id": "P66-P59_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P59_offline_acceptance_receipt.json",
+      "sha256": "7a2dd7247363ed15e5b89e50409d583318b132173d9fd7349304eb8dbf36e565"
+    },
+    {
+      "evidence_id": "P66-P5_OFFLINE_ACCEPTANCE_RECEIPT",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P5_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "b6fda0b6a3245b6721e41f5d500c7373ff37324d51d0d182bcd217c65a544ca8"
+    },
+    {
+      "evidence_id": "P66-P60_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P60_offline_acceptance_receipt.json",
+      "sha256": "116df80b2d63fab403ef0aa48e6f77bf8cabfedb9f6f23416009654b33fc44ea"
+    },
+    {
+      "evidence_id": "P66-P61_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P61_offline_acceptance_receipt.json",
+      "sha256": "7379754f87639408f7d0d5c564f9c81cee71cc58c3fe12e1e4518f754c3f4f22"
+    },
+    {
+      "evidence_id": "P66-P62_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P62_offline_acceptance_receipt.json",
+      "sha256": "52b424a1a07e6ef4f078834c2e1c0c95c4161460f5143c96139feb860aaad062"
+    },
+    {
+      "evidence_id": "P66-P63_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P63_offline_acceptance_receipt.json",
+      "sha256": "baebf0a46c68436700bb5b6a85531c49bceadd1afcd233817ed3e53c6a82c8fd"
+    },
+    {
+      "evidence_id": "P66-P64_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P64_offline_acceptance_receipt.json",
+      "sha256": "c6e98e6791693c27996e8e3dc4168ffa0cdf535bf459c032d6ca8c07210a0e0f"
+    },
+    {
+      "evidence_id": "P66-P65_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P65_offline_acceptance_receipt.json",
+      "sha256": "7b19cf4137f434b1e17b378125f45455a6237c7524c7846180a4b17000eaa50a"
+    },
+    {
+      "evidence_id": "P66-P66_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P66_offline_acceptance_receipt.json",
+      "sha256": "aa134c80f2c2b6c605c656621ef22e577b7a3f29a4e853d666b403bdee83b314"
+    },
+    {
+      "evidence_id": "P66-P6_OFFLINE_ACCEPTANCE_RECEIPT",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P6_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "17341841061ab28432336308d6890a1ff01604236a61b06cb244e33584fa03fd"
+    },
+    {
+      "evidence_id": "P66-P7_OFFLINE_ACCEPTANCE_RECEIPT",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P7_OFFLINE_ACCEPTANCE_RECEIPT.json",
+      "sha256": "29896881e206c8c7e78ea74ee0d2c07b3f1685379c8a63c9d9974885ed2733ec"
+    },
+    {
+      "evidence_id": "P66-P8_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P8_offline_acceptance_receipt.json",
+      "sha256": "a84748d2b644e9a198a14b79672b4af772f72fa4dd4f574f51eba0211abbc978"
+    },
+    {
+      "evidence_id": "P66-P9_offline_acceptance_receipt",
+      "classification": "DERIVED",
+      "source": "P66",
+      "description": "Machine-readable verification receipt generated from offline/host checks.",
+      "limitation": "Receipt is derived evidence; any live claim remains scoped exactly as stated in the receipt.",
+      "path": "verification/P9_offline_acceptance_receipt.json",
+      "sha256": "1699e13fe22de6909d2475c556af386e852cfd09666188a0e7630ae6c3b88a00"
+    },
+    {
+      "evidence_id": "R5-R5_142_COMBAT_ACTION_CONTRACT_QUARANTINE_TURN_LIVENESS_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_142_COMBAT_ACTION_CONTRACT_QUARANTINE_TURN_LIVENESS_HARDENING.md",
+      "sha256": "a81fabf07f16d4bd53df5ecb7eb8d0769be28cb3a36d947bd9bab5fbf0588be2"
+    },
+    {
+      "evidence_id": "R5-R5_151_LATENCY_RECONCILIATION_FOUNDATION_READINESS_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_151_LATENCY_RECONCILIATION_FOUNDATION_READINESS_HARDENING.md",
+      "sha256": "253058b5046c1d075de2b2977f0b611654a9de8671daeb4c6d7c6d5be9087f3b"
+    },
+    {
+      "evidence_id": "R5-R5_195_FIGHT_ENTRY_GEOMETRY_REPLAY_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_195_FIGHT_ENTRY_GEOMETRY_REPLAY_HARDENING.md",
+      "sha256": "46f443760f0966c24d39ffe83bcca9d5200458b01b0ec8bea4f41e44cc1d25e9"
+    },
+    {
+      "evidence_id": "R5-R5_196_TURN_HANDOFF_SYSTEMIC_SIMULATION_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_196_TURN_HANDOFF_SYSTEMIC_SIMULATION_HARDENING.md",
+      "sha256": "7637428179c47daa0d8af87e9de2d23d24467456db9c49a1d5f26b7b05d58ca0"
+    },
+    {
+      "evidence_id": "R5-R5_197_CONTROL_PLANE_TAKEOVER_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_197_CONTROL_PLANE_TAKEOVER_HARDENING.md",
+      "sha256": "a7ebf47d62853d78790adc98068041c63fd154e22971533981620360280b3f53"
+    },
+    {
+      "evidence_id": "R5-R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "R5_198_PROTOCOL_OPAQUE_DRIFT_FIGHT_CONTINUATION_HARDENING.md",
+      "sha256": "8bbe9c010708a545b6a8b169ddc64efad0f1a14816386b87ab7cab833eb459bd"
+    },
+    {
+      "evidence_id": "R5-ARCHITECTURE",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "ARCHITECTURE.md",
+      "sha256": "1f254ea1bb2cbf37c4894668a110a68160dc3b3aa8d517a17a7d9b5ba40ae76b"
+    },
+    {
+      "evidence_id": "R5-DEBUGGING",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "DEBUGGING.md",
+      "sha256": "acd52bd9d518ddeccab31d9b2ec087a9a94cb753b76ad760dd61afffce831de9"
+    },
+    {
+      "evidence_id": "R5-LIVE_ACCEPTANCE",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "LIVE_ACCEPTANCE.md",
+      "sha256": "cb8442c70e3a2135cbc0fd19a865f7677a350ce7fc003a375137286c32888863"
+    },
+    {
+      "evidence_id": "R5-PROTOCOL_UPGRADE_GUIDE",
+      "classification": "DERIVED",
+      "source": "R5.198",
+      "description": "Historical implementation/report evidence frozen from the reference release.",
+      "limitation": "Historical report is not a substitute for raw capture/journal and does not certify the current client.",
+      "path": "PROTOCOL_UPGRADE_GUIDE.md",
+      "sha256": "a5610b270f2fc602c44fa620b23f1ba96f167733f1c57fcc8bed7918b06d7a94"
+    },
+    {
+      "evidence_id": "MISSING-R5-RAW-PCAP",
+      "classification": "MISSING",
+      "source": "M0",
+      "description": "Original raw live PCAP/PCAPNG files cited by historical reports are not present in the lean R5.198 archive.",
+      "limitation": "Must remain blocked until primary evidence is collected under the appropriate later gate."
+    },
+    {
+      "evidence_id": "MISSING-R5-CANONICAL-JOURNAL",
+      "classification": "MISSING",
+      "source": "M0",
+      "description": "Original historical live Canonical SQLite journal/database is not present in the lean R5.198 archive.",
+      "limitation": "Must remain blocked until primary evidence is collected under the appropriate later gate."
+    },
+    {
+      "evidence_id": "MISSING-CURRENT-BUILD-CAPTURE",
+      "classification": "MISSING",
+      "source": "M0",
+      "description": "Fresh authoritative capture for the current Dofus client build has not been supplied/certified in M0.",
+      "limitation": "Must remain blocked until primary evidence is collected under the appropriate later gate."
+    },
+    {
+      "evidence_id": "MISSING-CURRENT-WINDOWS-ACCEPTANCE",
+      "classification": "MISSING",
+      "source": "M0",
+      "description": "Current Windows host/client identity, calibration, bridge and input acceptance evidence is not available in offline M0.",
+      "limitation": "Must remain blocked until primary evidence is collected under the appropriate later gate."
+    },
+    {
+      "evidence_id": "MISSING-CURRENT-CRA-ENU-LIVE-LIFECYCLE",
+      "classification": "MISSING",
+      "source": "M0",
+      "description": "Bounded current-client CRA→ENU join/Ready/turn/reentry live acceptance evidence is not available in M0.",
+      "limitation": "Must remain blocked until primary evidence is collected under the appropriate later gate."
+    }
+  ]
+}

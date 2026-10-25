@@ -1,0 +1,49 @@
+{
+  "milestone": "P17",
+  "date": "2026-10-20",
+  "title": "Synthetic Party Coordination and Mission Workflow",
+  "implementation": "OFFLINE_RESEARCH_ONLY",
+  "working_tree_tests": {
+    "result": "PASS",
+    "tests_run": 562,
+    "previous_baseline": 517,
+    "new_p17_tests": 45,
+    "runner": "python -m unittest discover -s tests -p test_*.py -v"
+  },
+  "invariants": [
+    "END_TURN_INTENDED is never treated as observed TURN_ENDED",
+    "New turn cannot begin before prior turn is confirmed ended",
+    "Every participant Ready does not prove fight start or turn ownership",
+    "Late confirmations checked even if no watchdog event occurs",
+    "Account generation, actor and fight epoch mismatch quarantined",
+    "First failure retained and later events cannot silently recover",
+    "Fight ended does not imply victory; separate outcome evidence required",
+    "Workflow consumes coordination contracts, not implementation internals",
+    "All reports permanently non-actionable; no physical input"
+  ],
+  "cli_checks": {
+    "happy_handoff": "PASS_SYNTHETIC_ONLY",
+    "missing_confirmation": "QUARANTINED_EXIT_10",
+    "start": "BLOCKED_EXIT_40"
+  },
+  "clean_extraction": {
+    "status": "PASS",
+    "tests_run": 562,
+    "seconds": 66.073,
+    "source": "/tmp/p17_fresh_test.log"
+  },
+  "windows_batch_execution": "NOT_TESTED",
+  "current_protocol_certification": "NOT_AVAILABLE",
+  "live_fight_acceptance": "NOT_PERFORMED",
+  "limitations": [
+    "All observations are synthetic; no authoritative live events",
+    "Timeouts are integer fixture ticks, not live wall-clock deadlines",
+    "Existing verify wrapper intermittently stalls in this environment; direct verbose suite passed"
+  ],
+  "physical_input_sent": false,
+  "fresh_cli_checks": {
+    "handoff_exit": 0,
+    "missing_confirmation_exit": 10,
+    "start_exit": 40
+  }
+}

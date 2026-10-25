@@ -1,0 +1,87 @@
+{
+  "milestone": "P23",
+  "schema_version": 1,
+  "scope": "two_phase_historical_semantic_audit_fail_closed",
+  "verification_environment": "Linux / Python; Windows host untested",
+  "grouped_tests": {
+    "status": "PASS",
+    "passed": 714,
+    "new_tests": 18,
+    "inherited_tests": 696,
+    "groups": [
+      {
+        "id": "1",
+        "passed": 67,
+        "subtests": 17,
+        "status": "PASS"
+      },
+      {
+        "id": "2",
+        "passed": 63,
+        "subtests": 0,
+        "status": "PASS"
+      },
+      {
+        "id": "3a",
+        "passed": 116,
+        "subtests": 9,
+        "status": "PASS"
+      },
+      {
+        "id": "3b",
+        "passed": 71,
+        "subtests": 31,
+        "status": "PASS"
+      },
+      {
+        "id": "4a",
+        "passed": 159,
+        "subtests": 70,
+        "status": "PASS"
+      },
+      {
+        "id": "4b",
+        "passed": 49,
+        "subtests": 10,
+        "status": "PASS"
+      },
+      {
+        "id": "5",
+        "passed": 145,
+        "subtests": 0,
+        "status": "PASS"
+      },
+      {
+        "id": "6",
+        "passed": 44,
+        "subtests": 0,
+        "status": "PASS"
+      }
+    ]
+  },
+  "single_process_full_suite": {
+    "status": "INCOMPLETE_INTERMITTENT_STALL",
+    "note": "full monolithic suite did not produce a completed receipt"
+  },
+  "live_acceptance": {
+    "status": "NOT_TESTED",
+    "percent_complete": 0
+  },
+  "readiness": {
+    "synthetic_historical_research_only": true,
+    "current_build_semantic_certified": false,
+    "canonical_authoritative_admission": false,
+    "real_input_enabled": false
+  },
+  "operator_bat_commands": [
+    "setup.bat",
+    "start.bat"
+  ],
+  "code_changes": [
+    "src/anka_app/semantic_offline.py"
+  ],
+  "new_tests": [
+    "tests/test_p23_semantic_transport_finality.py"
+  ],
+  "claims_limit": "All measured test cases pass in independent groups; not a current-client, Windows or end-to-end live certification"
+}

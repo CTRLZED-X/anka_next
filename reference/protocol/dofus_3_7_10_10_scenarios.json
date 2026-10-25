@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "adapter_id": "dofus_3_7_10_10",
+  "client_build": "3.7.10.10",
+  "scenarios": {
+    "WORLD_TO_FIGHT_ENTRY": {
+      "status": "CURRENT_RUNTIME_VERIFIED",
+      "evidence": ["5e9f1bd25dc43b71af5a4f55cae0e93adf891d21d988a53a97e0789ee44e53f3"],
+      "required_before_unbounded_live": true
+    },
+    "PARTY_CREATE_AND_JOIN": {
+      "status": "CURRENT_RUNTIME_VERIFIED",
+      "evidence": ["5e9f1bd25dc43b71af5a4f55cae0e93adf891d21d988a53a97e0789ee44e53f3"],
+      "required_before_unbounded_live": true
+    },
+    "WORLD_FIGHT_MAP_SEPARATION": {
+      "status": "CURRENT_RUNTIME_VERIFIED_AND_OFFLINE_REGRESSION",
+      "evidence": ["5e9f1bd25dc43b71af5a4f55cae0e93adf891d21d988a53a97e0789ee44e53f3"],
+      "required_before_unbounded_live": true
+    },
+    "PLACEMENT_TO_READY": {
+      "status": "OFFLINE_VERIFIED_PENDING_LIVE",
+      "evidence": ["R5.190 regression suite"],
+      "required_before_unbounded_live": true
+    },
+    "READY_TO_FIRST_TURN": {
+      "status": "OFFLINE_VERIFIED_PENDING_LIVE",
+      "evidence": ["R5.190 regression suite"],
+      "required_before_unbounded_live": true
+    },
+    "MOVE_TO_MP_AND_CELL": {
+      "status": "CURRENT_CAPTURE_VERIFIED",
+      "evidence": ["83701ef819d7f4acacbb59681b880350cc525e24ab1a425b7ef1b7b5e749c2cd", "3cf70c4f8c10d685b536eab551b7f8bebe770a8e9eda33c3199d325c882d1f06"],
+      "required_before_unbounded_live": true
+    },
+    "CAST_TO_AP_DAMAGE_COOLDOWN": {
+      "status": "CURRENT_CAPTURE_VERIFIED",
+      "evidence": ["83701ef819d7f4acacbb59681b880350cc525e24ab1a425b7ef1b7b5e749c2cd", "3cf70c4f8c10d685b536eab551b7f8bebe770a8e9eda33c3199d325c882d1f06"],
+      "required_before_unbounded_live": true
+    },
+    "END_TURN_TO_NEXT_OWNER": {
+      "status": "CURRENT_SERVER_AUTHORITY_VERIFIED_OUTBOUND_REQUEST_PENDING",
+      "evidence": ["R5 current turn-boundary evidence"],
+      "required_before_unbounded_live": true,
+      "limitation": "Do not infer the outbound End Turn opcode; server turn-ended/next-owner events remain authority."
+    },
+    "FIGHT_END_TO_WORLD_REENTRY": {
+      "status": "OFFLINE_AND_HISTORICAL_REGRESSION_PENDING_BOUNDED_CURRENT_LIVE",
+      "evidence": ["R5.190 regression suite"],
+      "required_before_unbounded_live": true
+    }
+  }
+}
