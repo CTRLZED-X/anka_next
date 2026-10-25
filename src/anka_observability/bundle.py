@@ -698,8 +698,15 @@ def verify_incident(path:Path)->dict:
             except (json.JSONDecodeError,UnicodeDecodeError,ValueError):add('MANIFEST_JSON_INVALID');return {'status':'FAIL','errors':errors}
             if not isinstance(m,dict):add('MANIFEST_SHAPE_INVALID');return {'status':'FAIL','errors':errors}
             if has_unredacted_sensitive_data(m):add('UNREDACTED_SENSITIVE_DATA:manifest.json')
-            if m.get('schema_version') not in (1,2):add('SCHEMA_MISMATCH')
-            if m.get('schema_version')==2:
+            declared_schema=m.get('schema_version')
+            if declared_schema not in (1,2):add('SCHEMA_MISMATCH')
+            modern_markers={
+                'analysis/gpt_summary.json','analysis/workflow_lifecycle.json','analysis/turn_handoff.json',
+                'analysis/snapshot_index.json','metadata/flight_recorder.json',
+            }
+            modern_bundle=(declared_schema==2 or bool(modern_markers & set(names)))
+            if declared_schema==1 and modern_bundle:add('SCHEMA_DOWNGRADE_SUSPECTED')
+            if modern_bundle:
                 missing_required=sorted(REQUIRED_SCHEMA2_FILES-set(names))
                 for required_name in missing_required[:32]:add('MISSING_REQUIRED_ARTIFACT:'+required_name)
             declared=m.get('files')
@@ -733,7 +740,7 @@ def verify_incident(path:Path)->dict:
                     # Dedicated structural parsers below report malformed data.
                     pass
 
-            if m.get('schema_version')==2 and 'GPT_READ_FIRST.md' in names and 'analysis/gpt_summary.json' in names:
+            if modern_bundle and 'GPT_READ_FIRST.md' in names and 'analysis/gpt_summary.json' in names:
                 try:
                     read_first_text=z.read('GPT_READ_FIRST.md').decode('utf8')
                     summary_hash=sha256(z.read('analysis/gpt_summary.json')).hexdigest()
@@ -750,7 +757,7 @@ def verify_incident(path:Path)->dict:
                     if not isinstance(matrix,dict) or not isinstance(matrix.get('sections'),dict):add('EVIDENCE_MATRIX_SHAPE_INVALID')
                     else:
                         sections=matrix['sections'];present=set(sections)
-                        required=set(CRITICAL_SECTIONS if m.get('schema_version')==2 else ('bootstrap','configuration','identity','capture','protocol','canonical','live_state','coordination','decision','execution','outcome'))
+                        required=set(CRITICAL_SECTIONS if modern_bundle else ('bootstrap','configuration','identity','capture','protocol','canonical','live_state','coordination','decision','execution','outcome'))
                         if not required.issubset(present):add('INCOMPLETE_EVIDENCE_MATRIX')
                         if any(not isinstance(k,str) or v not in EVIDENCE_STATUS for k,v in sections.items()):add('BAD_EVIDENCE_STATUS')
             if m.get('raw_protocol_included') is not False:add('RAW_PROTOCOL_DEFAULT_POLICY_VIOLATION')
@@ -810,11 +817,11 @@ def verify_incident(path:Path)->dict:
                 if invocation_id is not None and event.invocation_id!=invocation_id:add('TIMELINE_INVOCATION_ID_MISMATCH')
             manifest_run_id=m.get('run_id')
             if manifest_run_id is None:
-                if m.get('schema_version')==2:add('MANIFEST_RUN_ID_INVALID')
+                if modern_bundle:add('MANIFEST_RUN_ID_INVALID')
             elif not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
                 add('MANIFEST_RUN_ID_INVALID')
             if manifest_run_id is not None and run_id is not None and manifest_run_id!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
-            if (m.get('schema_version')==2 and not bool(m.get('advanced_analysis_failed'))
+            if (modern_bundle and not bool(m.get('advanced_analysis_failed'))
                     and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict)
                     and isinstance(run_manifest,dict)):
                 derived_sections=evidence_matrix(
@@ -1093,7 +1100,7 @@ def verify_incident(path:Path)->dict:
                     if retained_gpt_confidence not in allowed_confidence:add('GPT_SUMMARY_RETAINED_CONFIDENCE_INVALID')
                     if status not in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE','NOT_ESTABLISHED','ADVANCED_ANALYSIS_UNAVAILABLE'):
                         add('GPT_SUMMARY_FINDING_STATUS_INVALID')
-                    if m.get('schema_version')==2:
+                    if modern_bundle:
                         try:
                             summary_sha=sha256(z.read('analysis/gpt_summary.json')).hexdigest()
                             if status=='ADVANCED_ANALYSIS_UNAVAILABLE':
