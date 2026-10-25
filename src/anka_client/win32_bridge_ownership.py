@@ -69,12 +69,12 @@ def _loopback_listener_owners(raw: bytes, port: int) -> set[int]:
     return owners
 
 
-def loopback_listener_owner_pid(port: int) -> int | None:
-    """Return the unique PID owning an IPv4 loopback LISTEN socket on port.
+def loopback_listener_owner_generation(port: int) -> tuple[int, int] | None:
+    """Return exact (PID, process creation FILETIME) for a loopback listener.
 
     No process is started and no socket is modified. None means there is no
-    matching loopback listener. Ambiguous/corrupt Windows table evidence is
-    rejected rather than guessed.
+    matching loopback listener. Ambiguous/corrupt Windows evidence, PID reuse,
+    or an unavailable process generation is rejected rather than guessed.
     """
     if os.name != 'nt':
         raise RuntimeError('WINDOWS_BRIDGE_OWNERSHIP_REQUIRES_WINDOWS')
@@ -123,4 +123,36 @@ def loopback_listener_owner_pid(port: int) -> int | None:
     owners = _loopback_listener_owners(raw, port)
     if len(owners) > 1:
         raise OSError('TCP_LISTENER_OWNER_AMBIGUOUS')
-    return next(iter(owners)) if owners else None
+    if not owners:
+        return None
+
+    pid = next(iter(owners))
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.OpenProcess.argtypes=[wt.DWORD,wt.BOOL,wt.DWORD]
+    kernel.OpenProcess.restype=wt.HANDLE
+    kernel.CloseHandle.argtypes=[wt.HANDLE]
+    kernel.CloseHandle.restype=wt.BOOL
+    kernel.GetProcessTimes.argtypes=[
+        wt.HANDLE,ctypes.POINTER(wt.FILETIME),ctypes.POINTER(wt.FILETIME),
+        ctypes.POINTER(wt.FILETIME),ctypes.POINTER(wt.FILETIME)
+    ]
+    kernel.GetProcessTimes.restype=wt.BOOL
+    handle=kernel.OpenProcess(0x1000,False,pid)
+    if not handle:
+        raise OSError('TCP_LISTENER_PROCESS_OPEN_FAILED')
+    try:
+        times=[wt.FILETIME() for _ in range(4)]
+        if not kernel.GetProcessTimes(handle,*(ctypes.byref(item) for item in times)):
+            raise OSError('TCP_LISTENER_PROCESS_GENERATION_UNAVAILABLE')
+        created=(int(times[0].dwHighDateTime)<<32)|int(times[0].dwLowDateTime)
+        if created <= 0:
+            raise OSError('TCP_LISTENER_PROCESS_GENERATION_INVALID')
+    finally:
+        kernel.CloseHandle(handle)
+    return pid,created
+
+
+def loopback_listener_owner_pid(port: int) -> int | None:
+    """Compatibility diagnostic returning only the independently verified PID."""
+    generation=loopback_listener_owner_generation(port)
+    return generation[0] if generation is not None else None
