@@ -374,5 +374,40 @@ class TestAgent05PolicyClassProofSafety(unittest.TestCase):
         self.assertEqual(kernel.calls, [])
 
 
+
+class TestAgent05ReadyProofSafety(unittest.TestCase):
+    def test_ready_waits_on_unknown_or_stale_phase_and_cell_truth(self):
+        from dataclasses import replace
+
+        for name, status in (
+            ("fight_phase", "UNKNOWN"),
+            ("fight_phase", "STALE"),
+            ("actor_cell", "CONFLICTING"),
+            ("actor_cell", "NOT_OBSERVED"),
+        ):
+            with self.subTest(name=name, status=status):
+                frame = replace(combat_frame(), workflow_goal="READY")
+                proofs = tuple(
+                    (key, status if key == name else value)
+                    for key, value in frame.proof_statuses
+                )
+                result = DeterministicPlanner(LegalKernel()).plan(
+                    replace(frame, proof_statuses=proofs)
+                )
+                self.assertEqual(result.disposition, "WAIT")
+                self.assertEqual(result.reason, "DECISION_READY_EVIDENCE_MISSING")
+                self.assertIn(name, result.required_evidence)
+
+    def test_ready_requires_actor_identity_even_with_known_proofs(self):
+        from dataclasses import replace
+
+        frame = replace(combat_frame(), workflow_goal="READY", actor_id=None)
+        result = DeterministicPlanner(LegalKernel()).plan(frame)
+
+        self.assertEqual(result.disposition, "WAIT")
+        self.assertEqual(result.reason, "DECISION_READY_ACTOR_UNKNOWN")
+        self.assertIn("actor_identity", result.required_evidence)
+
+
 if __name__ == "__main__":
     unittest.main()
