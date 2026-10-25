@@ -771,6 +771,39 @@ class Agent06WorkflowRecoveryTests(unittest.TestCase):
             terminal.snapshot.terminal_reason, "WORKFLOW_TIMEOUT_RECOVERING"
         )
 
+    def test_resume_rejects_temporal_fence_regression(self):
+        workflow = MissionWorkflow(
+            "run-agent06-resume-tick",
+            mission(watchdog=5, recovery=1),
+        )
+        self._advance_to(workflow, "READY")
+        snapshot = workflow.snapshot()
+        self.assertGreater(snapshot.phase_started_tick, 0)
+
+        from anka_workflow.engine import WorkflowRejected
+
+        with self.assertRaisesRegex(WorkflowRejected, "RESUME_TICK_REGRESSION"):
+            MissionWorkflow.resume(
+                workflow.plan,
+                snapshot,
+                resume_tick=snapshot.phase_started_tick - 1,
+            )
+
+        resumed = MissionWorkflow.resume(
+            workflow.plan,
+            snapshot,
+            resume_tick=snapshot.phase_started_tick,
+        )
+        self.assertEqual(resumed.snapshot().phase, "READY")
+        self.assertEqual(
+            resumed.snapshot().phase_started_tick,
+            snapshot.phase_started_tick,
+        )
+        self.assertGreater(
+            resumed.snapshot().progress_generation,
+            snapshot.progress_generation,
+        )
+
     def test_terminal_stop_requests_cannot_grow_replay_history(self):
         workflow = MissionWorkflow(
             "run-agent06-terminal-history",
