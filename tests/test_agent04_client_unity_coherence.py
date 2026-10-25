@@ -317,7 +317,7 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
 
     def test_native_bridge_instance_seeds_nonrepeating_generation_epoch(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
-        self.assertIn('RandomNumberGenerator.Fill(bytes)', source)
+        self.assertIn('RandomNumberGenerator.Create()', source)
         self.assertIn('_mapGeneration = generationEpoch;', source)
         self.assertIn('_coordinateGeneration = generationEpoch;', source)
 
