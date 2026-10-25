@@ -409,5 +409,58 @@ class TestAgent05ReadyProofSafety(unittest.TestCase):
         self.assertIn("actor_identity", result.required_evidence)
 
 
+
+class TestAgent05NonCombatActorContextSafety(unittest.TestCase):
+    def test_noncombat_action_paths_require_actor_identity_and_cell_values(self):
+        from dataclasses import replace
+
+        cases = (
+            (
+                "PLACEMENT",
+                (("fight_phase", "KNOWN"), ("actor_cell", "KNOWN")),
+                {"candidate_move_cells": (201,), "map_id": 190580738},
+                "DECISION_PLACEMENT_ACTOR_UNKNOWN",
+            ),
+            (
+                "WORLD_MOVE",
+                (("world_map", "KNOWN"), ("actor_cell", "KNOWN")),
+                {"candidate_move_cells": (201,)},
+                "DECISION_WORLD_ACTOR_UNKNOWN",
+            ),
+            (
+                "FIGHT_ENTRY",
+                (("world_map", "KNOWN"), ("actor_cell", "KNOWN"), ("encounter_target", "KNOWN")),
+                {"encounter_id": "encounter-a", "map_id": 190580738},
+                "DECISION_FIGHT_ENTRY_ACTOR_UNKNOWN",
+            ),
+            (
+                "JOIN_FIGHT",
+                (
+                    ("world_map", "KNOWN"),
+                    ("actor_cell", "KNOWN"),
+                    ("fight_identity", "KNOWN"),
+                    ("join_target", "KNOWN"),
+                ),
+                {"target_fight_id": "fight-a", "target_fight_epoch": 1},
+                "DECISION_JOIN_ACTOR_UNKNOWN",
+            ),
+        )
+        for goal, proofs, extra, reason in cases:
+            with self.subTest(goal=goal):
+                frame = replace(
+                    combat_frame(),
+                    workflow_goal=goal,
+                    proof_statuses=proofs,
+                    actor_id=None,
+                    actor_cell=None,
+                    **extra,
+                )
+                result = DeterministicPlanner(LegalKernel()).plan(frame)
+                self.assertEqual(result.disposition, "WAIT")
+                self.assertEqual(result.reason, reason)
+                self.assertIn("actor_identity", result.required_evidence)
+                self.assertIn("actor_cell", result.required_evidence)
+
+
 if __name__ == "__main__":
     unittest.main()
