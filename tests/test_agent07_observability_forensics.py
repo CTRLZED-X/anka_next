@@ -10,7 +10,7 @@ from anka_contracts.diagnostics import DiagnosticEvent
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import verify_incident
 from anka_observability.recovery import recover_unclean_run
-from anka_observability.forensics import READY_TRACE, action_lifecycle_report, turn_handoff_report
+from anka_observability.forensics import READY_TRACE, PartyReadyAnalyzer, action_lifecycle_report, turn_handoff_report
 from anka_observability.redaction import has_unredacted_sensitive_data
 
 
@@ -369,6 +369,90 @@ class TestAgent07ExecutionStageProjection(unittest.TestCase):
                 self.assertIn('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH', tampered['errors'])
             finally:
                 obs.finish('BLOCKED')
+
+
+class TestAgent07ReadyBatchCorrelation(unittest.TestCase):
+    def test_protocol_ready_without_batch_span_cannot_float_to_any_canonical_commit(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-batch',
+                invocation_id='inv-agent07-ready-batch',
+            )
+            try:
+                fight_epoch=9
+                for account, batch in (
+                    ('acct-cra','batch-agent07-cra'),
+                    ('acct-enu',None),
+                ):
+                    action_id='action-agent07-ready-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    payload = {} if batch is None else {'batch_span_id':batch}
+                    obs.record(
+                        'protocol.ready_observed',
+                        owner_system='anka_protocol',
+                        boundary='protocol.ready_observation',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload=payload,
+                    )
+                    obs.record(
+                        'canonical.ready_committed',
+                        owner_system='anka_canonical',
+                        boundary='canonical.ready_commit',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch or 'batch-unrelated'},
+                    )
+
+                result = PartyReadyAnalyzer().analyze(
+                    obs.recent,
+                    ('acct-cra','acct-enu'),
+                    control_state='BLOCKED',
+                )
+                self.assertIsNotNone(result.finding)
+                self.assertEqual(
+                    result.finding.first_divergent_boundary,
+                    'protocol.ready_observation',
+                )
+                enu = next(
+                    graph for graph in result.account_graphs
+                    if graph['account_id']=='acct-enu'
+                )
+                protocol_edge = next(
+                    edge for edge in enu['edges']
+                    if edge['event_name']=='protocol.ready_observed'
+                )
+                self.assertEqual(protocol_edge['status'], 'INVALID_CORRELATION')
+                self.assertIsNone(protocol_edge['batch_span_id'])
+            finally:
+                obs.finish('BLOCKED')
+
+
 
 
 class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
