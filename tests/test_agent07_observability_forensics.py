@@ -1026,6 +1026,46 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
 
 
 
+class TestAgent07SchemaDowngradeIntegrity(unittest.TestCase):
+    def test_modern_bundle_cannot_bypass_checks_by_rewriting_manifest_schema_to_one(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-schema-downgrade',
+                invocation_id='inv-agent07-schema-downgrade',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'SCHEMA_DOWNGRADE_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                with ZipFile(path) as z:
+                    files = {name: z.read(name) for name in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                self.assertEqual(manifest['schema_version'], 2)
+                manifest['schema_version'] = 1
+                files['manifest.json'] = (
+                    json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                ).encode('utf8')
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for name, data in files.items():
+                        z.writestr(name, data)
+
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('SCHEMA_DOWNGRADE_SUSPECTED', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
 class TestAgent07EvidenceMatrixDerivation(unittest.TestCase):
     @staticmethod
     def _rewrite_json_files(path: Path, mutations: dict[str, object]) -> None:
