@@ -372,6 +372,93 @@ class TestAgent07ExecutionStageProjection(unittest.TestCase):
 
 
 class TestAgent07ReadyBatchCorrelation(unittest.TestCase):
+    def test_incompatible_shared_ready_barrier_cannot_be_skipped_for_later_good_barrier(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-shared',
+                invocation_id='inv-agent07-ready-shared',
+            )
+            try:
+                fight_epoch=10
+                for account in ('acct-cra','acct-enu'):
+                    action_id='action-agent07-shared-'+account
+                    batch='batch-agent07-shared-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    obs.record(
+                        'protocol.ready_observed',
+                        owner_system='anka_protocol',
+                        boundary='protocol.ready_observation',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch},
+                    )
+                    obs.record(
+                        'canonical.ready_committed',
+                        owner_system='anka_canonical',
+                        boundary='canonical.ready_commit',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch},
+                    )
+
+                bad = obs.record(
+                    'coordination.ready_barrier_satisfied',
+                    owner_system='anka_coordination',
+                    boundary='coordination.ready_barrier',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    fight_epoch=fight_epoch,
+                    payload={'required_accounts':['acct-cra']},
+                )
+                self.assertIn(bad, ('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'coordination.ready_barrier_satisfied',
+                    owner_system='anka_coordination',
+                    boundary='coordination.ready_barrier',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    fight_epoch=fight_epoch,
+                    payload={'required_accounts':['acct-cra','acct-enu']},
+                )
+
+                result = PartyReadyAnalyzer().analyze(
+                    obs.recent,
+                    ('acct-cra','acct-enu'),
+                    control_state='BLOCKED',
+                )
+                self.assertIsNotNone(result.finding)
+                self.assertEqual(
+                    result.finding.first_divergent_boundary,
+                    'coordination.ready_barrier',
+                )
+                self.assertEqual(result.shared_graph[-1]['status'], 'INVALID_CORRELATION')
+                self.assertEqual(result.shared_graph[-1]['invalid_field'], 'required_accounts')
+            finally:
+                obs.finish('BLOCKED')
+
     def test_protocol_ready_without_batch_span_cannot_float_to_any_canonical_commit(self):
         with tempfile.TemporaryDirectory() as td:
             obs = LocalDiagnostics(
