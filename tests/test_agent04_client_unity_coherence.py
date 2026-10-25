@@ -1,11 +1,14 @@
 """Chat 04 adversarial regressions for exact window/Unity projection coherence."""
 from __future__ import annotations
 
+import socket
+import struct
 import unittest
 
 from anka_app.cli import ROOT
 from anka_client.bridge_discovery import probe_bridge_range
 from anka_client.unity_bridge import ReadOnlyBridgeInspector
+from anka_client.win32_bridge_ownership import _loopback_listener_owners
 from anka_contracts.client import WindowObservation
 
 
@@ -158,6 +161,23 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertTrue(report['listener_owner_proof_active'])
         self.assertEqual(report['listener_owner_rejections'], 0)
         self.assertEqual(report['projection_ready_matches'], 1)
+
+    def test_windows_tcp_owner_table_parser_accepts_only_loopback_listener(self):
+        loopback = struct.unpack('<I', socket.inet_aton('127.0.0.1'))[0]
+        other = struct.unpack('<I', socket.inet_aton('0.0.0.0'))[0]
+        encoded_port = socket.htons(PORT)
+        rows = [
+            (2, loopback, encoded_port, 0, 0, PID),
+            (2, other, encoded_port, 0, 0, 9999),
+            (5, loopback, encoded_port, 0, 0, 8888),
+        ]
+        raw = struct.pack('<I', len(rows)) + b''.join(struct.pack('<6I', *row) for row in rows)
+        self.assertEqual(_loopback_listener_owners(raw, PORT), {PID})
+
+    def test_windows_tcp_owner_table_parser_rejects_truncation(self):
+        raw = struct.pack('<I', 2) + struct.pack('<6I', 2, 0, 0, 0, 0, PID)
+        with self.assertRaisesRegex(OSError, 'TCP_LISTENER_TABLE_TRUNCATED'):
+            _loopback_listener_owners(raw, PORT)
 
     def test_native_projection_signature_tracks_hwnd_replacement(self):
         source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
