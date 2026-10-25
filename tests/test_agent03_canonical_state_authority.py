@@ -5,6 +5,7 @@ damaged provenance receipts must fail closed without mutating durable truth.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -258,6 +259,25 @@ class Agent03AuthorityTests(unittest.TestCase):
                 ))
             self.assertEqual(writer.current_cursor(),4)
             self.assertEqual(writer.snapshot(ACCOUNT).client_instance_id,CLIENT)
+
+    def test_nonobservational_candidate_evidence_cannot_be_laundered_into_authority(self):
+        base=candidate('heuristic','FIGHT_STARTED',{'fight_id':'fight-1'},fight_epoch=1)
+        for classification,source_system in (
+            ('HEURISTIC','anka_protocol'),
+            ('STALE','anka_protocol'),
+            ('CONFLICTING','anka_protocol'),
+            ('MISSING','anka_protocol'),
+            ('AUTHORITY_COMMITTED','anka_protocol'),
+            ('OBSERVED_EXTERNAL','anka_observability'),
+        ):
+            with self.subTest(classification=classification,source_system=source_system):
+                pointer=replace(base.evidence[0],classification=classification,source_system=source_system)
+                untrusted=replace(base,evidence=(pointer,))
+                with self.writer() as writer:
+                    with self.assertRaisesRegex(Exception,'CANONICAL_CANDIDATE_EVIDENCE_UNTRUSTED'):
+                        writer.commit_candidate_batch(batch(1,untrusted))
+                    self.assertEqual(writer.current_cursor(),0)
+                    self.assertIsNone(writer.snapshot(ACCOUNT))
 
     def test_deleted_batch_receipt_is_detected_on_reopen(self):
         with self.writer() as writer:
