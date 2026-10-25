@@ -44,6 +44,8 @@ def signal(
     *,
     fight_epoch: int | None = None,
     fight_result: str | None = None,
+    action_id: str | None = None,
+    action_status: str | None = None,
     encounter_id: str | None = None,
     encounter_map_id: int | None = None,
 ):
@@ -54,6 +56,8 @@ def signal(
         (f"evidence-agent06-{number}",),
         fight_epoch=fight_epoch,
         fight_result=fight_result,
+        action_id=action_id,
+        action_status=action_status,
         encounter_id=encounter_id,
         encounter_map_id=encounter_map_id,
     )
@@ -581,6 +585,85 @@ class Agent06WorkflowRecoveryTests(unittest.TestCase):
         self.assertEqual(rejected.reason, "FIGHT_EPOCH_MISMATCH")
         self.assertEqual(rejected.snapshot.phase, "RECOVERING")
         self.assertEqual(rejected.snapshot.resume_phase, "READY")
+
+    def test_pending_action_blocks_progress_and_timeout_fails_closed(self):
+        workflow = MissionWorkflow(
+            "run-agent06-pending-timeout",
+            mission(watchdog=1, recovery=3),
+        )
+        self._advance_to(workflow, "READY")
+        submitted = workflow.apply(
+            signal(
+                100,
+                "ACTION_SUBMITTED",
+                7,
+                fight_epoch=1,
+                action_id="action-agent06-ready",
+            )
+        )
+        self.assertEqual(submitted.status, "APPLIED")
+        self.assertEqual(
+            submitted.snapshot.pending_action_id,
+            "action-agent06-ready",
+        )
+
+        blocked_progress = workflow.apply(
+            signal(101, "FIRST_TURN_PROVEN", 8, fight_epoch=1)
+        )
+        self.assertEqual(blocked_progress.status, "REJECTED")
+        self.assertEqual(
+            blocked_progress.reason,
+            "PENDING_ACTION_RECONCILIATION_REQUIRED",
+        )
+        self.assertEqual(blocked_progress.snapshot.phase, "READY")
+        self.assertEqual(
+            blocked_progress.snapshot.pending_action_id,
+            "action-agent06-ready",
+        )
+
+        timeout = workflow.apply(
+            signal(
+                102,
+                "WATCHDOG",
+                submitted.snapshot.watchdog_deadline_tick + 1,
+            )
+        )
+        self.assertEqual(timeout.snapshot.phase, "BLOCKED")
+        self.assertEqual(
+            timeout.snapshot.terminal_reason,
+            "WORKFLOW_PENDING_ACTION_TIMEOUT_REQUIRES_RECONCILIATION",
+        )
+        self.assertEqual(
+            timeout.snapshot.pending_action_id,
+            "action-agent06-ready",
+        )
+
+    def test_fight_end_is_only_safe_pending_action_supersession(self):
+        workflow = MissionWorkflow(
+            "run-agent06-pending-fight-end",
+            mission(watchdog=1, recovery=2),
+        )
+        self._advance_to(workflow, "READY")
+        submitted = workflow.apply(
+            signal(
+                110,
+                "ACTION_SUBMITTED",
+                7,
+                fight_epoch=1,
+                action_id="action-agent06-ready-end",
+            )
+        )
+        self.assertEqual(
+            submitted.snapshot.pending_action_id,
+            "action-agent06-ready-end",
+        )
+
+        ended = workflow.apply(
+            signal(111, "FIGHT_ENDED", 8, fight_epoch=1)
+        )
+        self.assertEqual(ended.status, "APPLIED")
+        self.assertEqual(ended.snapshot.phase, "FIGHT_END_RECONCILIATION")
+        self.assertIsNone(ended.snapshot.pending_action_id)
 
     def test_repeated_recovery_timeouts_are_bounded(self):
         workflow = MissionWorkflow(
