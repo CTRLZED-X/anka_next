@@ -230,6 +230,36 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         load_calibration_profile(path)
 
+    def test_current_calibration_requires_verified_source_and_changes_generation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'source.yaml'
+            source.write_text('current calibration source', encoding='utf8')
+            import hashlib
+            payload = {
+                'schema_version': 1,
+                'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+                'client_size': {'width': 1280, 'height': 649},
+                'spell_slots': {},
+                'controls': {},
+                'directions': {},
+                'status': 'CURRENT_CALIBRATION_EVIDENCE',
+            }
+            profile = root / 'calibration.json'
+            profile.write_text(json.dumps(payload), encoding='utf8')
+            with self.assertRaisesRegex(ValueError, 'CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED'):
+                load_calibration_profile(profile, current_client_certified=True, expected_dpi=96)
+            historical_generation = load_calibration_profile(
+                profile, source_path=source, current_client_certified=False, expected_dpi=96
+            ).generation
+            current_generation = load_calibration_profile(
+                profile, source_path=source, current_client_certified=True, expected_dpi=96
+            ).generation
+            different_dpi_generation = load_calibration_profile(
+                profile, source_path=source, current_client_certified=True, expected_dpi=120
+            ).generation
+            self.assertEqual(len({historical_generation,current_generation,different_dpi_generation}),3)
+
     def test_native_transient_projection_loss_forces_retry(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         tick_loss = '''_coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
