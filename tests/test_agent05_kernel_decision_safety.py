@@ -188,5 +188,54 @@ class TestAgent05MapResearchIdentity(unittest.TestCase):
         self.assertNotIn("ACTOR_ORIGIN_GEOMETRY_CONFLICT", result.reasons)
 
 
+
+class TestAgent05EffectConditionSafety(unittest.TestCase):
+    def test_unknown_alive_adjacent_actor_cannot_satisfy_condition(self):
+        from anka_game_kernel.domain.effect_conditions import (
+            AdjacentActorCondition,
+            ConditionSubject,
+            EffectConditionSpec,
+        )
+        from anka_game_kernel.domain.ids import ActorId
+        from anka_game_kernel.mechanics.effect_conditions.service import EffectConditionService
+        from anka_game_kernel.mechanics.geometry.grid import (
+            adjacent_cells,
+            cell_to_coordinate,
+            coordinate_to_cell,
+        )
+
+        caster_cell = CellId(100)
+        adjacent_cell = coordinate_to_cell(adjacent_cells(cell_to_coordinate(caster_cell))[0])
+        caster = SimpleNamespace(
+            actor_id=ActorId(41),
+            cell_id=caster_cell,
+        )
+        candidate = SimpleNamespace(
+            actor_id=ActorId(42),
+            alive=None,
+            cell_id=adjacent_cell,
+            team_id=None,
+            summoned=None,
+            summoner_id=None,
+        )
+        context = SimpleNamespace(
+            actors=(caster, candidate),
+            actor=lambda actor_id: None,
+        )
+        spec = EffectConditionSpec(
+            (AdjacentActorCondition(ConditionSubject.CASTER),)
+        )
+
+        result = EffectConditionService().evaluate(
+            spec,
+            caster=caster,
+            target=caster,
+            fight_context=context,
+        )
+
+        self.assertIsNone(result.matches)
+        self.assertIn("fight_context.adjacent_actor_semantics", result.missing_inputs)
+
+
 if __name__ == "__main__":
     unittest.main()
