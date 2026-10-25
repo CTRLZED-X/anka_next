@@ -154,6 +154,13 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertEqual((identity.status, identity.reason),
                          ('BLOCKED', 'BRIDGE_CLIENT_INSTANCE_MISMATCH'))
 
+    def test_native_projection_lifecycle_rechecks_latched_client_instance(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('private bool ObservationMatchesWindow', source)
+        self.assertIn('The current Dofus window no longer matches the accepted canonical client instance.', source)
+        self.assertIn('Canonical observation does not belong to the current Dofus window.', source)
+        self.assertIn('Canonical observation does not belong to the current follower window.', source)
+
     def test_native_observation_rejects_cross_client_and_revision_rollback(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         self.assertIn('OBSERVATION_CLIENT_INSTANCE_MISMATCH', source)
