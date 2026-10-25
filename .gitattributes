@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+# Keep binary evidence/reference assets byte-for-byte across platforms.
+*.zip binary
+*.pcapng binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.exe binary
+*.bin binary
