@@ -26,12 +26,14 @@ class _Dir:
     unresolved_gaps:int=0
     loss_epoch_seen:int=0
     reconnected_pending:bool=False
+    fin_seq:int|None=None
 
 @dataclass
 class _Flow:
     generation:int=1
     dirs:dict[str,_Dir]=field(default_factory=dict)
     active:bool=False
+    reset_seen:bool=False
 
 class TransportEnvelopeAssembler:
     def __init__(self, *, capture_session_id:str, flow_clients:Mapping[str,str], max_pending_segments:int=1024):
@@ -43,6 +45,7 @@ class TransportEnvelopeAssembler:
         self.capture_session_id=capture_session_id;self.flow_clients=bindings;self.max_pending=max_pending_segments
         self._flows:dict[str,_Flow]={};self._producer_sequence=0;self._loss_epoch=0;self._lock=RLock()
         self._emitted=0;self._bytes=0;self._ambiguous=0;self._reconnects=0;self._overflow=0;self._loss_fences=0
+        self._retired_uncertainty=0;self._retired_duplicates=0;self._retired_reordered=0
 
     def _connection_id(self,flow_id:str,generation:int)->str:
         digest=sha256(f'{self.capture_session_id}|{flow_id}|{generation}'.encode()).hexdigest()[:24]
@@ -72,14 +75,27 @@ class TransportEnvelopeAssembler:
     def _payload_seq(seg:CapturedTcpSegment)->int:
         return seg.seq + (1 if seg.syn else 0)
 
+    def _retire_generation(self,flow:_Flow)->None:
+        # Health is capture-session evidence, not merely the current TCP generation.
+        # A reconnect must never erase an unresolved old gap or old duplicate/reorder
+        # counters simply because the active direction state is replaced.
+        for old in flow.dirs.values():
+            self._retired_uncertainty+=old.unresolved_gaps+(1 if old.pending else 0)
+            self._retired_duplicates+=old.duplicates
+            self._retired_reordered+=old.reordered
+
     def _start_or_reconnect(self,flow_id:str,flow:_Flow,seg:CapturedTcpSegment)->_Dir:
         state=flow.dirs.setdefault(seg.direction,_Dir())
         if not seg.syn: return state
-        if state.syn_seq is not None and state.syn_seq==seg.seq:
+        terminal_restart=flow.reset_seen or any(d.fin_seq is not None for d in flow.dirs.values())
+        if not terminal_restart and state.syn_seq is not None and state.syn_seq==seg.seq:
             state.duplicates+=1;return state
-        if state.syn_seq is not None and state.syn_seq!=seg.seq:
-            # A new SYN in an already-anchored direction is a new 4-tuple generation.
-            flow.generation+=1;self._reconnects+=1;flow.dirs={};state=_Dir(reconnected_pending=True,loss_epoch_seen=self._loss_epoch);flow.dirs[seg.direction]=state
+        if terminal_restart or (state.syn_seq is not None and state.syn_seq!=seg.seq):
+            # A SYN after terminal evidence, or a different SYN on an already
+            # anchored tuple, starts a fresh connection generation.
+            self._retire_generation(flow)
+            flow.generation+=1;self._reconnects+=1;flow.dirs={};flow.reset_seen=False
+            state=_Dir(reconnected_pending=True,loss_epoch_seen=self._loss_epoch);flow.dirs[seg.direction]=state
         state.syn_seq=seg.seq;state.expected=(seg.seq+1)%_MOD;state.loss_epoch_seen=self._loss_epoch;flow.active=True
         return state
 
@@ -91,17 +107,45 @@ class TransportEnvelopeAssembler:
             self._ambiguous+=1;return ()
         flow=self._flows.setdefault(seg.flow_id,_Flow())
         state=self._start_or_reconnect(seg.flow_id,flow,seg)
-        if not seg.payload:return ()
         seq=self._payload_seq(seg)
+
+        # RST terminates the whole TCP connection. Preserve any payload as
+        # explicitly untrusted RESET evidence and fence all later non-SYN bytes.
+        if seg.rst:
+            flow.reset_seen=True
+            if not seg.payload:return ()
+            state.unresolved_gaps+=1
+            return (self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'RESET'),)
+        if flow.reset_seen and not seg.syn:
+            if not seg.payload:return ()
+            state.unresolved_gaps+=1
+            return (self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'RESET'),)
+
+        # FIN is half-close evidence. Its sequence position is the first byte
+        # that may no longer begin new payload in this direction. Retransmitted
+        # pre-FIN bytes remain admissible, but bytes at/after the FIN boundary
+        # are preserved only behind an explicit continuity fence.
+        if seg.fin:
+            fin_seq=seq+len(seg.payload)
+            if fin_seq>_MOD:
+                state.unresolved_gaps+=1
+            elif state.fin_seq is None:
+                state.fin_seq=fin_seq
+            elif state.fin_seq!=fin_seq:
+                state.unresolved_gaps+=1
+        if not seg.payload:return ()
         if seq>=_MOD or seq+len(seg.payload)>_MOD:
             state.unresolved_gaps+=1;return ()
+        end=seq+len(seg.payload)
+        if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
+            state.unresolved_gaps+=1
+            return (self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'),)
         if state.expected is None:
             # Midstream capture: preserve bytes but explicitly fence missing prefix.
             state.expected=seq;state.unresolved_gaps+=1
             env=self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'GAP_BEFORE')
             state.expected=seq+len(seg.payload)
             return (env,)
-        end=seq+len(seg.payload)
         if end<=state.expected:
             state.duplicates+=1;return ()
         if seq<state.expected:
@@ -167,8 +211,10 @@ class TransportEnvelopeAssembler:
 
     def _health_unlocked(self)->CaptureHealthSnapshot:
         dirs=[d for f in self._flows.values() for d in f.dirs.values()]
-        gaps=sum(d.unresolved_gaps for d in dirs)
+        gaps=self._retired_uncertainty+sum(d.unresolved_gaps+(1 if d.pending else 0) for d in dirs)
         uncertain=bool(gaps or self._ambiguous or self._overflow or self._loss_fences)
         status='NO_TRAFFIC' if self._emitted==0 and not uncertain else ('UNCERTAIN' if uncertain else 'CLEAN')
         return CaptureHealthSnapshot(status,self._emitted,self._bytes,gaps,self._reconnects,
-            sum(d.duplicates for d in dirs),sum(d.reordered for d in dirs),self._ambiguous,self._loss_fences,self._overflow)
+            self._retired_duplicates+sum(d.duplicates for d in dirs),
+            self._retired_reordered+sum(d.reordered for d in dirs),
+            self._ambiguous,self._loss_fences,self._overflow)
