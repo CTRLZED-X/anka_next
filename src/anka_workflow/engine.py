@@ -258,6 +258,19 @@ class MissionWorkflow:
         if s.pending_action_id is not None and signal.kind!='FIGHT_ENDED':
             return WorkflowApplyResult('REJECTED',False,'PENDING_ACTION_RECONCILIATION_REQUIRED',s,None)
         if s.phase=='RECOVERING':
+            # A watchdog may race the authoritative proof it was waiting for.
+            # Preserve that proof instead of requiring an unrelated recovery
+            # acknowledgement and risking a permanent Ready/join/placement stall.
+            recovery_progress={
+                'FIGHT_ENTRY':('PARTY_JOIN_PROVEN','PARTY_JOIN'),
+                'PARTY_JOIN':('PLACEMENT_PROVEN','PLACEMENT'),
+                'PLACEMENT':('READY_PROVEN','READY'),
+                'READY':('FIRST_TURN_PROVEN','FIGHT_ACTIVE'),
+            }
+            expected=recovery_progress.get(s.resume_phase)
+            if expected is not None and signal.kind==expected[0]:
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                return self._transition(expected[1],signal,reason=signal.kind+'_SUPERSEDES_RECOVERY',resume_phase=None)
             if signal.kind=='RECOVERY_FAILED':
                 return self._transition('BLOCKED',signal,reason='RECOVERY_FAILED',terminal_reason='RECOVERY_FAILED')
             if signal.kind=='RECOVERY_SUCCEEDED' and s.resume_phase:
