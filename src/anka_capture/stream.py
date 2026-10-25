@@ -11,6 +11,7 @@ from typing import Mapping
 from threading import RLock
 from anka_contracts.capture import CapturedTcpSegment, CaptureHealthSnapshot, CapturePoll
 from anka_contracts.wire import WireEnvelope
+from anka_capture.overlap import MATCH, RecentByteProof
 
 _MOD=2**32
 
@@ -27,6 +28,8 @@ class _Dir:
     loss_epoch_seen:int=0
     reconnected_pending:bool=False
     fin_seq:int|None=None
+    overlap_proof:RecentByteProof=field(default_factory=RecentByteProof)
+    overlap_untrusted:bool=False
 
 @dataclass
 class _Flow:
@@ -67,6 +70,10 @@ class TransportEnvelopeAssembler:
             if continuity in ('COMPLETE','CONTIGUOUS'):
                 continuity='RECONNECTED'
             state.reconnected_pending=False
+        if state.overlap_untrusted and continuity in ('COMPLETE','CONTIGUOUS','RECONNECTED'):
+            # Once byte identity is conflicting or no longer provable, this TCP
+            # generation never returns to trusted continuity.
+            continuity='GAP_INSIDE'
         self._producer_sequence+=1
         utc,mono,provenance=self._times(seg)
         start=state.stream_offset;end=start+len(payload)
@@ -78,6 +85,26 @@ class TransportEnvelopeAssembler:
     @staticmethod
     def _payload_seq(seg:CapturedTcpSegment)->int:
         return seg.seq + (1 if seg.syn else 0)
+
+    @staticmethod
+    def _mark_overlap_untrusted(state:_Dir)->None:
+        state.unresolved_gaps+=1
+        state.overlap_untrusted=True
+
+    def _trim_verified_overlap(self,state:_Dir,seq:int,payload:bytes)->tuple[int,bytes]:
+        """Remove only overlap whose exact bytes are still provably identical."""
+        if state.expected is None or seq>=state.expected:
+            return seq,payload
+        end=seq+len(payload)
+        overlap_end=min(end,state.expected)
+        verdict=state.overlap_proof.compare(seq,payload,overlap_end)
+        if verdict!=MATCH:
+            self._mark_overlap_untrusted(state)
+        if end<=state.expected:
+            if verdict==MATCH:
+                state.duplicates+=1
+            return state.expected,b''
+        return state.expected,payload[state.expected-seq:]
 
     def _retire_generation(self,flow:_Flow)->None:
         # Health is capture-session evidence, not merely the current TCP generation.
@@ -130,9 +157,7 @@ class TransportEnvelopeAssembler:
             return (self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'RESET'),)
 
         # FIN is half-close evidence. Its sequence position is the first byte
-        # that may no longer begin new payload in this direction. Retransmitted
-        # pre-FIN bytes remain admissible, but bytes at/after the FIN boundary
-        # are preserved only behind an explicit continuity fence.
+        # that may no longer begin new payload in this direction.
         if seg.fin:
             fin_seq=seq+len(seg.payload)
             if fin_seq>_MOD:
@@ -143,22 +168,30 @@ class TransportEnvelopeAssembler:
                 state.unresolved_gaps+=1
         if not seg.payload:return ()
         if seq>=_MOD or seq+len(seg.payload)>_MOD:
+            # Sequence wrap is still conservatively uncertifiable.
             state.unresolved_gaps+=1;return ()
-        end=seq+len(seg.payload)
+
+        # Every retransmitted overlap is byte-checked before it can be discarded
+        # or before a new suffix can be trusted.
+        if state.expected is not None and seq<state.expected:
+            seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+        else:
+            payload=seg.payload
+        if not payload:return ()
+        end=seq+len(payload)
+
+        # Payload at/after a known FIN boundary is preserved only as untrusted.
         if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
             state.unresolved_gaps+=1
-            return (self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'),)
+            return (self._emit(seg.flow_id,flow,state,seg,payload,seq,'GAP_INSIDE'),)
+
         if state.expected is None:
             # Midstream capture: preserve bytes but explicitly fence missing prefix.
             state.expected=seq;state.unresolved_gaps+=1
-            env=self._emit(seg.flow_id,flow,state,seg,seg.payload,seq,'GAP_BEFORE')
-            state.expected=seq+len(seg.payload)
+            env=self._emit(seg.flow_id,flow,state,seg,payload,seq,'GAP_BEFORE')
+            state.expected=end
+            state.overlap_proof.remember(seq,payload)
             return (env,)
-        if end<=state.expected:
-            state.duplicates+=1;return ()
-        if seq<state.expected:
-            trim=state.expected-seq;payload=seg.payload[trim:];seq=state.expected
-            end=seq+len(payload)
         if seq>state.expected:
             state.reordered+=1;state.pending.append(seg);state.pending.sort(key=self._payload_seq)
             if len(state.pending)>self.max_pending:
@@ -166,25 +199,33 @@ class TransportEnvelopeAssembler:
                 # permanently mark this direction uncertain and force a gap fence.
                 state.pending.clear();state.unresolved_gaps+=1;self._overflow+=1;self._loss_epoch+=1
             return ()
-        out=[self._emit(seg.flow_id,flow,state,seg,seg.payload[-(end-seq):] if len(seg.payload)!=(end-seq) else seg.payload,seq,'COMPLETE')]
+        out=[self._emit(seg.flow_id,flow,state,seg,payload,seq,'COMPLETE')]
         state.expected=end
+        state.overlap_proof.remember(seq,payload)
         out.extend(self._drain_contiguous(seg.flow_id,flow,state))
         return tuple(out)
 
     def _drain_contiguous(self,flow_id:str,flow:_Flow,state:_Dir)->list[WireEnvelope]:
         out=[]
         while state.pending:
-            seg=state.pending[0];seq=self._payload_seq(seg);end=seq+len(seg.payload)
+            seg=state.pending[0];seq=self._payload_seq(seg)
+            if state.expected is not None and seq<state.expected:
+                seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+            else:
+                payload=seg.payload
+            if not payload:
+                state.pending.pop(0)
+                continue
+            end=seq+len(payload)
             if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
                 state.pending.pop(0);state.unresolved_gaps+=1
-                out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'))
+                out.append(self._emit(flow_id,flow,state,seg,payload,seq,'GAP_INSIDE'))
                 continue
-            if end<=state.expected:
-                state.pending.pop(0);state.duplicates+=1;continue
             if seq>state.expected:break
-            state.pending.pop(0);trim=max(0,state.expected-seq);payload=seg.payload[trim:]
-            out.append(self._emit(flow_id,flow,state,seg,payload,state.expected,'COMPLETE'))
-            state.expected+=len(payload)
+            state.pending.pop(0)
+            out.append(self._emit(flow_id,flow,state,seg,payload,seq,'COMPLETE'))
+            state.expected=end
+            state.overlap_proof.remember(seq,payload)
         return out
 
     def consume_poll(self,poll:CapturePoll)->tuple[WireEnvelope,...]:
@@ -205,25 +246,30 @@ class TransportEnvelopeAssembler:
         for flow_id,flow in sorted(self._flows.items()):
             for direction,state in sorted(flow.dirs.items()):
                 while state.pending:
-                    seg=state.pending.pop(0);seq=self._payload_seq(seg);end=seq+len(seg.payload)
+                    seg=state.pending.pop(0);seq=self._payload_seq(seg)
                     if flow.reset_seen:
                         state.unresolved_gaps+=1
                         out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'RESET'))
                         continue
+                    if state.expected is not None and seq<state.expected:
+                        seq,payload=self._trim_verified_overlap(state,seq,seg.payload)
+                    else:
+                        payload=seg.payload
+                    if not payload:
+                        continue
+                    end=seq+len(payload)
                     if state.fin_seq is not None and (seq>=state.fin_seq or end>state.fin_seq):
                         state.unresolved_gaps+=1
-                        out.append(self._emit(flow_id,flow,state,seg,seg.payload,seq,'GAP_INSIDE'))
+                        out.append(self._emit(flow_id,flow,state,seg,payload,seq,'GAP_INSIDE'))
                         continue
                     if state.expected is None:state.expected=seq
-                    if end<=state.expected:state.duplicates+=1;continue
-                    trim=max(0,state.expected-seq) if seq<state.expected else 0
                     if seq>state.expected:
                         state.stream_offset+=seq-state.expected;state.unresolved_gaps+=1
                         continuity='GAP_BEFORE';state.expected=seq
                     else: continuity='COMPLETE'
-                    payload=seg.payload[trim:]
-                    out.append(self._emit(flow_id,flow,state,seg,payload,state.expected,continuity))
-                    state.expected+=len(payload)
+                    out.append(self._emit(flow_id,flow,state,seg,payload,seq,continuity))
+                    state.expected=end
+                    state.overlap_proof.remember(seq,payload)
         return tuple(out)
 
     def health(self)->CaptureHealthSnapshot:
