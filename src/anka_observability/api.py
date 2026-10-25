@@ -15,6 +15,11 @@ from anka_contracts.diagnostics import DiagnosticEvent, now_utc
 from anka_observability.redaction import sanitize,has_diagnostic_truncation
 
 
+DIAGNOSTIC_EVENT_ID_RE=re.compile(r'evt-[A-Za-z0-9][A-Za-z0-9_.-]{0,111}')
+DIAGNOSTIC_INVOCATION_ID_RE=re.compile(r'inv-[A-Za-z0-9][A-Za-z0-9_.-]{0,95}')
+DIAGNOSTIC_RUN_ID_RE=re.compile(r'run-[A-Za-z0-9][A-Za-z0-9_.-]{0,95}')
+
+
 def is_priority_event(event:DiagnosticEvent)->bool:
     """Pure priority classification shared by recorder and bundle verifier.
 
@@ -101,9 +106,9 @@ class LocalDiagnostics:
         self.root=Path(root)
         self.invocation_id=invocation_id or 'inv-'+uuid4().hex
         self.run_id=run_id or 'run-'+uuid4().hex
-        if not re.fullmatch(r'inv-[A-Za-z0-9][A-Za-z0-9_.-]{0,95}',self.invocation_id):
+        if DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(self.invocation_id) is None:
             raise ValueError('INVALID_DIAGNOSTIC_INVOCATION_ID')
-        if not re.fullmatch(r'run-[A-Za-z0-9][A-Za-z0-9_.-]{0,95}',self.run_id):
+        if DIAGNOSTIC_RUN_ID_RE.fullmatch(self.run_id) is None:
             raise ValueError('INVALID_DIAGNOSTIC_RUN_ID')
         self.folder=self.root/'runs'/self.run_id
         self.max_journal_bytes=max_journal_bytes
@@ -358,11 +363,11 @@ class LocalDiagnostics:
             # Reject malformed external evidence before it can poison an otherwise
             # verifier-clean incident. Locally-recorded events use generated IDs
             # and now_utc(), so this only constrains foreign producers.
-            if not re.fullmatch(r'evt-[A-Za-z0-9][A-Za-z0-9_.-]{0,111}',event.event_id):
+            if DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None:
                 self.dropped+=1
                 if 'EXTERNAL_EVENT_ID_INVALID' not in self.errors:self.errors.append('EXTERNAL_EVENT_ID_INVALID')
                 return 'DROPPED'
-            if event.parent_event_id is not None and not re.fullmatch(r'evt-[A-Za-z0-9][A-Za-z0-9_.-]{0,111}',event.parent_event_id):
+            if event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None:
                 self.dropped+=1
                 if 'EXTERNAL_PARENT_EVENT_ID_INVALID' not in self.errors:self.errors.append('EXTERNAL_PARENT_EVENT_ID_INVALID')
                 return 'DROPPED'
