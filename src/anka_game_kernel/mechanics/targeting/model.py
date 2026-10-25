@@ -77,24 +77,3 @@ class TargetCellContext:
     occupied_cells: frozenset[CellId] | None
     # Positive occupancy authority. Only explicitly alive actors belong here.
     proven_occupied_cells: frozenset[CellId] | None = None
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.caster_cell, CellId):
-            raise TypeError("caster_cell must be a CellId")
-        for name, value in (
-            ("occupied_cells", self.occupied_cells),
-            ("proven_occupied_cells", self.proven_occupied_cells),
-        ):
-            if value is not None:
-                if not isinstance(value, frozenset):
-                    raise TypeError(f"{name} must be a frozenset of CellId values or None")
-                if any(not isinstance(cell_id, CellId) for cell_id in value):
-                    raise TypeError(f"{name} must contain only CellId values")
-        if (
-            self.occupied_cells is not None
-            and self.proven_occupied_cells is not None
-            and not self.proven_occupied_cells.issubset(self.occupied_cells)
-        ):
-            raise ValueError(
-                "proven_occupied_cells must be a subset of occupied_cells when blocker occupancy is complete"
-            )
