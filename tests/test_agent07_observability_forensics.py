@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from hashlib import sha256
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -661,6 +662,111 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
                 run_manifest = json.loads(z.read('run_manifest.json'))
             self.assertNotIn('evt-' + ('x' * 113), {row.get('event_id') for row in recovered_rows})
             self.assertIn('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED', run_manifest['observer_errors'])
+
+
+
+
+class TestAgent07ReadFirstDerivationIntegrity(unittest.TestCase):
+    @staticmethod
+    def _rewrite_read_first(path: Path, mutate) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        original = files['GPT_READ_FIRST.md'].decode('utf8')
+        rewritten = mutate(original).encode('utf8')
+        files['GPT_READ_FIRST.md'] = rewritten
+        manifest = json.loads(files['manifest.json'])
+        manifest['files']['GPT_READ_FIRST.md'] = {
+            'sha256': sha256(rewritten).hexdigest(),
+            'bytes': len(rewritten),
+        }
+        files['manifest.json'] = (
+            json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+        ).encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_read_first_cannot_add_false_causal_claim(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-read-first',
+                invocation_id='inv-agent07-read-first',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'READ_FIRST_DERIVATION_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                self._rewrite_read_first(
+                    path,
+                    lambda text: text.replace(
+                        '# ANKA diagnostic incident\n\n',
+                        '# ANKA diagnostic incident\n\n'
+                        '**ROOT CAUSE:** Protocol definitely failed.\n\n',
+                        1,
+                    ),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                # The machine-summary marker was deliberately preserved. Exact
+                # rendering, not only marker presence, must detect the lie.
+                self.assertNotIn('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_emergency_read_first_cannot_add_false_root_cause(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-emergency-read-first',
+                invocation_id='inv-agent07-emergency-read-first',
+            )
+            try:
+                obs.record(
+                    'ready.requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.ready_request',
+                    account_id='acct-cra',
+                )
+                with patch(
+                    'anka_observability.bundle._build_artifacts',
+                    side_effect=RuntimeError('agent07-forced-analysis-failure'),
+                ):
+                    path = obs.export_incident(
+                        'EMERGENCY_READ_FIRST_TEST',
+                        boundary='protocol.ready_observation',
+                        trace_spec=READY_TRACE,
+                        control_state='BLOCKED',
+                    )
+                initial = verify_incident(path)
+                self.assertEqual(initial['status'], 'PASS', initial['errors'])
+                with ZipFile(path) as z:
+                    manifest = json.loads(z.read('manifest.json'))
+                    self.assertTrue(manifest['advanced_analysis_failed'])
+
+                self._rewrite_read_first(
+                    path,
+                    lambda text: text.replace(
+                        '# ANKA emergency diagnostic incident\n\n',
+                        '# ANKA emergency diagnostic incident\n\n'
+                        '**ROOT CAUSE:** Client definitely failed.\n\n',
+                        1,
+                    ),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                self.assertNotIn('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
 
 
 
