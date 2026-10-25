@@ -101,6 +101,20 @@ class TestAgent02TransportFinality(unittest.TestCase):
         self.assertNotEqual(old.connection_id, new.connection_id)
         self.assertEqual(new.continuity, "RECONNECTED")
 
+    def test_reconnect_marker_never_overwrites_first_gap_fence(self):
+        a = assembler()
+        a.feed(seg(100, n=1, flags=0x02))
+        a.feed(seg(101, b"A", n=2, flags=0x18))
+        a.feed(seg(500, n=3, flags=0x02))
+
+        self.assertEqual(a.feed(seg(510, b"late", n=4, flags=0x18)), ())
+        flushed = a.finish()
+        self.assertEqual(len(flushed), 1)
+        self.assertEqual(flushed[0].connection_generation, 2)
+        self.assertEqual(flushed[0].continuity, "GAP_BEFORE")
+        self.assertNotEqual(flushed[0].continuity, "RECONNECTED")
+        self.assertEqual(a.health().status, "UNCERTAIN")
+
     def test_pending_bytes_beyond_fin_are_fenced_when_gap_closes(self):
         a = assembler()
         a.feed(seg(100, n=1, flags=0x02))
