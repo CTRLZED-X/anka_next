@@ -11,7 +11,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from anka_contracts.client import WindowObservation
-from anka_client.unity_bridge import LocalLoopbackBridgeReader
+from anka_client.unity_bridge import (
+    EXPECTED_BRIDGE_ADAPTER, EXPECTED_BRIDGE_VERSION, LocalLoopbackBridgeReader
+)
 
 
 def _projection_ready_for_window(health: dict, window: WindowObservation) -> bool:
@@ -77,6 +79,9 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             health=factory().get_json(port,'/health')
             if health.get('source') != 'unity_bridge' or health.get('available') is not True:
                 return None
+            if (health.get('bridgeVersion') != EXPECTED_BRIDGE_VERSION
+                    or health.get('adapter') != EXPECTED_BRIDGE_ADAPTER):
+                return ('STALE_OR_FOREIGN_BRIDGE',None,False)
             pid=health.get('processId'); created=health.get('processStartTime'); declared=health.get('bridgePort')
             if type(pid) is not int or type(created) is not int or type(declared) is not int or declared != port:
                 return ('MALFORMED',None,False)
@@ -112,7 +117,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             result=future.result()
             if result is None:continue
             status,generation,is_ready=result
-            if status in ('OWNER_UNVERIFIED','OWNER_MISMATCH'):
+            if status in ('OWNER_UNVERIFIED','OWNER_MISMATCH','STALE_OR_FOREIGN_BRIDGE'):
                 listener_owner_rejections+=1
                 continue
             if status=='AMBIGUOUS_WINDOW':
