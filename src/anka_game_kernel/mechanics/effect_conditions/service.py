@@ -200,6 +200,9 @@ class EffectConditionService:
                         continue
                     if summoner.class_id != predicate.summoner_class_id:
                         continue
+                if candidate.alive is None:
+                    unresolved = True
+                    continue
                 return _PredicateEvaluation(True)
             if unresolved:
                 return _PredicateEvaluation(None, "fight_context.adjacent_actor_semantics")
