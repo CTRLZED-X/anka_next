@@ -1222,15 +1222,18 @@ class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
             self._handoff_event(10,'workflow.action_requested',action_id=new),
             self._handoff_event(11,'execution.admitted',action_id=new,physical_input_state='NOT_SENT'),
             self._handoff_event(12,'execution.send_started',action_id=new,attempt_id='attempt-new',physical_input_state='SEND_STARTED',severity='SAFETY'),
-            # This proof is causally after the old send but before the selected
-            # latest attempt's authoritative send and must not be borrowed.
-            self._handoff_event(15,'coordination.turn_owner_proved',account_id='acct-enu',fight_epoch=20,turn_epoch=8,evidence_class='AUTHORITY_COMMITTED'),
             self._handoff_event(20,'execution.input_sent',action_id=new,attempt_id='attempt-new',physical_input_state='SENT'),
+            # Even though this owner proof is after the selected attempt's send,
+            # the same fight/turn already had another END_TURN attempt and the
+            # Coordination row carries no action_id. Attribution is ambiguous.
+            self._handoff_event(25,'coordination.turn_owner_proved',account_id='acct-enu',fight_epoch=20,turn_epoch=8,evidence_class='AUTHORITY_COMMITTED'),
             self._handoff_event(30,'execution.outcome_settled',action_id=new,attempt_id='attempt-new',severity='SETTLEMENT',payload={'status':'SETTLED_SUCCESS'}),
         ]
         report=turn_handoff_report(rows)
         self.assertEqual(report['action_id'],new)
-        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertEqual(report['status'],'OWNER_PROOF_AMBIGUOUS_ACROSS_ATTEMPTS')
+        self.assertTrue(report['owner_attribution_ambiguous'])
+        self.assertIn(old,report['competing_action_ids'])
         self.assertIsNone(report['next_owner_event_id'])
         self.assertEqual(len(report['noncausal_owner_event_ids']),1)
 
