@@ -53,7 +53,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
         if w.pid > 0 and w.process_created_100ns > 0 and w.hwnd > 0:
             windows_by_process.setdefault((w.pid,w.process_created_100ns),[]).append(w)
     generations=set(windows_by_process)
-    factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=.20))
+    factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=1.0))
     # An explicitly injected reader is a deterministic test/research dependency;
     # do not silently mix it with live OS listener ownership. Production uses the
     # default loopback reader and therefore gets automatic Windows owner proof.
@@ -72,6 +72,8 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
                     return ('OWNER_UNVERIFIED',None,False)
                 if owner_before is None:
                     return None
+                if owner_before not in generations:
+                    return ('OWNER_MISMATCH',None,False)
             health=factory().get_json(port,'/health')
             if health.get('source') != 'unity_bridge' or health.get('available') is not True:
                 return None
