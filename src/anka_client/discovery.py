@@ -98,24 +98,27 @@ def bind_accounts(names: tuple[str, ...], scan: WindowScan,
         if w.minimized:
             results.append(AccountBinding(name,'BLOCKED','WINDOW_MINIMIZED',**common))
             continue
-        matched=[e for e in evidence if e.character_name.strip().casefold()==name.strip().casefold() and
-                 e.hwnd == w.hwnd and e.pid == w.pid]
-        if not matched:
+        scoped=[e for e in evidence if e.character_name.strip().casefold()==name.strip().casefold() and
+                e.hwnd == w.hwnd and e.pid == w.pid]
+        if not scoped:
             results.append(AccountBinding(name,'PENDING','NO_AUTHORITATIVE_CHARACTER_EVIDENCE',**common))
             continue
-        if len(matched) != 1:
-            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
-            continue
-        e=matched[0]
-        if not _matches_generation(w,e):
+        exact=[e for e in scoped if _matches_generation(w,e)]
+        if not exact:
             results.append(AccountBinding(name,'BLOCKED','PROCESS_GENERATION_CHANGED',**common))
             continue
-        if e.source not in SUPPORTED_EVIDENCE_SOURCES:
+        trusted=[e for e in exact if e.source in SUPPORTED_EVIDENCE_SOURCES]
+        if not trusted:
             results.append(AccountBinding(name,'BLOCKED','UNTRUSTED_EVIDENCE_SOURCE',**common))
             continue
-        if not _evidence_current(e,scan):
+        current=[e for e in trusted if _evidence_current(e,scan)]
+        if not current:
             results.append(AccountBinding(name,'BLOCKED','STALE_OR_FUTURE_IDENTITY_EVIDENCE',**common))
             continue
+        if len(current) != 1:
+            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
+            continue
+        e=current[0]
         if e.breed.strip().upper() not in SUPPORTED_BREEDS:
             results.append(AccountBinding(name,'BLOCKED','UNSUPPORTED_BREED',**common))
             continue
