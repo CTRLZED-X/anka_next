@@ -93,7 +93,7 @@ class DeterministicPlanner:
         return PlannerResult('PLAN',plan=plan)
 
     def _fight(self,frame):
-        missing=self._required_known(frame,('fight_phase','turn_owner','actor_cell','ap','mp','loadout'))
+        missing=self._required_known(frame,('fight_phase','turn_owner','actor_cell','ap','mp','loadout','targets'))
         if missing:return self._wait(*missing,reason='DECISION_REQUIRED_FIGHT_EVIDENCE_MISSING')
         if frame.actor_id is None or frame.turn_owner_id is None:return self._wait('actor_identity','turn_owner',reason='DECISION_ACTOR_OR_TURN_UNKNOWN')
         if frame.actor_id!=frame.turn_owner_id:return self._wait('turn_owner',reason='DECISION_NOT_ACTOR_TURN')
