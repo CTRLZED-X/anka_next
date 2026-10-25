@@ -127,8 +127,13 @@ class WindowsLiveCapture:
                 if remaining<=0:
                     return 'LIVE_CAPTURE_LATE_START_CALLBACK_DRAIN_TIMEOUT'
                 self._quiesce_condition.wait(timeout=remaining)
-        # The original start/quiesce timeout already marked evidence incomplete.
-        # Seal it only after backend termination and callback drain are proven.
+        # The original start/quiesce timeout should already have marked evidence
+        # incomplete. If that marking itself failed, never seal the recorder:
+        # a clean-looking artifact would be stronger than the evidence permits.
+        with self._state_lock:
+            prior_secondary=self._secondary_cleanup_error
+        if prior_secondary=='LIVE_CAPTURE_INTERRUPT_MARK_FAILED':
+            return prior_secondary
         if self._evidence_recorder is not None and self._raw_evidence_receipt is None:
             try:
                 receipt=self._evidence_recorder.close()
@@ -349,7 +354,12 @@ class WindowsLiveCapture:
                 remaining=deadline-monotonic()
                 if remaining<=0:
                     self._stopped=True;self._quiesce_error='LIVE_CAPTURE_START_QUIESCE_TIMEOUT'
-                    self.queue.close();self.mark_capture_interrupted()
+                    self.queue.close()
+                    try:self.mark_capture_interrupted()
+                    except Exception:
+                        # Preserve the lifecycle timeout as authoritative while
+                        # recording that the raw evidence could not be safely marked.
+                        self._secondary_cleanup_error='LIVE_CAPTURE_INTERRUPT_MARK_FAILED'
                     raise RuntimeError(self._quiesce_error)
                 self._quiesce_condition.wait(timeout=remaining)
             if self._quiesced:return
@@ -385,7 +395,12 @@ class WindowsLiveCapture:
                         error_code='LIVE_CAPTURE_CALLBACK_DRAIN_TIMEOUT';break
                     self._quiesce_condition.wait(timeout=remaining)
 
-        if error_code is not None:self.mark_capture_interrupted()
+        if error_code is not None:
+            try:self.mark_capture_interrupted()
+            except Exception:
+                with self._state_lock:
+                    if self._secondary_cleanup_error is None:
+                        self._secondary_cleanup_error='LIVE_CAPTURE_INTERRUPT_MARK_FAILED'
         self.queue.close()
         with self._quiesce_condition:
             self._quiescing=False
