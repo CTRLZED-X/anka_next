@@ -170,6 +170,45 @@ class TestAgent07PreActionCausalIndex(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_successful_plan_results_do_not_flood_reserved_priority_lane(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-plan-priority',
+                invocation_id='inv-agent07-plan-priority',
+                max_recent=64,
+                max_priority=2,
+            )
+            try:
+                for i in range(20):
+                    obs.record(
+                        'decision.plan_result',
+                        owner_system='anka_decision',
+                        boundary='decision.plan',
+                        account_id='acct-cra',
+                        payload={
+                            'frame_id':f'frame-agent07-plan-{i}',
+                            'disposition':'PLAN',
+                            'reason':'PLAN_READY',
+                            'plan_id':f'plan-agent07-{i}',
+                            'kind':'CAST',
+                        },
+                    )
+                obs.record(
+                    'execution.outcome_missing',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome',
+                    failure_code='AUTHORITATIVE_OUTCOME_MISSING',
+                    account_id='acct-cra',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                priority_names=[row.get('event_name') for row in obs.priority]
+                self.assertIn('execution.outcome_missing', priority_names)
+                self.assertNotIn('decision.plan_result', priority_names)
+            finally:
+                obs.finish('BLOCKED')
+
     def test_decision_plan_result_survives_recent_ring_overwrite_for_forensics(self):
         with tempfile.TemporaryDirectory() as td:
             obs = LocalDiagnostics(
