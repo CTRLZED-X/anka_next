@@ -36,6 +36,12 @@ def generation_id(window: WindowObservation) -> str:
     return 'win-' + hashlib.sha256(value).hexdigest()[:32]
 
 
+def client_instance_id(window: WindowObservation) -> str:
+    """Stable physical-client ID derived from the exact Windows generation."""
+    gid=generation_id(window)
+    return 'client-'+gid[4:20]
+
+
 def _matches_generation(window: WindowObservation, identity: CharacterEvidence) -> bool:
     return (window.hwnd == identity.hwnd and window.pid == identity.pid
             and window.process_created_100ns == identity.process_created_100ns)
