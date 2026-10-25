@@ -476,14 +476,16 @@ def workflow_lifecycle_report(events:Iterable[DiagnosticEvent|dict])->dict:
     cycle=transitions[starts[-1]:] if starts else transitions
     latest_fight_epoch=max((row['fight_epoch'] for row in cycle if isinstance(row['fight_epoch'],int) and row['fight_epoch']>0),default=None)
     current=cycle[-1]['to_phase']
-    blocking=None
+    blocking=None;rejected_signal=None
     cycle_start_seq=cycle[0]['producer_seq']
     for e in ordered:
         if e.producer_seq<cycle_start_seq:continue
-        if e.event_name in ('workflow.blocked','workflow.signal_rejected'):
+        if e.event_name=='workflow.signal_rejected':
+            rejected_signal={'event_id':e.event_id,'event_name':e.event_name,'failure_code':e.failure_code,
+                             'boundary':e.boundary,'producer_seq':e.producer_seq}
+        elif e.event_name=='workflow.blocked':
             blocking={'event_id':e.event_id,'event_name':e.event_name,'failure_code':e.failure_code,
                       'boundary':e.boundary,'producer_seq':e.producer_seq}
-            break
 
     # Validate the major path in order while allowing action-fence self
     # transitions to exist outside this filtered list.
@@ -516,13 +518,13 @@ def workflow_lifecycle_report(events:Iterable[DiagnosticEvent|dict])->dict:
         next_expected={'from_phase':'WORLD_REENTRY','to_phase':'WORLD|COMPLETED|STOPPED'}
 
     if contradiction is not None:status='CONTRADICTORY'
-    elif blocking is not None:status='BLOCKED'
+    elif current=='BLOCKED' or blocking is not None:status='BLOCKED'
     elif reentry is not None:status='COMPLETE_CYCLE'
     else:status='IN_PROGRESS'
     return {'schema_version':1,'status':status,'current_phase':current,'latest_fight_epoch':latest_fight_epoch,
             'transitions':cycle,'next_expected_transition':next_expected,'blocking_event':blocking,
-            'contradiction':contradiction,'matched_event_ids':matched,
-            'note':'Progress index over authoritative Workflow transition diagnostics. IN_PROGRESS alone is not a failure claim.'}
+            'rejected_signal':rejected_signal,'contradiction':contradiction,'matched_event_ids':matched,
+            'note':'Rejected Workflow signals are surfaced as non-terminal diagnostic context. BLOCKED requires an authoritative blocked phase/event; IN_PROGRESS alone is not a failure claim.'}
 
 
 def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
