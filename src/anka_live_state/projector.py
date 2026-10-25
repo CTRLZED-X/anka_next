@@ -4,7 +4,6 @@ Only committed CanonicalEventEnvelope objects are accepted. Missing values stay
 unknown; stale evidence remains visible with its provenance instead of becoming 0.
 """
 from __future__ import annotations
-from dataclasses import replace
 from hashlib import sha256
 import json
 
@@ -14,6 +13,7 @@ from anka_contracts.state import FieldValueProof,ActorLiveSnapshot,LiveStateSnap
 class LiveStateProjectionError(ValueError): pass
 
 _FIELDS=('cell','hp','max_hp','ap','mp','range','cooldowns','ready')
+_TURN_SCOPED_FIELDS=('ap','mp','cooldowns')
 
 def _unknown(name:str,cursor:int,reason:str,*,fight_epoch=None,turn_epoch=None)->FieldValueProof:
     return FieldValueProof(name,None,'UNKNOWN',(),cursor,fight_epoch,turn_epoch,invalidation_reason=reason)
@@ -77,8 +77,32 @@ def _snapshot(**kw)->LiveStateSnapshot:
     return LiveStateSnapshot('snap-'+digest[:32],kw['account_id'],kw['client_instance_id'],kw['cursor'],kw['revision'],kw['world_epoch'],kw['fight_epoch'],kw['turn_epoch'],
                              kw['world_map'],kw['fight_id'],kw['fight_phase'],kw['turn_owner'],kw['fight_map'],tuple(sorted(kw['actors'],key=lambda a:a.actor_id)),digest)
 
+def _require_active_fight(fight_phase:FieldValueProof)->None:
+    if fight_phase.status!='KNOWN' or fight_phase.value!='ACTIVE':
+        raise LiveStateProjectionError('STATE_FIGHT_NOT_ACTIVE')
+
+def _require_exact_epoch(value:int|None,expected:int,code:str)->None:
+    if value is not None and value!=expected:
+        raise LiveStateProjectionError(code)
+
+def _next_epoch(value:int|None,current:int,code:str)->int:
+    expected=current+1
+    if value is not None and value!=expected:
+        raise LiveStateProjectionError(code)
+    return expected if value is None else value
+
+def _require_fight_scope(event:CanonicalEventEnvelope,*,world_epoch:int,fight_epoch:int)->None:
+    _require_exact_epoch(event.world_epoch,world_epoch,'STATE_WORLD_EPOCH_MISMATCH')
+    _require_exact_epoch(event.fight_epoch,fight_epoch,'STATE_FIGHT_EPOCH_MISMATCH')
+
+def _turn_fact_epoch(event:CanonicalEventEnvelope,*,turn_active:bool,turn_epoch:int)->int:
+    expected=turn_epoch if turn_active else turn_epoch+1
+    if event.turn_epoch is not None and event.turn_epoch!=expected:
+        raise LiveStateProjectionError('STATE_TURN_EPOCH_MISMATCH')
+    return expected if event.turn_epoch is None else event.turn_epoch
+
 class StateProjector:
-    reducer_revision='m7-r1'
+    reducer_revision='m7-r2'
 
     def validate_snapshot(self,snapshot:LiveStateSnapshot)->None:
         """Recompute the semantic identity of a deserialized snapshot.
@@ -116,56 +140,76 @@ class StateProjector:
             if e.canonical_cursor<=cursor:raise LiveStateProjectionError('STATE_CANONICAL_CURSOR_REORDER_OR_DUPLICATE')
             data=_payload(e);kind=e.semantic_kind
             if kind=='WORLD_MAP_OBSERVED':
-                mid=_integer(data,'map_id',minimum=1);world_epoch=e.world_epoch if e.world_epoch is not None else world_epoch+(1 if world_map.value!=mid else 0)
+                mid=_integer(data,'map_id',minimum=1)
+                expected=world_epoch if world_map.status=='KNOWN' and world_map.value==mid else world_epoch+1
+                _require_exact_epoch(e.world_epoch,expected,'STATE_WORLD_EPOCH_MISMATCH')
+                world_epoch=expected
                 world_map=_known('world_map',mid,e)
             elif kind=='FIGHT_STARTED':
-                fid=data.get('fight_id');
+                if fight_phase.status=='KNOWN' and fight_phase.value=='ACTIVE':
+                    raise LiveStateProjectionError('STATE_FIGHT_ALREADY_ACTIVE')
+                _require_exact_epoch(e.world_epoch,world_epoch,'STATE_WORLD_EPOCH_MISMATCH')
+                fight_epoch=_next_epoch(e.fight_epoch,fight_epoch,'STATE_FIGHT_EPOCH_MISMATCH')
+                _require_exact_epoch(e.turn_epoch,0,'STATE_TURN_EPOCH_MISMATCH')
+                fid=data.get('fight_id')
                 if not fid:raise LiveStateProjectionError('STATE_FIGHT_ID_REQUIRED')
-                fight_epoch=e.fight_epoch if e.fight_epoch is not None else fight_epoch+1;turn_epoch=0
+                turn_epoch=0
                 fight_id=_known('fight_id',fid,e,fight_epoch=fight_epoch);fight_phase=_known('fight_phase','ACTIVE',e,fight_epoch=fight_epoch)
                 turn_owner=_unknown('turn_owner',e.canonical_cursor,'NO_TURN_OWNER_YET',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 fight_map=_known('fight_map',_integer(data,'map_id',minimum=1),e,fight_epoch=fight_epoch) if 'map_id' in data else _unknown('fight_map',e.canonical_cursor,'FIGHT_MAP_NOT_OBSERVED',fight_epoch=fight_epoch)
                 amap={}
             elif kind=='FIGHT_MAP_OBSERVED':
-                if fight_phase.status!='KNOWN' or fight_phase.value!='ACTIVE':raise LiveStateProjectionError('STATE_FIGHT_NOT_ACTIVE')
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
                 fight_map=_known('fight_map',_integer(data,'map_id',minimum=1),e,fight_epoch=fight_epoch)
             elif kind=='ACTOR_SEEN':
-                aid=_integer(data,'actor_id');
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
+                aid=_integer(data,'actor_id')
                 if aid==0:raise LiveStateProjectionError('STATE_ACTOR_INVALID')
                 amap.setdefault(aid,_actor_unknown(aid,e.canonical_cursor,fight_epoch,turn_epoch))
             elif kind in ('ACTOR_RESOURCE_ABSOLUTE','ACTOR_HP_ABSOLUTE','ACTOR_CELL_OBSERVED','ACTOR_COOLDOWN_SNAPSHOT','READY_OBSERVED'):
-                aid=_integer(data,'actor_id');
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
+                aid=_integer(data,'actor_id')
                 if aid not in amap:raise LiveStateProjectionError('STATE_ACTOR_UNKNOWN')
                 fields=_actor_map(amap[aid])
                 if kind=='ACTOR_RESOURCE_ABSOLUTE':
                     resource=data.get('resource','').upper();name={'AP':'ap','MP':'mp','RANGE':'range'}.get(resource)
                     if name is None:raise LiveStateProjectionError('STATE_RESOURCE_INVALID')
-                    fields[name]=_known(name,_integer(data,'value',minimum=0,maximum=1000),e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
+                    fact_turn=_turn_fact_epoch(e,turn_active=turn_owner.status=='KNOWN',turn_epoch=turn_epoch) if name in ('ap','mp') else turn_epoch
+                    fields[name]=_known(name,_integer(data,'value',minimum=0,maximum=1000),e,fight_epoch=fight_epoch,turn_epoch=fact_turn)
                 elif kind=='ACTOR_HP_ABSOLUTE':
                     hp=_integer(data,'value',minimum=0);maximum=_integer(data,'maximum',minimum=0)
                     if hp>maximum:raise LiveStateProjectionError('STATE_HP_RANGE_INVALID')
                     fields['hp']=_known('hp',hp,e,fight_epoch=fight_epoch,turn_epoch=turn_epoch);fields['max_hp']=_known('max_hp',maximum,e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 elif kind=='ACTOR_CELL_OBSERVED':fields['cell']=_known('cell',_integer(data,'cell_id',minimum=0,maximum=100000),e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
-                elif kind=='ACTOR_COOLDOWN_SNAPSHOT':fields['cooldowns']=_known('cooldowns',data.get('cooldowns','[]'),e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
+                elif kind=='ACTOR_COOLDOWN_SNAPSHOT':
+                    fact_turn=_turn_fact_epoch(e,turn_active=turn_owner.status=='KNOWN',turn_epoch=turn_epoch)
+                    fields['cooldowns']=_known('cooldowns',data.get('cooldowns','[]'),e,fight_epoch=fight_epoch,turn_epoch=fact_turn)
                 else:fields['ready']=_known('ready',_boolean(data,'ready'),e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 amap[aid]=_build_actor(aid,fields)
             elif kind=='TURN_STARTED':
-                aid=_integer(data,'actor_id');
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
+                aid=_integer(data,'actor_id')
                 if aid not in amap:raise LiveStateProjectionError('STATE_TURN_ACTOR_UNKNOWN')
                 if turn_owner.status=='KNOWN':raise LiveStateProjectionError('STATE_TURN_ALREADY_ACTIVE')
-                turn_epoch=e.turn_epoch if e.turn_epoch is not None else turn_epoch+1
+                turn_epoch=_next_epoch(e.turn_epoch,turn_epoch,'STATE_TURN_EPOCH_MISMATCH')
+                fields=_actor_map(amap[aid])
+                for name in _TURN_SCOPED_FIELDS:
+                    if fields[name].status=='KNOWN' and fields[name].turn_epoch!=turn_epoch:
+                        fields[name]=_stale(fields[name],e.canonical_cursor,'TURN_STARTED_WITHOUT_CURRENT_ABSOLUTE_EVIDENCE',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
+                amap[aid]=_build_actor(aid,fields)
                 turn_owner=_known('turn_owner',aid,e,fight_epoch=fight_epoch,turn_epoch=turn_epoch)
-                # Do NOT stale absolute AP/MP simply because TURN_STARTED arrived.
-                # A valid same-fight absolute snapshot just before this event can remain usable.
             elif kind=='TURN_ENDED':
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
+                _require_exact_epoch(e.turn_epoch,turn_epoch,'STATE_TURN_EPOCH_MISMATCH')
                 aid=_integer(data,'actor_id')
                 if turn_owner.status!='KNOWN' or turn_owner.value!=aid:raise LiveStateProjectionError('STATE_TURN_END_OWNER_MISMATCH')
                 fields=_actor_map(amap[aid])
-                for name in ('ap','mp','cooldowns'):
+                for name in _TURN_SCOPED_FIELDS:
                     if fields[name].status=='KNOWN':fields[name]=_stale(fields[name],e.canonical_cursor,'TURN_ENDED',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 amap[aid]=_build_actor(aid,fields);turn_owner=_unknown('turn_owner',e.canonical_cursor,'TURN_ENDED',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
             elif kind=='FIGHT_ENDED':
-                if fight_phase.status!='KNOWN' or fight_phase.value!='ACTIVE':raise LiveStateProjectionError('STATE_FIGHT_NOT_ACTIVE')
+                _require_active_fight(fight_phase);_require_fight_scope(e,world_epoch=world_epoch,fight_epoch=fight_epoch)
+                _require_exact_epoch(e.turn_epoch,turn_epoch,'STATE_TURN_EPOCH_MISMATCH')
                 fight_phase=_known('fight_phase','ENDED',e,fight_epoch=fight_epoch);turn_owner=_unknown('turn_owner',e.canonical_cursor,'FIGHT_ENDED',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 if fight_map.status=='KNOWN':fight_map=_stale(fight_map,e.canonical_cursor,'FIGHT_ENDED',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                 for aid,a in list(amap.items()):
@@ -174,7 +218,8 @@ class StateProjector:
                         if fields[name].status=='KNOWN':fields[name]=_stale(fields[name],e.canonical_cursor,'FIGHT_ENDED',fight_epoch=fight_epoch,turn_epoch=turn_epoch)
                     amap[aid]=_build_actor(aid,fields)
             elif kind=='WORLD_REENTRY':
-                mid=_integer(data,'map_id',minimum=1);world_epoch=e.world_epoch if e.world_epoch is not None else world_epoch+1
+                world_epoch=_next_epoch(e.world_epoch,world_epoch,'STATE_WORLD_EPOCH_MISMATCH')
+                mid=_integer(data,'map_id',minimum=1)
                 world_map=_known('world_map',mid,e);fight_id=_unknown('fight_id',e.canonical_cursor,'WORLD_REENTRY');fight_phase=_unknown('fight_phase',e.canonical_cursor,'WORLD_REENTRY')
                 turn_owner=_unknown('turn_owner',e.canonical_cursor,'WORLD_REENTRY');fight_map=_unknown('fight_map',e.canonical_cursor,'WORLD_REENTRY');amap={}
             else:raise LiveStateProjectionError('STATE_SEMANTIC_KIND_UNSUPPORTED:'+kind)
