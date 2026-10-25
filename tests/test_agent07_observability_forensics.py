@@ -438,6 +438,35 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_crash_recovery_rejects_mixed_invocation_journal_when_state_identity_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-mixed', invocation_id='inv-agent07-recovery-a')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+
+            state_path = obs.folder / 'run_state.json'
+            state = json.loads(state_path.read_text(encoding='utf8'))
+            state.pop('invocation_id', None)
+            state_path.write_text(json.dumps(state, sort_keys=True) + '\n', encoding='utf8')
+
+            event_path = obs.folder / 'events.jsonl'
+            rows = [json.loads(line) for line in event_path.read_text(encoding='utf8').splitlines() if line]
+            self.assertEqual(len(rows), 1)
+            mixed = dict(rows[0])
+            mixed['event_id'] = 'evt-agent07-mixed-invocation'
+            mixed['invocation_id'] = 'inv-agent07-recovery-b'
+            mixed['producer_seq'] = rows[0]['producer_seq'] + 1
+            mixed['monotonic_ns'] = rows[0]['monotonic_ns'] + 1
+            event_path.write_text(
+                ''.join(json.dumps(row, sort_keys=True, separators=(',', ':')) + '\n' for row in (rows[0], mixed)),
+                encoding='utf8',
+            )
+
+            self.assertIsNone(recover_unclean_run(obs.folder))
+            self.assertFalse((obs.folder / 'unclean_recovery.json').exists())
+
+
     def test_crash_recovery_skips_journal_event_live_recorder_would_reject(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
