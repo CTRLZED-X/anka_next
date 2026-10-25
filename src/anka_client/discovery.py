@@ -115,13 +115,16 @@ def bind_accounts(names: tuple[str, ...], scan: WindowScan,
         if not current:
             results.append(AccountBinding(name,'BLOCKED','STALE_OR_FUTURE_IDENTITY_EVIDENCE',**common))
             continue
-        if len(current) != 1:
-            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
-            continue
-        e=current[0]
-        if e.breed.strip().upper() not in SUPPORTED_BREEDS:
+        supported=[e for e in current if e.breed.strip().upper() in SUPPORTED_BREEDS]
+        if not supported:
             results.append(AccountBinding(name,'BLOCKED','UNSUPPORTED_BREED',**common))
             continue
+        # Exact duplicate observations do not create a second authority claim.
+        supported=list(dict.fromkeys(supported))
+        if len(supported) != 1:
+            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
+            continue
+        e=supported[0]
         results.append(AccountBinding(name,'IDENTITY_MATCHED','INDEPENDENT_IDENTITY_MATCH',
                    breed=e.breed.strip().upper(),evidence_source=e.source,**common))
     # Even apparently distinct names must never control the same physical client.
