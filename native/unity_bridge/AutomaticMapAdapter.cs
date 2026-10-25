@@ -190,6 +190,8 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
 
         if (!CoordinateProjection.TryGetDofusWindow(out var responseWindow, out var responseWindowError))
             return Failure(request, "COORDINATE_NOT_READY", responseWindowError ?? "Dofus window is unavailable for coordinate-space validation.");
+        if (!string.Equals(ProjectionSignature(responseWindow), _lastProjectionSignature, StringComparison.Ordinal))
+            return Failure(request, "COORDINATE_NOT_READY", "Projection changed after the cached coordinate table was validated.");
 
         ActorRuntimeMatch targetEntity = null;
         ProjectedPoint targetProjection = null;
@@ -277,6 +279,9 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 || !targetProjection.InsideCameraViewport)
                 return Failure(request, "TARGET_ENTITY_OUTSIDE_VIEWPORT", "The exact target Unity entity is not safely projectable in the current viewport.");
         }
+
+        if (!string.Equals(ProjectionSignature(responseWindow), _lastProjectionSignature, StringComparison.Ordinal))
+            return Failure(request, "COORDINATE_NOT_READY", "Projection changed during coordinate resolution.");
 
         return new CoordinateResponse
         {
