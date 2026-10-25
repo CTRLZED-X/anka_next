@@ -27,7 +27,10 @@ def _safe_state(folder:Path)->dict:
     try:
         state_path=folder/'run_state.json'
         if state_path.is_symlink():return {}
-        raw=state_path.read_bytes()
+        # Bound the read itself, not only the parsed result. A corrupted state
+        # file must not allocate arbitrary memory during startup recovery.
+        with state_path.open('rb') as handle:
+            raw=handle.read(65537)
         if len(raw)>65536:return {}
         obj=json.loads(raw)
         return obj if isinstance(obj,dict) else {}
@@ -39,13 +42,24 @@ def _read_rows(path:Path,*,run_id:str,invocation_id:str|None,errors:list[str])->
     try:
         if path.is_symlink():
             errors.append('RECOVERY_JOURNAL_SYMLINK_REJECTED');return []
-        raw=path.read_bytes()
+        # Read at most the configured recovery tail. Reading the whole file and
+        # slicing afterwards would defeat the startup memory bound for a giant
+        # corrupted or sparse journal.
+        with path.open('rb') as handle:
+            handle.seek(0,2)
+            size=handle.tell()
+            truncated=size>_MAX_RECOVERY_JOURNAL_BYTES
+            if truncated:
+                handle.seek(-_MAX_RECOVERY_JOURNAL_BYTES,2)
+                raw=handle.read(_MAX_RECOVERY_JOURNAL_BYTES)
+            else:
+                handle.seek(0)
+                raw=handle.read(size)
     except FileNotFoundError:return []
     except OSError:
         errors.append('RECOVERY_JOURNAL_UNREADABLE');return []
-    if len(raw)>_MAX_RECOVERY_JOURNAL_BYTES:
-        # Keep the newest bounded tail.  A partial first line is discarded below.
-        raw=raw[-_MAX_RECOVERY_JOURNAL_BYTES:]
+    if truncated:
+        # Keep the newest bounded tail. A partial first line is discarded below.
         first=raw.find(b'\n')
         raw=raw[first+1:] if first>=0 else b''
         errors.append('RECOVERY_JOURNAL_TRUNCATED_TO_BOUND')
