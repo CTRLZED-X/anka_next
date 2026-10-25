@@ -1,0 +1,33 @@
+name: integration-release
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  chat08-pr26-exact-agent02:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact PR26 head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: 1fd64829d36ec5aca61ee58c0c31b23ebabe242c
+      - name: Assert exact SHA
+        run: |
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_SHA=1fd64829d36ec5aca61ee58c0c31b23ebabe242c"
+          echo "ACTUAL_SHA=$actual"
+          test "$actual" = "1fd64829d36ec5aca61ee58c0c31b23ebabe242c"
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install --disable-pip-version-check -r requirements-p1.txt
+      - name: Exact Agent02
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+        run: python -m pytest -q tests/test_agent02_*.py
