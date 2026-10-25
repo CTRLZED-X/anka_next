@@ -91,6 +91,19 @@ def recover_unclean_run(folder:Path)->Path|None:
         prior=by_id.get(event_id)
         if prior is None:by_id[event_id]=row
         elif prior!=row:errors.append('RECOVERY_DUPLICATE_EVENT_CONFLICT_SKIPPED')
+    if invocation_id is None:
+        # Resolve invocation identity before applying any global sequence/order
+        # filtering. Otherwise two valid invocations that both start at sequence 1
+        # can cause one namespace to be discarded first and the survivor to be
+        # falsely inferred as the only invocation in the recovered run.
+        valid_invocations={
+            row.get('invocation_id') for row in by_id.values()
+            if isinstance(row.get('invocation_id'),str)
+            and DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(row.get('invocation_id')) is not None
+        }
+        if len(valid_invocations)!=1:return None
+        invocation_id=next(iter(valid_invocations))
+        by_id={event_id:row for event_id,row in by_id.items() if row.get('invocation_id')==invocation_id}
     ordered=sorted(by_id.values(),key=lambda e:(int(e.get('producer_seq',0)),int(e.get('monotonic_ns',0)),str(e.get('event_id',''))))
     rows=[];seen_seq=set();last_seq=None;last_mono=None
     for row in ordered:
@@ -116,10 +129,6 @@ def recover_unclean_run(folder:Path)->Path|None:
         if last_mono is not None and event.monotonic_ns<last_mono:
             errors.append('RECOVERY_MONOTONIC_REGRESSION_SKIPPED');continue
         seen_seq.add(seq);rows.append(row);last_seq=event.producer_seq;last_mono=event.monotonic_ns
-    if invocation_id is None:
-        invocations={r.get('invocation_id') for r in rows if isinstance(r.get('invocation_id'),str)}
-        if len(invocations)!=1:return None
-        invocation_id=next(iter(invocations))
     recent=tuple(rows[-_MAX_RECENT:])
     priority_rows=[]
     for row in rows:
