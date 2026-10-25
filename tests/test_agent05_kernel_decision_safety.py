@@ -283,5 +283,29 @@ class TestAgent05NearestActorSafety(unittest.TestCase):
         self.assertIn("actor:42.alive", result.missing_inputs)
 
 
+
+class TestAgent05SummonCountSafety(unittest.TestCase):
+    def test_unknown_alive_owned_summon_is_not_counted_as_definitely_active(self):
+        from anka_game_kernel.domain.ids import ActorId
+        from anka_game_kernel.mechanics.actor_queries.service import ActorQueryService
+
+        summoner = SimpleNamespace(actor_id=ActorId(41))
+        summon = SimpleNamespace(
+            actor_id=ActorId(50),
+            alive=None,
+            summoned=True,
+            summoner_id=ActorId(41),
+        )
+        context = SimpleNamespace(
+            actors=(summoner, summon),
+            actor=lambda actor_id: summoner if actor_id == summoner.actor_id else summon,
+        )
+
+        result = ActorQueryService.summon_count(context, summoner.actor_id)
+
+        self.assertEqual(result.count, 0)
+        self.assertIn("actor:50.alive", result.missing_inputs)
+
+
 if __name__ == "__main__":
     unittest.main()
