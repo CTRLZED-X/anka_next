@@ -269,6 +269,8 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             if len({e.event_name for e in send_results})>1:hard_conflicts.append('CONFLICTING_SEND_RESULTS')
         if len(settlements)>1:lifecycle_anomalies.append('MULTIPLE_SETTLEMENTS')
         if len(terminal_unresolveds)>1:lifecycle_anomalies.append('MULTIPLE_TERMINAL_UNRESOLVED')
+        if len(pre_send_terminal_events)>1:lifecycle_anomalies.append('MULTIPLE_PRE_SEND_TERMINALS')
+        if pre_send_terminal_events and (starts or send_results):hard_conflicts.append('PRE_SEND_TERMINAL_WITH_SEND')
         # Missing earlier lifecycle edges are not themselves contradictions in a
         # bounded incident: the recorder may have omitted them. Only positive,
         # mutually incompatible included evidence is allowed to create a hard
