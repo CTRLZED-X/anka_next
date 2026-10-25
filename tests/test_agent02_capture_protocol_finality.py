@@ -508,8 +508,10 @@ class TestAgent02SamePollFinality(unittest.TestCase):
 
     def test_capture_loss_fence_still_applies(self):
         a = assembler()
-        returned = a.consume_poll(self.poll(
+        self.assertEqual(a.consume_poll(self.poll(
             seg(100, n=1, flags=0x02),
+        )), ())
+        returned = a.consume_poll(self.poll(
             seg(101, b"A", n=2),
             dropped=1,
             driver="AVAILABLE_DROPPED",
