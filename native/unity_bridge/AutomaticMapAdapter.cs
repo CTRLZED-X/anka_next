@@ -392,6 +392,23 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 "INVALID_OBSERVATION_PROVENANCE",
                 "account_id, client_instance_id, observation_signature and a non-negative canonical_revision are required.");
 
+        if (!CoordinateProjection.TryGetDofusWindow(out var identityWindow, out var identityWindowError))
+            return RejectObservation(
+                "OBSERVATION_CLIENT_WINDOW_UNAVAILABLE",
+                identityWindowError ?? "The local Dofus window is unavailable for observation identity validation.");
+        using (var process = System.Diagnostics.Process.GetCurrentProcess())
+        {
+            var expectedClientInstanceId = CoordinateProjection.ClientInstanceId(
+                identityWindow, process.Id, process.StartTime.ToFileTimeUtc());
+            if (!string.Equals(
+                    observation.ClientInstanceId,
+                    expectedClientInstanceId,
+                    StringComparison.Ordinal))
+                return RejectObservation(
+                    "OBSERVATION_CLIENT_INSTANCE_MISMATCH",
+                    "Canonical observation client_instance_id does not identify this Dofus window/process generation.");
+        }
+
         if (_lastObservation != null)
         {
             if (!string.Equals(observation.AccountId, _lastObservation.AccountId, StringComparison.Ordinal)
