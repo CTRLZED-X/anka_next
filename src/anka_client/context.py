@@ -7,7 +7,7 @@ from __future__ import annotations
 from anka_contracts.bridge import BridgeMapReport
 from anka_contracts.client import (AccountBinding, CalibrationProfileEvidence,
     ClientContextProof, ClientGenerationVector, LoadoutEvidence, WindowObservation)
-from anka_client.discovery import generation_id
+from anka_client.discovery import client_instance_id, generation_id
 
 BREED_CLASS_IDS={'CRA':9,'ENUTROF':3}
 MAX_LOADOUT_AGE_NS=3_000_000_000
@@ -90,6 +90,6 @@ def identity_from_binding(*, account_id: str, binding: AccountBinding, window: W
     if class_id is None: raise ValueError('CLIENT_CLASS_NOT_PROVEN')
     account_token=account_id if account_id.startswith('acct-') else 'acct-'+account_id
     gid=binding.generation_id
-    return ClientIdentity('client-'+gid[4:20],account_token,window.pid,window.process_created_100ns,window.hwnd,
+    return ClientIdentity(client_instance_id(window),account_token,window.pid,window.process_created_100ns,window.hwnd,
         int(gid[4:20],16),'PROVEN',class_id,'PROVEN',bridge_generation,
         window.client_width,window.client_height,window.dpi)
