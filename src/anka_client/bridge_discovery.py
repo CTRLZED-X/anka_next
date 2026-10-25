@@ -5,6 +5,7 @@ bridge health to independently observed Windows process generations and exports
 only aggregate diagnostics; ports/PIDs/window handles never enter incidents.
 """
 from __future__ import annotations
+import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
@@ -43,7 +44,8 @@ def _projection_ready_for_window(health: dict, window: WindowObservation) -> boo
 
 def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
                        port_start: int = 8765, port_count: int = 32,
-                       reader_factory: Callable[[], object] | None = None) -> dict:
+                       reader_factory: Callable[[], object] | None = None,
+                       listener_owner_resolver: Callable[[int], int | None] | None = None) -> dict:
     if not (1 <= port_start <= 65535) or not (1 <= port_count <= 64) or port_start + port_count - 1 > 65535:
         raise ValueError('INVALID_BRIDGE_PORT_RANGE')
     windows_by_process={}
@@ -52,15 +54,34 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             windows_by_process.setdefault((w.pid,w.process_created_100ns),[]).append(w)
     generations=set(windows_by_process)
     factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=.20))
+    if listener_owner_resolver is None and os.name == 'nt':
+        from anka_client.win32_bridge_ownership import loopback_listener_owner_pid
+        listener_owner_resolver=loopback_listener_owner_pid
+    owner_proof_active=listener_owner_resolver is not None
 
     def one(port: int):
         try:
+            owner_before=None
+            if listener_owner_resolver is not None:
+                try:
+                    owner_before=listener_owner_resolver(port)
+                except Exception:
+                    return ('OWNER_UNVERIFIED',None,False)
+                if owner_before is None:
+                    return None
             health=factory().get_json(port,'/health')
             if health.get('source') != 'unity_bridge' or health.get('available') is not True:
                 return None
             pid=health.get('processId'); created=health.get('processStartTime'); declared=health.get('bridgePort')
             if type(pid) is not int or type(created) is not int or type(declared) is not int or declared != port:
                 return ('MALFORMED',None,False)
+            if listener_owner_resolver is not None:
+                try:
+                    owner_after=listener_owner_resolver(port)
+                except Exception:
+                    return ('OWNER_UNVERIFIED',None,False)
+                if owner_before != pid or owner_after != pid:
+                    return ('OWNER_MISMATCH',None,False)
             generation=(pid,created)
             matched=generation if generation in generations else None
             if matched is None:
@@ -78,6 +99,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
 
     valid=ready_count=unmatched=0
     matched=[];ready=[];ambiguous_window_generations=set()
+    listener_owner_rejections=0
     workers=min(12,port_count)
     with ThreadPoolExecutor(max_workers=workers,thread_name_prefix='anka-bridge-probe') as pool:
         futures=[pool.submit(one,p) for p in range(port_start,port_start+port_count)]
@@ -85,6 +107,9 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             result=future.result()
             if result is None:continue
             status,generation,is_ready=result
+            if status in ('OWNER_UNVERIFIED','OWNER_MISMATCH'):
+                listener_owner_rejections+=1
+                continue
             if status=='AMBIGUOUS_WINDOW':
                 valid+=1
                 ambiguous_window_generations.add(generation)
@@ -123,6 +148,8 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
         'unmatched_healthy_bridges':unmatched,
         'projection_ready_matches':ready_unique,
         'projection_ready_duplicate_responses':max(0,ready_count-ready_unique),
+        'listener_owner_proof_active':owner_proof_active,
+        'listener_owner_rejections':listener_owner_rejections,
         'character_identity_provided':False,
         'physical_input_permitted':False,
     }
