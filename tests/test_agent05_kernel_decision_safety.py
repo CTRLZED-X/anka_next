@@ -307,5 +307,32 @@ class TestAgent05SummonCountSafety(unittest.TestCase):
         self.assertIn("actor:50.alive", result.missing_inputs)
 
 
+
+class TestAgent05ActionIdentitySafety(unittest.TestCase):
+    def test_action_key_changes_with_kernel_or_game_data_identity(self):
+        from dataclasses import replace
+
+        from anka_decision.planner import action_key
+
+        frame = combat_frame()
+        target = (("spell_id", "32435"), ("grade", "3"), ("target_cell", "229"))
+        baseline = action_key(frame, "CAST", target)
+
+        changed_kernel = action_key(
+            replace(frame, kernel_ruleset_id="kernel-ruleset-b"),
+            "CAST",
+            target,
+        )
+        changed_data = action_key(
+            replace(frame, game_data_revision="game-data-b"),
+            "CAST",
+            target,
+        )
+
+        self.assertNotEqual(baseline, changed_kernel)
+        self.assertNotEqual(baseline, changed_data)
+        self.assertNotEqual(changed_kernel, changed_data)
+
+
 if __name__ == "__main__":
     unittest.main()
