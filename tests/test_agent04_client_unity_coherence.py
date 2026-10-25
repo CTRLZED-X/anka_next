@@ -167,6 +167,13 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertIn('public long? CanonicalRevision', contracts)
         self.assertIn('!observation.CanonicalRevision.HasValue', adapter)
 
+    def test_native_observation_epoch_allows_safe_revision_reset_and_invalidates_projection(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('string.IsNullOrWhiteSpace(observation.ObservationEpoch)', source)
+        self.assertIn('var observationEpochChanged = false;', source)
+        self.assertIn('if (!observationEpochChanged)', source)
+        self.assertIn('var generationChanged = observationEpochChanged', source)
+
     def test_native_observation_rejects_cross_client_and_revision_rollback(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         self.assertIn('OBSERVATION_CLIENT_INSTANCE_MISMATCH', source)
