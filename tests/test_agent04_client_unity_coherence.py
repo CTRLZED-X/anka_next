@@ -1,12 +1,16 @@
 """Chat 04 adversarial regressions for exact window/Unity projection coherence."""
 from __future__ import annotations
 
+import json
 import socket
 import struct
+import tempfile
 import unittest
+from pathlib import Path
 
 from anka_app.cli import ROOT
 from anka_client.bridge_discovery import probe_bridge_range
+from anka_client.calibration import load_calibration_profile
 from anka_client.unity_bridge import ReadOnlyBridgeInspector
 from anka_client.win32_bridge_ownership import _loopback_listener_owners
 from anka_contracts.client import WindowObservation
@@ -178,6 +182,43 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         raw = struct.pack('<I', 2) + struct.pack('<6I', 2, 0, 0, 0, 0, PID)
         with self.assertRaisesRegex(OSError, 'TCP_LISTENER_TABLE_TRUNCATED'):
             _loopback_listener_owners(raw, PORT)
+
+    def test_calibration_loader_rejects_string_coordinate_coercion(self):
+        data = {
+            'schema_version': 1,
+            'source_sha256': 'a' * 64,
+            'client_size': {'width': 1280, 'height': 649},
+            'spell_slots': {'1': {'x': '467', 'y': 583, 'verified': True}},
+            'controls': {},
+            'directions': {},
+            'status': 'TEST_CURRENT',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'calibration.json'
+            path.write_text(json.dumps(data), encoding='utf8')
+            with self.assertRaisesRegex(ValueError, 'INVALID_CALIBRATION_POINT_TYPE'):
+                load_calibration_profile(path)
+
+    def test_calibration_loader_rejects_bool_schema_and_geometry(self):
+        base = {
+            'source_sha256': 'a' * 64,
+            'client_size': {'width': 1280, 'height': 649},
+            'spell_slots': {},
+            'controls': {},
+            'directions': {},
+            'status': 'TEST_CURRENT',
+        }
+        cases = [
+            dict(base, schema_version=True),
+            dict(base, schema_version=1, client_size={'width': True, 'height': 649}),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'calibration.json'
+            for payload in cases:
+                with self.subTest(payload=payload):
+                    path.write_text(json.dumps(payload), encoding='utf8')
+                    with self.assertRaises(ValueError):
+                        load_calibration_profile(path)
 
     def test_native_transient_projection_loss_forces_retry(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
