@@ -92,7 +92,11 @@ class TransportEnvelopeAssembler:
         state=flow.dirs.setdefault(seg.direction,_Dir())
         if not seg.syn: return state
         terminal_restart=flow.reset_seen or any(d.fin_seq is not None for d in flow.dirs.values())
-        if not terminal_restart and state.syn_seq is not None and state.syn_seq==seg.seq:
+        # An exact retransmission of the already-anchored SYN is still evidence
+        # from the existing generation, even after FIN/RST. It must never create
+        # a fresh generation by itself; terminal fencing remains in place so any
+        # later stale bytes stay untrusted.
+        if state.syn_seq is not None and state.syn_seq==seg.seq:
             state.duplicates+=1;return state
         if terminal_restart or (state.syn_seq is not None and state.syn_seq!=seg.seq):
             # A SYN after terminal evidence, or a different SYN on an already
