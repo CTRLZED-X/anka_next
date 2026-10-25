@@ -760,9 +760,11 @@ def verify_incident(path:Path)->dict:
                 if run_id is not None and event.run_id!=run_id:add('TIMELINE_RUN_ID_MISMATCH')
                 if invocation_id is not None and event.invocation_id!=invocation_id:add('TIMELINE_INVOCATION_ID_MISMATCH')
             manifest_run_id=m.get('run_id')
-            if not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
+            if manifest_run_id is None:
+                if m.get('schema_version')==2:add('MANIFEST_RUN_ID_INVALID')
+            elif not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
                 add('MANIFEST_RUN_ID_INVALID')
-            if m.get('run_id') is not None and run_id is not None and m.get('run_id')!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
+            if manifest_run_id is not None and run_id is not None and manifest_run_id!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
             if isinstance(run_manifest,dict):
                 if run_manifest.get('physical_input_state')!=_aggregate_physical_input_state(rows):
                     add('RUN_MANIFEST_PHYSICAL_STATE_MISMATCH')
