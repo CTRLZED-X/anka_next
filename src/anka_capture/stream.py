@@ -125,7 +125,11 @@ class TransportEnvelopeAssembler:
         # a fresh generation by itself; terminal fencing remains in place so any
         # later stale bytes stay untrusted.
         if state.syn_seq is not None and state.syn_seq==seg.seq:
-            state.duplicates+=1;return state
+            # Sequence identity proves only the SYN control retransmission.
+            # SYN payload, if any, must still pass exact byte-overlap proof.
+            if not seg.payload:
+                state.duplicates+=1
+            return state
         if terminal_restart or (state.syn_seq is not None and state.syn_seq!=seg.seq):
             # A SYN after terminal evidence, or a different SYN on an already
             # anchored tuple, starts a fresh connection generation.
