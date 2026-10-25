@@ -226,6 +226,7 @@ public sealed class ObservationResponse
 public sealed class BridgeHealth
 {
     public string BridgeVersion { get; set; }
+    public string ClientInstanceId { get; set; }
     public int ProcessId { get; set; }
     public long ProcessStartTime { get; set; }
     public int BridgePort { get; set; }
