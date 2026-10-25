@@ -260,7 +260,25 @@ class MissionWorkflow:
         if s.phase=='RECOVERING':
             # A watchdog may race the authoritative proof it was waiting for.
             # Preserve that proof instead of requiring an unrelated recovery
-            # acknowledgement and risking a permanent Ready/join/placement stall.
+            # acknowledgement and risking a permanent lifecycle stall.
+            if s.resume_phase=='PREFLIGHT' and signal.kind=='PREFLIGHT_OK':
+                return self._transition('WORLD',signal,reason='PREFLIGHT_OK_SUPERSEDES_RECOVERY',resume_phase=None)
+            if s.resume_phase=='WORLD' and signal.kind=='ROUTE_STEP_PROVEN':
+                return self._transition('WORLD',signal,reason='ROUTE_STEP_PROVEN_SUPERSEDES_RECOVERY',
+                                        route_index=s.route_index+1,resume_phase=None)
+            if s.resume_phase=='WORLD' and signal.kind=='ENCOUNTER_SELECTED':
+                if len(s.started_fight_epochs)>=self.plan.config.max_attempts:
+                    return self._transition('STOPPED',signal,reason='MAX_ATTEMPTS_REACHED',
+                                            terminal_reason='MAX_ATTEMPTS_REACHED',resume_phase=None)
+                return self._transition('ENCOUNTER_SELECTED',signal,reason='ENCOUNTER_SELECTED_SUPERSEDES_RECOVERY',
+                                        selected_encounter_id=signal.encounter_id,
+                                        selected_encounter_map_id=signal.encounter_map_id,resume_phase=None)
+            if s.resume_phase=='ENCOUNTER_SELECTED' and signal.kind=='FIGHT_ENTRY_PROVEN':
+                if signal.fight_epoch is None or signal.fight_epoch<=s.fight_epoch or signal.fight_epoch in s.started_fight_epochs:
+                    return WorkflowApplyResult('REJECTED',False,'NEW_FIGHT_EPOCH_REQUIRED',s,None)
+                return self._transition('FIGHT_ENTRY',signal,reason='FIGHT_ENTRY_PROVEN_SUPERSEDES_RECOVERY',
+                                        fight_epoch=signal.fight_epoch,
+                                        started=s.started_fight_epochs+(signal.fight_epoch,),resume_phase=None)
             recovery_progress={
                 'FIGHT_ENTRY':('PARTY_JOIN_PROVEN','PARTY_JOIN'),
                 'PARTY_JOIN':('PLACEMENT_PROVEN','PLACEMENT'),
@@ -271,6 +289,35 @@ class MissionWorkflow:
             if expected is not None and signal.kind==expected[0]:
                 if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
                 return self._transition(expected[1],signal,reason=signal.kind+'_SUPERSEDES_RECOVERY',resume_phase=None)
+            if s.resume_phase=='FIGHT_END_RECONCILIATION' and signal.kind=='FIGHT_OUTCOME':
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                attempts,wins,losses,unknowns,aborted=s.attempts+1,s.wins,s.losses,s.unknowns,s.aborted
+                if signal.fight_result=='VICTORY':wins+=1
+                elif signal.fight_result=='DEFEAT':losses+=1
+                elif signal.fight_result=='UNKNOWN':unknowns+=1
+                else:aborted+=1
+                stop_reason=None
+                if wins>=self.plan.config.target_wins:stop_reason='TARGET_WINS_REACHED'
+                elif signal.fight_result=='DEFEAT' and self.plan.config.stop_on_loss:stop_reason='LOSS_CONFIRMED'
+                elif signal.fight_result=='UNKNOWN' and self.plan.config.stop_on_unknown:stop_reason='OUTCOME_UNKNOWN'
+                elif attempts>=self.plan.config.max_attempts:stop_reason='MAX_ATTEMPTS_REACHED'
+                return self._transition('WORLD_REENTRY',signal,reason='FIGHT_OUTCOME_SUPERSEDES_RECOVERY',
+                                        counters=(attempts,wins,losses,unknowns,aborted),
+                                        counted=s.counted_fight_epochs+(s.fight_epoch,),
+                                        goal_pending=stop_reason is not None,terminal_reason=stop_reason,
+                                        resume_phase=None)
+            if s.resume_phase=='WORLD_REENTRY' and signal.kind=='WORLD_REENTRY_PROVEN':
+                if signal.fight_epoch!=s.fight_epoch:return WorkflowApplyResult('REJECTED',False,'FIGHT_EPOCH_MISMATCH',s,None)
+                if s.goal_reached_pending_reentry:
+                    terminal='COMPLETED' if s.terminal_reason=='TARGET_WINS_REACHED' else 'STOPPED'
+                    return self._transition(terminal,signal,reason='WORLD_REENTRY_SUPERSEDES_RECOVERY',
+                                            terminal_reason=s.terminal_reason,goal_pending=False,
+                                            selected_encounter_id=None,selected_encounter_map_id=None,
+                                            resume_phase=None)
+                return self._transition('WORLD',signal,reason='WORLD_REENTRY_SUPERSEDES_RECOVERY',
+                                        goal_pending=False,terminal_reason=None,
+                                        selected_encounter_id=None,selected_encounter_map_id=None,
+                                        resume_phase=None)
             if signal.kind=='RECOVERY_FAILED':
                 return self._transition('BLOCKED',signal,reason='RECOVERY_FAILED',terminal_reason='RECOVERY_FAILED')
             if signal.kind=='RECOVERY_SUCCEEDED' and s.resume_phase:
