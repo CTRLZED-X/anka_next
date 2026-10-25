@@ -361,9 +361,9 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,'edges':boundary_graph}
     action_lifecycles=action_lifecycle_report(events)
     pre_action_outcomes=action_lifecycles.get('pre_action_outcomes',[]) if isinstance(action_lifecycles,dict) else []
-    latest_pre_action_outcome=(pre_action_outcomes[-1] if pre_action_outcomes else None)
+    latest_included_pre_action_outcome=(pre_action_outcomes[-1] if pre_action_outcomes else None)
     action_rows=action_lifecycles.get('actions',[]) if isinstance(action_lifecycles,dict) else []
-    latest_action_lifecycle=(action_rows[-1] if action_rows else None)
+    latest_included_action_lifecycle=(action_rows[-1] if action_rows else None)
     historical_matches=historical_similarity_report(events,code=code,boundary=boundary)
     recovery_history=recovery_history_report(events)
     workflow_lifecycle=workflow_lifecycle_report(events)
@@ -390,8 +390,11 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'next_targeted_verification':sanitize(next_test),'diagnostic_coverage_gaps':gap_summary,
         'snapshot_names':snapshot_names,'snapshot_omissions':snapshot_omissions,
         'settled_action_count':proven_facts.get('settled_action_count',0),
-        'unresolved_actions':unresolved_actions,'latest_pre_action_outcome':latest_pre_action_outcome,
-        'latest_action_lifecycle':latest_action_lifecycle,'recovery_attempt_count':recovery_count,
+        'unresolved_actions':unresolved_actions,'latest_included_pre_action_outcome':latest_included_pre_action_outcome,
+        'latest_included_action_lifecycle':latest_included_action_lifecycle,
+        'pre_action_outcomes_omitted':action_lifecycles.get('pre_action_outcomes_omitted',0),
+        'action_lifecycles_omitted':action_lifecycles.get('actions_omitted',0),
+        'recovery_attempt_count':recovery_count,
         'historical_similarity_case_ids':historical_ids,'workflow_lifecycle_status':workflow_lifecycle.get('status'),
         'workflow_current_phase':workflow_lifecycle.get('current_phase'),'turn_handoff_status':turn_handoff.get('status'),
         'evidence_completeness':evidence_completeness,
@@ -421,8 +424,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         f'**Recorded recovery/watchdog attempts:** {recovery_count}.\n\n'
         f'**Workflow lifecycle index:** {workflow_lifecycle.get("status")} at phase {workflow_lifecycle.get("current_phase")}; next={sanitize(workflow_lifecycle.get("next_expected_transition"))}.\n\n'
         f'**End Turn handoff index:** {turn_handoff.get("status")}; next_owner={sanitize(turn_handoff.get("next_owner_account_id"))}.\n\n'
-        f'**Latest pre-action causal outcome:** {sanitize(latest_pre_action_outcome) if latest_pre_action_outcome else "none included"}.\n\n'
-        f'**Latest action lifecycle:** {sanitize(latest_action_lifecycle) if latest_action_lifecycle else "none included"}.\n\n'
+        f'**Latest included pre-action causal outcome:** {sanitize(latest_included_pre_action_outcome) if latest_included_pre_action_outcome else "none included"}; omitted={action_lifecycles.get("pre_action_outcomes_omitted",0)}.\n\n'
+        f'**Latest included action lifecycle:** {sanitize(latest_included_action_lifecycle) if latest_included_action_lifecycle else "none included"}; omitted={action_lifecycles.get("actions_omitted",0)}.\n\n'
         f'**Historical similarity hints (not root-cause proof):** {sanitize(historical_ids) if historical_ids else "none"}.\n\n'
         f'**Evidence completeness:** {evidence_completeness}; flight recorder overwrites={flight["recent_overwrites"]}; '
         f'journal drops={observer.dropped}; size omissions={flight["timeline_events_omitted_for_size"]}.\n\n'
@@ -533,8 +536,9 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
             'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
             'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
             'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
-            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_pre_action_outcome':None,
-            'latest_action_lifecycle':None,'recovery_attempt_count':0,
+            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_included_pre_action_outcome':None,
+            'latest_included_action_lifecycle':None,'pre_action_outcomes_omitted':0,'action_lifecycles_omitted':0,
+            'recovery_attempt_count':0,
             'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
             'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}),
         'analysis/evidence_request.json':_serialized({'schema_version':1,'raw_network_evidence_required_for_protocol_reverse_engineering':False}),
@@ -1135,12 +1139,16 @@ def verify_incident(path:Path)->dict:
                         if isinstance(gpt,dict) and gpt:
                             lifecycle_pre=lifecycles.get('pre_action_outcomes',[])
                             expected_latest_pre=(lifecycle_pre[-1] if isinstance(lifecycle_pre,list) and lifecycle_pre else None)
-                            if gpt.get('latest_pre_action_outcome')!=expected_latest_pre:
+                            if gpt.get('latest_included_pre_action_outcome')!=expected_latest_pre:
                                 add('GPT_SUMMARY_PRE_ACTION_MISMATCH')
                             lifecycle_actions=lifecycles.get('actions',[])
                             expected_latest_action=(lifecycle_actions[-1] if isinstance(lifecycle_actions,list) and lifecycle_actions else None)
-                            if gpt.get('latest_action_lifecycle')!=expected_latest_action:
+                            if gpt.get('latest_included_action_lifecycle')!=expected_latest_action:
                                 add('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH')
+                            if gpt.get('pre_action_outcomes_omitted')!=lifecycles.get('pre_action_outcomes_omitted',0):
+                                add('GPT_SUMMARY_PRE_ACTION_OMISSION_MISMATCH')
+                            if gpt.get('action_lifecycles_omitted')!=lifecycles.get('actions_omitted',0):
+                                add('GPT_SUMMARY_ACTION_OMISSION_MISMATCH')
                         if not bool(m.get('advanced_analysis_failed')) and isinstance(facts,dict) and isinstance(graph,dict):
                             try:
                                 expected_facts=proven_fact_report(rows,graph.get('edges',[]),lifecycles)
