@@ -71,6 +71,11 @@ class MissionWorkflow:
         if snapshot.phase in _TERMINAL:
             engine._snapshot=snapshot
             return engine
+        # Resume must never rewind the temporal acceptance fence.  Otherwise a
+        # stale signal with a fresh transport identity can become admissible
+        # after restart simply because the caller supplied an older tick.
+        if resume_tick < snapshot.phase_started_tick:
+            raise WorkflowRejected('RESUME_TICK_REGRESSION')
         gen=snapshot.progress_generation+1
         progress=_token(snapshot.run_id,snapshot.phase,snapshot.fight_epoch,(snapshot.attempts,snapshot.wins,snapshot.losses,snapshot.unknowns,snapshot.aborted),snapshot.route_index,None,snapshot.counted_fight_epochs,snapshot.started_fight_epochs,gen)
         engine._snapshot=replace(snapshot,progress_generation=gen,progress_token=progress,phase_started_tick=resume_tick,watchdog_deadline_tick=resume_tick+plan.watchdog_budget_ticks,resume_phase=None if snapshot.phase!='RECOVERING' else snapshot.resume_phase)
