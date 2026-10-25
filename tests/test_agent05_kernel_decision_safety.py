@@ -852,5 +852,41 @@ class TestAgent05OccupancyCertaintySeparation(unittest.TestCase):
         self.assertIn("occupied_cells", result.missing_inputs)
 
 
+
+class TestAgent05OccupancyAuthorityInvariants(unittest.TestCase):
+    def test_unknown_life_caster_cell_cannot_self_prove_taken_requirement(self):
+        target = CellId(100)
+        map_definition = SimpleNamespace(
+            cells=(
+                SimpleNamespace(
+                    cell_id=target,
+                    walkable=True,
+                    non_walkable_during_fight=False,
+                ),
+            )
+        )
+        result = TargetingService().evaluate_cell(
+            map_definition,
+            target,
+            TargetCellSpec(need_taken_cell=True),
+            TargetCellContext(
+                caster_cell=target,
+                occupied_cells=frozenset({target}),
+                proven_occupied_cells=frozenset(),
+            ),
+        )
+
+        self.assertIsNone(result.legal)
+        self.assertIn("target_occupant_alive:100", result.missing_inputs)
+
+    def test_positive_occupancy_proof_cannot_escape_complete_blocker_snapshot(self):
+        with self.assertRaisesRegex(ValueError, "proven_occupied_cells"):
+            TargetCellContext(
+                caster_cell=CellId(100),
+                occupied_cells=frozenset(),
+                proven_occupied_cells=frozenset({CellId(101)}),
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
