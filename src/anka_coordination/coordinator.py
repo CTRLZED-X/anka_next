@@ -307,6 +307,14 @@ class PartyCoordinatorService:
                 raise CoordinationRejected('ACCOUNT_NOT_IN_ROSTER')
             snap=self._build_snapshot(); member=self._observations.get(account_id)
             turn_epoch=member.turn_epoch if member is not None else 0
+            authoritative_map_id=(snap.members[0].map_id if snap.same_fight_proven and snap.members else None)
+            member_matches_fight=(
+                member is not None
+                and snap.same_fight_proven
+                and member.fight_id==snap.fight_id
+                and member.fight_epoch==snap.fight_epoch
+                and member.map_id==authoritative_map_id
+            )
 
             if scope=='TURN':
                 allowed=True;reason='PERMIT_GRANTED'
@@ -322,6 +330,7 @@ class PartyCoordinatorService:
                 if not snap.same_fight_proven:allowed=False;reason='SAME_FIGHT_UNPROVEN'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.joined is True:allowed=False;reason='ALREADY_JOINED'
                 evidence=tuple(dict.fromkeys(tuple(e for o in snap.members for e in o.evidence_ids))) if allowed else ()
             elif scope=='PLACEMENT':
@@ -330,6 +339,7 @@ class PartyCoordinatorService:
                 elif not snap.join_barrier.satisfied:allowed=False;reason='JOIN_BARRIER_UNSATISFIED'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.placed is True:allowed=False;reason='ALREADY_PLACED'
                 evidence=tuple(dict.fromkeys(snap.join_barrier.evidence_ids + (member.evidence_ids if member is not None else ()))) if allowed else ()
             elif scope=='READY':
@@ -338,6 +348,7 @@ class PartyCoordinatorService:
                 elif not snap.placement_barrier.satisfied:allowed=False;reason='PLACEMENT_BARRIER_UNSATISFIED'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.ready is True:allowed=False;reason='ALREADY_READY'
                 evidence=tuple(dict.fromkeys(snap.placement_barrier.evidence_ids + (member.evidence_ids if member is not None else ()))) if allowed else ()
             else:
