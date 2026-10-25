@@ -318,6 +318,87 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'nearby_semantic_context':nearby,'semantic_context_window_end':context_window_end,
             'nearby_semantic_context_is_causal_proof':False,
         })
+    # Pre-action causal index: Decision and authorization can terminate before
+    # Workflow creates an action_id.  Without this lane, a "nothing happened"
+    # incident can look like a missing action even when the planner deliberately
+    # waited or Coordination denied the plan before Execution admission.
+    pre_action_all=[]
+    decision_results=[e for e in ordered if e.event_name=='decision.plan_result']
+    for index,decision_event in enumerate(decision_results):
+        disposition=decision_event.payload.get('disposition')
+        disposition=disposition if isinstance(disposition,str) else 'UNKNOWN'
+        plan_id=decision_event.payload.get('plan_id')
+        plan_id=plan_id if isinstance(plan_id,str) else None
+
+        # WorkflowTurnController handles one planner result synchronously. Bound
+        # downstream matching to the next Decision result for the same account so
+        # a later attempt cannot be borrowed to make this attempt look healthy.
+        next_same_account_seq=None
+        for later_decision in decision_results[index+1:]:
+            if later_decision.account_id==decision_event.account_id:
+                next_same_account_seq=later_decision.producer_seq
+                break
+
+        def same_attempt_window(event:DiagnosticEvent)->bool:
+            if event.producer_seq<=decision_event.producer_seq:return False
+            if next_same_account_seq is not None and event.producer_seq>=next_same_account_seq:return False
+            if decision_event.account_id is not None and event.account_id not in (None,decision_event.account_id):return False
+            if decision_event.fight_epoch is not None and event.fight_epoch not in (None,decision_event.fight_epoch):return False
+            if decision_event.turn_epoch is not None and event.turn_epoch not in (None,decision_event.turn_epoch):return False
+            return True
+
+        downstream=None
+        state=('DECISION_'+disposition if disposition in ('WAIT','NO_ACTION','FAULT') else 'DECISION_RESULT_UNKNOWN')
+        if disposition=='PLAN':
+            candidates=[]
+            if plan_id is not None:
+                for event in ordered:
+                    if not same_attempt_window(event):continue
+                    if event.event_name=='workflow.action_authorization_blocked' and event.payload.get('plan_id')==plan_id:
+                        candidates.append(event)
+                    elif event.event_name=='workflow.action_requested' and event.payload.get('plan_id')==plan_id:
+                        candidates.append(event)
+            if candidates:
+                downstream=min(candidates,key=lambda e:(e.producer_seq,e.monotonic_ns,e.event_id))
+                state=('AUTHORIZATION_BLOCKED' if downstream.event_name=='workflow.action_authorization_blocked'
+                       else 'ACTION_REQUESTED')
+            else:
+                state='PLAN_WITHOUT_WORKFLOW_OUTCOME'
+
+        reason=(downstream.payload.get('reason') if downstream is not None else decision_event.payload.get('reason'))
+        if reason is None and downstream is not None:reason=downstream.failure_code
+        downstream_payload=(downstream.payload if downstream is not None else {})
+        event_ids=[decision_event.event_id]
+        if downstream is not None:event_ids.append(downstream.event_id)
+        required_evidence=decision_event.payload.get('required_evidence',[])
+        if not isinstance(required_evidence,list):required_evidence=[]
+        pre_action_all.append({
+            'state':state,'account_id':decision_event.account_id,'fight_epoch':decision_event.fight_epoch,
+            'turn_epoch':decision_event.turn_epoch,'frame_id':decision_event.payload.get('frame_id'),
+            'plan_id':plan_id,'disposition':disposition,'reason':reason,
+            'failure_code':(downstream.failure_code if downstream is not None else decision_event.failure_code),
+            'scope':downstream_payload.get('scope'),'kind':downstream_payload.get('kind',decision_event.payload.get('kind')),
+            'action_id':downstream.action_id if downstream is not None else None,
+            'trace_id':downstream.trace_id if downstream is not None else None,
+            'decision_event_id':decision_event.event_id,
+            'downstream_event_id':downstream.event_id if downstream is not None else None,
+            'required_evidence':list(required_evidence),'event_ids':event_ids,
+            'producer_seq':decision_event.producer_seq,
+        })
+
+    # Failure/no-progress rows outrank routine ACTION_REQUESTED rows. Then fill
+    # remaining capacity with the newest ordinary attempts. Omissions are explicit.
+    selected_pre=[]
+    selected_pre_ids=set()
+    for row in reversed([x for x in pre_action_all if x['state']!='ACTION_REQUESTED']):
+        if len(selected_pre)>=limit:break
+        selected_pre.append(row);selected_pre_ids.add(row['decision_event_id'])
+    for row in reversed(pre_action_all):
+        if len(selected_pre)>=limit:break
+        if row['decision_event_id'] in selected_pre_ids:continue
+        selected_pre.append(row);selected_pre_ids.add(row['decision_event_id'])
+    pre_action_outcomes=sorted(selected_pre,key=lambda row:(row['producer_seq'],row['decision_event_id']))
+
     blockers=[]
     for e in ordered:
         if e.event_name=='workflow.action_authorization_blocked':
@@ -330,9 +411,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'priority_action_count':priority_action_count,'priority_actions_included':included_priority_count,
             'priority_actions_omitted':max(0,priority_action_count-included_priority_count),
             'selection_policy':'RISK_FIRST_THEN_RECENT',
+            'pre_action_outcomes':pre_action_outcomes,'total_pre_action_outcome_count':len(pre_action_all),
+            'pre_action_outcomes_omitted':max(0,len(pre_action_all)-len(pre_action_outcomes)),
             'authorization_blockers':blockers[-32:],'total_authorization_blocker_count':len(blockers),
             'authorization_blockers_omitted':max(0,len(blockers)-min(len(blockers),32)),
-            'note':'Nearby Protocol/Canonical/Live-State rows are timing/scope context only, never automatic action-outcome proof. High-risk/unresolved actions are retained before recent normal actions; bounded omissions are counted explicitly.'}
+            'note':'Decision and authorization outcomes are indexed even when no action_id exists. Nearby Protocol/Canonical/Live-State rows are timing/scope context only, never automatic action-outcome proof. High-risk/unresolved actions are retained before recent normal actions; bounded omissions are counted explicitly.'}
 
 
 _MAJOR_WORKFLOW_TRANSITIONS=(
