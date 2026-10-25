@@ -193,6 +193,56 @@ class TestAgent02CaptureCallbackQuiesce(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
             source.stop()
 
+    def test_timeout_remains_authoritative_if_incomplete_marking_fails(self):
+        start_entered = Event()
+        release_start = Event()
+        stop_called = Event()
+
+        class BrokenRecorder:
+            def mark_incomplete(self):
+                raise OSError("private recorder detail")
+
+            def close(self):
+                raise AssertionError("unsafe evidence must not be sealed")
+
+        class BlockingStartSniffer:
+            def __init__(self, **_):
+                pass
+
+            def start(self):
+                start_entered.set()
+                if not release_start.wait(timeout=2):
+                    raise RuntimeError("TEST_START_RELEASE_TIMEOUT")
+
+            def stop(self):
+                stop_called.set()
+
+        source = WindowsLiveCapture(
+            interface="stub",
+            server_ports=(40400,),
+            require_windows=False,
+            sniffer_factory=BlockingStartSniffer,
+            evidence_recorder=BrokenRecorder(),
+            lifecycle_timeout_seconds=0.05,
+        )
+        errors = []
+        starter = Thread(target=lambda: self._start(source, errors), daemon=True)
+        starter.start()
+        self.assertTrue(start_entered.wait(timeout=1))
+
+        with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
+            source.quiesce()
+        release_start.set()
+        starter.join(timeout=1)
+        self.assertFalse(starter.is_alive())
+        self.assertEqual(errors, ["LIVE_CAPTURE_START_QUIESCE_TIMEOUT"])
+        self.assertTrue(stop_called.wait(timeout=1))
+
+        stats = source.safe_stats()
+        self.assertEqual(stats["lifecycle_error"], "LIVE_CAPTURE_START_QUIESCE_TIMEOUT")
+        self.assertEqual(stats["secondary_cleanup_error"], "LIVE_CAPTURE_INTERRUPT_MARK_FAILED")
+        self.assertIsNone(stats["raw_evidence"])
+
     def test_late_start_cleanup_failure_does_not_replace_authoritative_timeout(self):
         start_entered = Event()
         release_start = Event()
