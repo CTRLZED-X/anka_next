@@ -39,12 +39,12 @@ class _Direction:
         self.syn_seq: int | None = None
         self.overlap_proof = RecentByteProof()
 
-    def feed(self, segment: CapturedTcpSegment) -> None:
+    def feed(self, segment: CapturedTcpSegment, *, same_syn_retransmission: bool = False) -> None:
         if self.finished:
             # Payload after FIN/RST might be a reused tuple. Without a new SYN,
             # never certify this flow generation as continuous.
             self.has_gaps = True
-        if segment.syn:
+        if segment.syn and not same_syn_retransmission:
             self.syn_seq = segment.seq
             self.anchored = True
             self.expected = (segment.seq + 1) % 2**32
@@ -127,9 +127,12 @@ class TransportAuditor:
                 current = directions[key] = _Direction()
                 generations.append(current)
             elif seg.syn and current.anchored and current.syn_seq == seg.seq:
-                # Exact SYN retransmission before useful traffic does not start
-                # a new connection generation.
-                current.duplicates += 1
+                # SYN sequence identity alone does not prove SYN payload bytes.
+                if not seg.payload:
+                    current.duplicates += 1
+                    continue
+                current.feed(seg,same_syn_retransmission=True)
+                payload_bytes += len(seg.payload)
                 continue
             current.feed(seg)
             payload_bytes += len(seg.payload)
@@ -185,7 +188,10 @@ class IncrementalTransportAuditor:
             current=self._directions[key]=_Direction()
             self._generations.append(current)
         elif segment.syn and current.anchored and current.syn_seq==segment.seq:
-            current.duplicates+=1
+            if not segment.payload:
+                current.duplicates+=1
+                return
+            current.feed(segment,same_syn_retransmission=True)
             return
         current.feed(segment)
 
