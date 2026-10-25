@@ -7,7 +7,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import verify_incident
-from anka_observability.forensics import READY_TRACE
+from anka_observability.forensics import READY_TRACE, action_lifecycle_report
 from anka_observability.redaction import has_unredacted_sensitive_data
 
 
@@ -111,6 +111,94 @@ class TestAgent07EvidenceLossCertainty(unittest.TestCase):
                 self.assertEqual(result['status'], 'FAIL')
                 self.assertIn('GPT_SUMMARY_LOSS_CONFIDENCE_MISMATCH', result['errors'])
                 self.assertIn('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07PreActionCausalIndex(unittest.TestCase):
+    def test_decision_wait_is_indexed_without_action_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-decision-wait', invocation_id='inv-agent07-decision-wait')
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=4,
+                    turn_epoch=9,
+                    payload={
+                        'frame_id':'frame-agent07-wait',
+                        'disposition':'WAIT',
+                        'reason':'DECISION_BUDGET_EXHAUSTED',
+                        'required_evidence':['planner_budget'],
+                    },
+                )
+                report = action_lifecycle_report(obs.recent)
+                self.assertEqual(report['actions'], [])
+                self.assertEqual(report['total_pre_action_outcome_count'], 1)
+                row = report['pre_action_outcomes'][0]
+                self.assertEqual(row['state'], 'DECISION_WAIT')
+                self.assertEqual(row['reason'], 'DECISION_BUDGET_EXHAUSTED')
+                self.assertEqual(row['required_evidence'], ['planner_budget'])
+                self.assertIsNone(row['action_id'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_authorization_blocker_is_correlated_before_action_id_and_surfaced_for_gpt(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-auth-block', invocation_id='inv-agent07-auth-block')
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=5,
+                    turn_epoch=11,
+                    payload={
+                        'frame_id':'frame-agent07-auth',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-auth',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_authorization_blocked',
+                    severity='WARNING',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    failure_code='COORDINATION_TURN_OWNER_UNPROVEN',
+                    account_id='acct-cra',
+                    fight_epoch=5,
+                    turn_epoch=11,
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'plan_id':'plan-agent07-auth',
+                        'reason':'COORDINATION_TURN_OWNER_UNPROVEN',
+                    },
+                )
+                path = obs.export_incident('NOTHING_HAPPENED', boundary='workflow.action_authorization')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                    gpt = json.loads(z.read('analysis/gpt_summary.json'))
+                self.assertEqual(lifecycles['actions'], [])
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['state'], 'AUTHORIZATION_BLOCKED')
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['plan_id'], 'plan-agent07-auth')
+                self.assertIsNone(lifecycles['pre_action_outcomes'][-1]['action_id'])
+                self.assertEqual(gpt['latest_pre_action_outcome'], lifecycles['pre_action_outcomes'][-1])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_pre_action_outcome', None)},
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_PRE_ACTION_MISMATCH', tampered['errors'])
             finally:
                 obs.finish('BLOCKED')
 
