@@ -252,6 +252,19 @@ class TestPersistenceMigrationPhaseA(unittest.TestCase):
         self.assertEqual(loaded.classification,'INCOMPATIBLE')
         self.assertIsNone(loaded.snapshot)
 
+    def test_legacy_nonrecovery_signal_is_parseable_but_not_current_authority(self):
+        legacy={
+            'signal_id':'wfsig-legacy-heartbeat',
+            'kind':'HEARTBEAT',
+            'monotonic_tick':10,
+            'evidence_ids':[],
+        }
+        loaded=load_workflow_signal(legacy)
+        self.assertEqual(loaded.classification,'AMBIGUOUS')
+        self.assertFalse(loaded.authoritative)
+        self.assertEqual(loaded.signal.kind,'HEARTBEAT')
+        self.assertIn('LEGACY_SIGNAL_AUTHORITY_UNPROVEN',loaded.reasons)
+
     def test_legacy_recovery_signal_never_gets_manufactured_identity(self):
         legacy={
             'signal_id':'wfsig-legacy-recovery',
