@@ -96,10 +96,26 @@ def _require_fight_scope(event:CanonicalEventEnvelope,*,world_epoch:int,fight_ep
     _require_exact_epoch(event.fight_epoch,fight_epoch,'STATE_FIGHT_EPOCH_MISMATCH')
 
 def _turn_fact_epoch(event:CanonicalEventEnvelope,*,turn_active:bool,turn_epoch:int)->int:
-    expected=turn_epoch if turn_active else turn_epoch+1
-    if event.turn_epoch is not None and event.turn_epoch!=expected:
+    if turn_active:
+        if event.turn_epoch is not None and event.turn_epoch!=turn_epoch:
+            raise LiveStateProjectionError('STATE_TURN_EPOCH_MISMATCH')
+        return turn_epoch
+    # Before the very first turn, absolute resource/cooldown evidence is a
+    # deliberate bootstrap exception: existing M7 semantics allow a same-fight
+    # snapshot immediately before TURN_STARTED to satisfy turn 1.
+    if turn_epoch==0:
+        if event.turn_epoch is not None and event.turn_epoch!=1:
+            raise LiveStateProjectionError('STATE_TURN_EPOCH_MISMATCH')
+        return 1
+    # Between later turns, an untagged late absolute observation must not be
+    # optimistically borrowed into the *next* turn. Preserve it under the last
+    # completed turn so TURN_STARTED will stale it. Explicit evidence may name
+    # either the just-completed turn or the immediately upcoming turn.
+    if event.turn_epoch is None:
+        return turn_epoch
+    if event.turn_epoch not in (turn_epoch,turn_epoch+1):
         raise LiveStateProjectionError('STATE_TURN_EPOCH_MISMATCH')
-    return expected if event.turn_epoch is None else event.turn_epoch
+    return event.turn_epoch
 
 class StateProjector:
     reducer_revision='m7-r2'
