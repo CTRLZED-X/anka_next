@@ -411,6 +411,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.',
     }
 
+    gpt_summary_blob=_serialized(gpt_summary)
+    gpt_summary_sha256=sha256(gpt_summary_blob).hexdigest()
     read_first=(
         '# ANKA diagnostic incident\n\n'
         f'**Code:** {sanitize(code)}\n\n'
@@ -442,6 +444,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         f'**Available shipped bounded snapshots:** {sanitize(snapshot_names) if snapshot_names else "none"}.\n\n'
         f'**Snapshot omissions:** {sanitize(snapshot_omissions) if snapshot_omissions else "none"}.\n\n'
         '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
+        f'**Machine summary SHA-256:** {gpt_summary_sha256}\n\n'
         f'**Observer health:** storage_available={flight["persistent_storage_available"]}; errors={sanitize(list(observer.errors[-10:]))}.\n\n'
         + ('**INCIDENT_PRIMARY_EXPORT_FAILED:** primary run-folder ZIP write failed; this is the bounded fallback artifact.\n\n' if primary_export_failed else '')
         + 'Raw packet captures, credentials and environment dumps are excluded by default. '
@@ -464,7 +467,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'analysis/next_verification.json':_serialized(next_verification),
         'analysis/snapshot_index.json':_serialized({'schema_version':1,'snapshots':snapshot_names,'omitted':snapshot_omissions,
             'note':'Only shipped snapshot names are listed as available. Omitted snapshots are explicit; all snapshot content is bounded, sanitized diagnostic context and is not gameplay authority.'}),
-        'analysis/gpt_summary.json':_serialized(gpt_summary),
+        'analysis/gpt_summary.json':gpt_summary_blob,
         'logs/relevant_timeline.jsonl':timeline,'logs/priority_timeline.jsonl':priority_timeline,
         'logs/relevant_errors.jsonl':error_lines,
         'metadata/flight_recorder.json':_serialized({'schema_version':1,**flight}),
@@ -519,6 +522,26 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         f'**Detail:** {sanitize(detail)}\n\n'
         'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n'
     ).encode('utf8')
+    emergency_gpt_summary={'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
+        'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
+        'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
+        'cause_status':'UNDETERMINED','cause_scope':'INCLUDED_EVIDENCE_ONLY',
+        'candidate_causes_may_be_incomplete':True,'candidate_causes':[],
+        'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
+        'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
+        'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
+        'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_included_pre_action_outcome':None,
+        'latest_included_action_lifecycle':None,'pre_action_outcomes_omitted':0,'action_lifecycles_omitted':0,
+        'recovery_attempt_count':0,
+        'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
+        'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}
+    emergency_gpt_blob=_serialized(emergency_gpt_summary)
+    emergency_gpt_sha256=sha256(emergency_gpt_blob).hexdigest()
+    read_first=read_first.replace(
+        'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n',
+        'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n\n'
+        f'**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
+        f'**Machine summary SHA-256:** {emergency_gpt_sha256}\n')
     artifacts={
         'diagnosis.json':_serialized(diagnosis),'analysis/diagnosis.json':_serialized(diagnosis),
         'evidence_matrix.json':_serialized({'schema_version':2,'sections':sections}),
@@ -538,19 +561,7 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'analysis/proven_facts.json':_serialized({'schema_version':1,'facts':[],'settled_action_count':0,'unresolved_actions':[],'note':'Advanced fact extraction unavailable.'}),
         'analysis/next_verification.json':_serialized({'schema_version':1,'recommended_next_test':'Rerun forensic analysis offline.','missing_evidence':['ADVANCED_FORENSIC_ANALYSIS']}),
         'analysis/snapshot_index.json':_serialized({'schema_version':1,'snapshots':[], 'note':'Advanced snapshot indexing unavailable.'}),
-        'analysis/gpt_summary.json':_serialized({'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
-            'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
-            'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
-            'cause_status':'UNDETERMINED','cause_scope':'INCLUDED_EVIDENCE_ONLY',
-            'candidate_causes_may_be_incomplete':True,'candidate_causes':[],
-            'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
-            'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
-            'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
-            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_included_pre_action_outcome':None,
-            'latest_included_action_lifecycle':None,'pre_action_outcomes_omitted':0,'action_lifecycles_omitted':0,
-            'recovery_attempt_count':0,
-            'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
-            'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}),
+        'analysis/gpt_summary.json':emergency_gpt_blob,
         'analysis/evidence_request.json':_serialized({'schema_version':1,'raw_network_evidence_required_for_protocol_reverse_engineering':False}),
         'metadata/flight_recorder.json':_serialized({'schema_version':1,**flight}),
         'metadata/artifact_integrity.json':_serialized({'schema_version':1,'verification':'see manifest.json'}),
@@ -692,6 +703,15 @@ def verify_incident(path:Path)->dict:
                 except (json.JSONDecodeError,UnicodeDecodeError,ValueError,TypeError):
                     # Dedicated structural parsers below report malformed data.
                     pass
+
+            if m.get('schema_version')==2 and 'GPT_READ_FIRST.md' in names and 'analysis/gpt_summary.json' in names:
+                try:
+                    read_first_text=z.read('GPT_READ_FIRST.md').decode('utf8')
+                    summary_hash=sha256(z.read('analysis/gpt_summary.json')).hexdigest()
+                    expected_marker='**Machine summary SHA-256:** '+summary_hash
+                    if expected_marker not in read_first_text:add('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH')
+                except UnicodeDecodeError:
+                    add('GPT_READ_FIRST_UTF8_INVALID')
 
             matrix=None
             if 'evidence_matrix.json' in names:
