@@ -8,9 +8,14 @@
   },
   "files": [
     {
+      "path": ".gitattributes",
+      "sha256": "689a46efd2ced5bbd409d112c918cc7ffe8f3f34a4fa767ab9c55db13f51cb88",
+      "size": 226
+    },
+    {
       "path": ".github/workflows/integration-release.yml",
-      "sha256": "2f9c171936c6b0b64fce43e948bdc54f45b548a439209ce18c0dfb2c7dd9ec1f",
-      "size": 2168
+      "sha256": "5343d9322ee260e88a21c45cbe93c77316b30e01107df906a4a847ba166cc7fe",
+      "size": 2516
     },
     {
       "path": ".gitignore",
@@ -4138,8 +4143,8 @@
       "status": "PASS"
     }
   },
-  "release_content_sha256": "a9a7e4fe8cceacb7feebb0da2c98f74e504b7157c41558bf1d34c03e873f53f2",
-  "release_file_count": 813,
+  "release_content_sha256": "6819ee936db671eb514246ae634140a9631b0fe082e86c488fa819c7834df3d6",
+  "release_file_count": 814,
   "release_id": "ANKA_NEXT_M12_006",
   "schema_version": 1,
   "windows_acceptance_status": "BLOCKED_MISSING_EVIDENCE"
