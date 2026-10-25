@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONPATH: ${{ github.workspace }}\\src
+
 concurrency:
   group: integration-release-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +40,6 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --disable-pip-version-check -r requirements-p1.txt -r requirements-windows-capture.txt
-          python -m pip install --disable-pip-version-check -e .
 
       - name: Architecture and contracts
         shell: pwsh
