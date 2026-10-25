@@ -689,7 +689,18 @@ class PartyReadyAnalyzer:
                         missing='ready.requested.action_id' if action_id is None else 'ready.requested.fight_epoch'
                         if finding is None:finding=self._finding(missing,boundary,owner,account_id=account,events=ordered,cursor=idx,control_state=control_state)
                         break
-                if event_name=='protocol.ready_observed':batch_span=e.payload.get('batch_span_id')
+                if event_name=='protocol.ready_observed':
+                    candidate_batch=e.payload.get('batch_span_id')
+                    if not isinstance(candidate_batch,str) or not candidate_batch:
+                        matched.append(e.event_id);last_seq=max(last_seq,e.producer_seq);cursor=idx+1
+                        edges.append({'account_id':account,'fight_epoch':target_fight_epoch,'event_name':event_name,
+                                      'boundary':boundary,'owner_system':owner,'status':'INVALID_CORRELATION',
+                                      'event_id':e.event_id,'action_id':action_id,'batch_span_id':None})
+                        if finding is None:
+                            finding=self._finding('protocol.ready_observed.batch_span_id',boundary,owner,
+                                                  account_id=account,events=ordered,cursor=idx,control_state=control_state)
+                        break
+                    batch_span=candidate_batch
                 matched.append(e.event_id);last_seq=max(last_seq,e.producer_seq);cursor=idx+1
                 edges.append({'account_id':account,'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,'owner_system':owner,'status':'OBSERVED','event_id':e.event_id,'action_id':action_id,'batch_span_id':batch_span})
             graphs.append({'account_id':account,'fight_epoch':target_fight_epoch,'edges':edges})
