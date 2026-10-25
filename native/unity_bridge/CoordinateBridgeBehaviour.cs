@@ -100,6 +100,9 @@ public sealed class CoordinateBridgeBehaviour : MonoBehaviour
         health.ProcessId = process.Id;
         health.ProcessStartTime = process.StartTime.ToFileTimeUtc();
         health.BridgePort = _port;
+        if (CoordinateProjection.TryGetDofusWindow(out var window, out _))
+            health.ClientInstanceId = CoordinateProjection.ClientInstanceId(
+                window, health.ProcessId, health.ProcessStartTime);
         return health;
     }
 
