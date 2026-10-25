@@ -5,6 +5,7 @@ from hashlib import sha256
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from anka_contracts.diagnostics import DiagnosticEvent
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import verify_incident
 from anka_observability.recovery import recover_unclean_run
@@ -381,6 +382,89 @@ class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
                 self.assertEqual(report['contradictory_action_count'], 1)
             finally:
                 obs.finish('BLOCKED')
+
+
+class TestAgent07ExternalEventSequenceIsolation(unittest.TestCase):
+    def test_foreign_run_event_cannot_consume_future_sequence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-seq-foreign', invocation_id='inv-agent07-seq-foreign')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                previous_seq = obs._seq
+                bad = DiagnosticEvent(
+                    1,
+                    'evt-agent07-foreign-seq',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:00Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 100,
+                    obs.invocation_id,
+                    'run-agent07-foreign-other',
+                    owner_system='anka_observability',
+                )
+                self.assertEqual(obs.emit(bad), 'DROPPED')
+                self.assertEqual(obs._seq, previous_seq)
+
+                good = DiagnosticEvent(
+                    1,
+                    'evt-agent07-foreign-followup',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:01Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 1,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertIn(obs.emit(good), ('RECORDED', 'DROPPED', 'UNAVAILABLE'))
+                self.assertEqual(obs._seq, previous_seq + 1)
+                self.assertIn('evt-agent07-foreign-followup', {row.get('event_id') for row in obs.recent})
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_monotonic_regression_cannot_consume_future_sequence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-seq-mono', invocation_id='inv-agent07-seq-mono')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                previous_seq = obs._seq
+                bad = DiagnosticEvent(
+                    1,
+                    'evt-agent07-mono-seq',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:00Z',
+                    max(0, obs._last_monotonic_ns - 1),
+                    previous_seq + 100,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertEqual(obs.emit(bad), 'DROPPED')
+                self.assertEqual(obs._seq, previous_seq)
+                self.assertIn('EVENT_MONOTONIC_REGRESSION', obs.errors)
+
+                good = DiagnosticEvent(
+                    1,
+                    'evt-agent07-mono-followup',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:01Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 1,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertIn(obs.emit(good), ('RECORDED', 'DROPPED', 'UNAVAILABLE'))
+                self.assertEqual(obs._seq, previous_seq + 1)
+                self.assertIn('evt-agent07-mono-followup', {row.get('event_id') for row in obs.recent})
+            finally:
+                obs.finish('BLOCKED')
+
+
 
 
 class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
