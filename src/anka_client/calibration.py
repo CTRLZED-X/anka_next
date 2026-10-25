@@ -28,9 +28,12 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     if (type(data) is not dict or type(data.get('schema_version')) is not int
             or data.get('schema_version') != 1):
         raise ValueError('UNSUPPORTED_CALIBRATION_SCHEMA')
-    source_digest=str(data.get('source_sha256',''))
-    if len(source_digest)!=64:
+    source_digest=data.get('source_sha256')
+    if (type(source_digest) is not str or len(source_digest)!=64
+            or any(ch not in '0123456789abcdef' for ch in source_digest)):
         raise ValueError('CALIBRATION_SOURCE_HASH_MISSING')
+    if current_client_certified and source_path is None:
+        raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
     if source_path is not None and sha256(source_path.read_bytes()).hexdigest()!=source_digest:
         raise ValueError('CALIBRATION_SOURCE_HASH_MISMATCH')
     size=data.get('client_size',{})
@@ -42,13 +45,23 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
         if type(group) is not dict: raise ValueError('INVALID_CALIBRATION_POINTS')
         if any(type(v) is not dict or v.get('verified') is not True for v in group.values()):
             raise ValueError('UNVERIFIED_CALIBRATION_POINT')
+    status=data.get('status','UNKNOWN')
+    if type(status) is not str or not status:
+        raise ValueError('INVALID_CALIBRATION_STATUS')
     # Historical status cannot be silently promoted into a current certification.
-    historical=data.get('status')=='HISTORICAL_COORDINATES_NOT_LIVE_CERTIFIED'
+    historical=status=='HISTORICAL_COORDINATES_NOT_LIVE_CERTIFIED'
     if current_client_certified and historical:
         raise ValueError('HISTORICAL_CALIBRATION_CANNOT_SELF_CERTIFY_CURRENT_CLIENT')
+    # The evidence generation must change when authority-relevant external
+    # calibration evidence changes even if the JSON profile bytes are identical.
+    generation_material=(
+        digest+'|dpi='+(str(expected_dpi) if expected_dpi is not None else 'NONE')
+        +'|current='+('1' if current_client_certified else '0')
+    ).encode('ascii')
+    evidence_generation=max(1,int(sha256(generation_material).hexdigest()[:15],16))
     return CalibrationProfileEvidence(
         profile_id=f"cal-{digest[:20]}", profile_sha256=digest, source_sha256=source_digest,
-        generation=max(1,int(digest[:15],16)), width=size['width'], height=size['height'],
+        generation=evidence_generation, width=size['width'], height=size['height'],
         expected_dpi=expected_dpi, spell_slots=_point_tuple(slots,numeric_key=True),
         controls=_point_tuple(controls), directions=_point_tuple(directions),
-        status=str(data.get('status','UNKNOWN')), current_client_certified=current_client_certified)
+        status=status, current_client_certified=current_client_certified)
