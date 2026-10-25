@@ -114,10 +114,11 @@ class TestAgent05MapResearchIdentity(unittest.TestCase):
         # therefore reproduces the old false block.
         cells = [Cell(i) for i in reversed(range(560))]
         next(cell for cell in cells if int(cell.cell_id) == 549).walkable = False
+        cell_values = tuple(cells)
 
         class FakeMap:
             map_id = MapId(190580738)
-            cells = tuple(cells)
+            cells = cell_values
 
         actor = SimpleNamespace(
             actor_id=ActorId(41),
