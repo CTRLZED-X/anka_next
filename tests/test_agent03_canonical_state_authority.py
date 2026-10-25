@@ -112,6 +112,45 @@ class Agent03AuthorityTests(unittest.TestCase):
     def writer(self):
         return CanonicalWriter(self.path,projector=self.projector,admission_policy=self.policy)
 
+    def test_world_actor_presence_and_position_are_valid_without_active_fight(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(batch(
+                1,
+                candidate('world-map','WORLD_MAP_OBSERVED',{'map_id':100},world_epoch=1),
+                candidate('world-actor','ACTOR_SEEN',{'actor_id':41},world_epoch=1),
+                candidate('world-cell','ACTOR_CELL_OBSERVED',{'actor_id':41,'cell_id':215},world_epoch=1),
+            ))
+            snapshot=writer.snapshot(ACCOUNT)
+            self.assertEqual(snapshot.world_map.value,100)
+            self.assertEqual(snapshot.fight_phase.status,'UNKNOWN')
+            self.assertEqual(snapshot.actors[0].cell.status,'KNOWN')
+            self.assertEqual(snapshot.actors[0].cell.value,215)
+
+    def test_actor_world_observation_is_blocked_after_fight_end_until_reentry(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2, candidate('fight-end-world-gap','FIGHT_ENDED',{},fight_epoch=1),
+            ))
+            before=writer.snapshot(ACCOUNT).to_dict()
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_FIGHT_NOT_ACTIVE'):
+                writer.commit_candidate_batch(batch(
+                    3, candidate('ambiguous-world-cell','ACTOR_CELL_OBSERVED',
+                                 {'actor_id':41,'cell_id':216}),
+                ))
+            self.assertEqual(writer.snapshot(ACCOUNT).to_dict(),before)
+            writer.commit_candidate_batch(batch(
+                4, candidate('world-reentry','WORLD_REENTRY',{'map_id':101},world_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                5,
+                candidate('world-actor-after-reentry','ACTOR_SEEN',{'actor_id':41},world_epoch=1),
+                candidate('world-cell-after-reentry','ACTOR_CELL_OBSERVED',{'actor_id':41,'cell_id':216},world_epoch=1),
+            ))
+            snapshot=writer.snapshot(ACCOUNT)
+            self.assertEqual(snapshot.fight_phase.status,'UNKNOWN')
+            self.assertEqual(snapshot.actors[0].cell.value,216)
+
     def test_wrong_fight_epoch_rolls_back_without_mutating_current_state(self):
         with self.writer() as writer:
             writer.commit_candidate_batch(fight_bootstrap())
@@ -150,20 +189,20 @@ class Agent03AuthorityTests(unittest.TestCase):
                 ))
             self.assertEqual(writer.snapshot(ACCOUNT).turn_epoch,0)
 
-    def test_turn_scoped_absolute_values_are_bound_to_upcoming_turn(self):
+    def test_first_turn_bootstrap_values_remain_unbound_until_owner_turn(self):
         with self.writer() as writer:
             writer.commit_candidate_batch(fight_bootstrap())
             before=writer.snapshot(ACCOUNT).actors[0]
-            self.assertEqual((before.ap.status,before.ap.turn_epoch),('KNOWN',1))
-            self.assertEqual((before.mp.status,before.mp.turn_epoch),('KNOWN',1))
+            self.assertEqual((before.ap.status,before.ap.turn_epoch),('KNOWN',None))
+            self.assertEqual((before.mp.status,before.mp.turn_epoch),('KNOWN',None))
             writer.commit_candidate_batch(batch(
                 2,
                 candidate('turn-1','TURN_STARTED',{'actor_id':41},
                           fight_epoch=1,turn_epoch=1),
             ))
             after=writer.snapshot(ACCOUNT).actors[0]
-            self.assertEqual((after.ap.status,after.ap.turn_epoch),('KNOWN',1))
-            self.assertEqual((after.mp.status,after.mp.turn_epoch),('KNOWN',1))
+            self.assertEqual((after.ap.status,after.ap.turn_epoch),('KNOWN',None))
+            self.assertEqual((after.mp.status,after.mp.turn_epoch),('KNOWN',None))
 
     def test_old_turn_absolute_value_cannot_remain_known_in_new_turn(self):
         with self.writer() as writer:
