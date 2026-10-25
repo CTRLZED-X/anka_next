@@ -8,10 +8,12 @@ from __future__ import annotations
 from pathlib import Path
 from datetime import datetime
 import json
-import re
 
 from anka_contracts.diagnostics import DiagnosticEvent, now_utc
-from anka_observability.api import FrozenDiagnostics, is_priority_event
+from anka_observability.api import (
+    FrozenDiagnostics, is_priority_event,
+    DIAGNOSTIC_EVENT_ID_RE, DIAGNOSTIC_INVOCATION_ID_RE, DIAGNOSTIC_RUN_ID_RE,
+)
 from anka_observability.bundle import export_incident, verify_incident
 from anka_observability.redaction import has_diagnostic_truncation
 
@@ -25,7 +27,10 @@ def _safe_state(folder:Path)->dict:
     try:
         state_path=folder/'run_state.json'
         if state_path.is_symlink():return {}
-        raw=state_path.read_bytes()
+        # Bound the read itself, not only the parsed result. A corrupted state
+        # file must not allocate arbitrary memory during startup recovery.
+        with state_path.open('rb') as handle:
+            raw=handle.read(65537)
         if len(raw)>65536:return {}
         obj=json.loads(raw)
         return obj if isinstance(obj,dict) else {}
@@ -37,13 +42,24 @@ def _read_rows(path:Path,*,run_id:str,invocation_id:str|None,errors:list[str])->
     try:
         if path.is_symlink():
             errors.append('RECOVERY_JOURNAL_SYMLINK_REJECTED');return []
-        raw=path.read_bytes()
+        # Read at most the configured recovery tail. Reading the whole file and
+        # slicing afterwards would defeat the startup memory bound for a giant
+        # corrupted or sparse journal.
+        with path.open('rb') as handle:
+            handle.seek(0,2)
+            size=handle.tell()
+            truncated=size>_MAX_RECOVERY_JOURNAL_BYTES
+            if truncated:
+                handle.seek(-_MAX_RECOVERY_JOURNAL_BYTES,2)
+                raw=handle.read(_MAX_RECOVERY_JOURNAL_BYTES)
+            else:
+                handle.seek(0)
+                raw=handle.read(size)
     except FileNotFoundError:return []
     except OSError:
         errors.append('RECOVERY_JOURNAL_UNREADABLE');return []
-    if len(raw)>_MAX_RECOVERY_JOURNAL_BYTES:
-        # Keep the newest bounded tail.  A partial first line is discarded below.
-        raw=raw[-_MAX_RECOVERY_JOURNAL_BYTES:]
+    if truncated:
+        # Keep the newest bounded tail. A partial first line is discarded below.
         first=raw.find(b'\n')
         raw=raw[first+1:] if first>=0 else b''
         errors.append('RECOVERY_JOURNAL_TRUNCATED_TO_BOUND')
@@ -56,6 +72,11 @@ def _read_rows(path:Path,*,run_id:str,invocation_id:str|None,errors:list[str])->
             obj=json.loads(line);event=DiagnosticEvent.from_dict(obj)
         except (json.JSONDecodeError,UnicodeDecodeError,TypeError,ValueError):
             errors.append('RECOVERY_INVALID_EVENT_SKIPPED');continue
+        if (DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None
+                or (event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None)
+                or DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None
+                or event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None):
+            errors.append('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED');continue
         if event.run_id!=run_id:
             errors.append('RECOVERY_FOREIGN_RUN_EVENT_SKIPPED');continue
         if invocation_id is not None and event.invocation_id!=invocation_id:
@@ -71,13 +92,16 @@ def recover_unclean_run(folder:Path)->Path|None:
     state=_safe_state(folder)
     if state.get('state') in _TERMINAL:return None
     marker=folder/'unclean_recovery.json'
-    if marker.exists():return None
+    # `Path.exists()` is false for a broken symlink. Reject links explicitly so
+    # the recovery marker can never be written through an attacker-controlled
+    # path outside the run folder.
+    if marker.is_symlink() or marker.exists():return None
     state_run=state.get('run_id') if isinstance(state.get('run_id'),str) else None
     if state_run is not None and state_run!=folder.name:return None
     run_id=state_run or folder.name
-    if not isinstance(run_id,str) or not run_id.startswith('run-'):return None
+    if not isinstance(run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(run_id) is None:return None
     state_inv=state.get('invocation_id') if isinstance(state.get('invocation_id'),str) else None
-    invocation_id=state_inv if state_inv is not None and state_inv.startswith('inv-') else None
+    invocation_id=(state_inv if state_inv is not None and DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(state_inv) is not None else None)
     errors=['UNCLEAN_RUN_RECOVERED_TAIL_MAY_BE_MISSING']
     if state_inv is not None and invocation_id is None:errors.append('RECOVERY_STATE_INVOCATION_ID_INVALID')
     rows=_read_rows(folder/'events.jsonl',run_id=run_id,invocation_id=invocation_id,errors=errors)
@@ -88,6 +112,19 @@ def recover_unclean_run(folder:Path)->Path|None:
         prior=by_id.get(event_id)
         if prior is None:by_id[event_id]=row
         elif prior!=row:errors.append('RECOVERY_DUPLICATE_EVENT_CONFLICT_SKIPPED')
+    if invocation_id is None:
+        # Resolve invocation identity before applying any global sequence/order
+        # filtering. Otherwise two valid invocations that both start at sequence 1
+        # can cause one namespace to be discarded first and the survivor to be
+        # falsely inferred as the only invocation in the recovered run.
+        valid_invocations={
+            row.get('invocation_id') for row in by_id.values()
+            if isinstance(row.get('invocation_id'),str)
+            and DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(row.get('invocation_id')) is not None
+        }
+        if len(valid_invocations)!=1:return None
+        invocation_id=next(iter(valid_invocations))
+        by_id={event_id:row for event_id,row in by_id.items() if row.get('invocation_id')==invocation_id}
     ordered=sorted(by_id.values(),key=lambda e:(int(e.get('producer_seq',0)),int(e.get('monotonic_ns',0)),str(e.get('event_id',''))))
     rows=[];seen_seq=set();last_seq=None;last_mono=None
     for row in ordered:
@@ -96,8 +133,14 @@ def recover_unclean_run(folder:Path)->Path|None:
             errors.append('RECOVERY_PRODUCER_SEQ_CONFLICT_SKIPPED');continue
         try:
             event=DiagnosticEvent.from_dict(row)
-            if not re.fullmatch(r'evt-[A-Za-z0-9][A-Za-z0-9_.-]{0,127}',event.event_id):
+            if DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None:
                 raise ValueError('event-id')
+            if event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None:
+                raise ValueError('parent-event-id')
+            if DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None:
+                raise ValueError('invocation-id')
+            if event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None:
+                raise ValueError('run-id')
             stamp=datetime.fromisoformat(event.occurred_utc.replace('Z','+00:00'))
             if stamp.tzinfo is None:raise ValueError('timestamp')
         except (TypeError,ValueError):
@@ -107,10 +150,6 @@ def recover_unclean_run(folder:Path)->Path|None:
         if last_mono is not None and event.monotonic_ns<last_mono:
             errors.append('RECOVERY_MONOTONIC_REGRESSION_SKIPPED');continue
         seen_seq.add(seq);rows.append(row);last_seq=event.producer_seq;last_mono=event.monotonic_ns
-    if invocation_id is None:
-        invocations={r.get('invocation_id') for r in rows if isinstance(r.get('invocation_id'),str)}
-        if len(invocations)!=1:return None
-        invocation_id=next(iter(invocations))
     recent=tuple(rows[-_MAX_RECENT:])
     priority_rows=[]
     for row in rows:
@@ -135,7 +174,14 @@ def recover_unclean_run(folder:Path)->Path|None:
         # retry the durable evidence with a stronger recovery parser.
         return None
     try:
-        marker.write_text(json.dumps({'schema_version':1,'recovered_utc':now_utc(),'incident':path.name},sort_keys=True,indent=2)+'\n',encoding='utf8')
+        marker_payload=json.dumps(
+            {'schema_version':1,'recovered_utc':now_utc(),'incident':path.name},
+            sort_keys=True,indent=2,
+        )+'\n'
+        # Exclusive creation prevents a symlink/file inserted after the earlier
+        # check from being followed or overwritten.
+        with marker.open('x',encoding='utf8') as out:
+            out.write(marker_payload)
     except OSError:
         # Idempotence marker loss can cause a duplicate recovery next launch, but
         # must never make diagnostic recovery authoritative or block startup.

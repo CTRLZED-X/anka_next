@@ -1,0 +1,2182 @@
+import json
+import tempfile
+import unittest
+from unittest.mock import patch
+from hashlib import sha256
+from pathlib import Path
+from zipfile import ZIP_DEFLATED, ZipFile
+
+from anka_contracts.diagnostics import BoundaryExpectation, DiagnosticEvent, OperationTraceSpec
+from anka_observability.api import LocalDiagnostics
+from anka_observability.bundle import _render_read_first, verify_incident
+from anka_observability.recovery import recover_unclean_run
+from anka_observability.forensics import READY_TRACE, PartyReadyAnalyzer, action_lifecycle_report, turn_handoff_report, workflow_lifecycle_report
+from anka_observability.redaction import has_unredacted_sensitive_data
+
+
+class TestAgent07EvidenceLossCertainty(unittest.TestCase):
+    @staticmethod
+    def _partial_ready_incident(root: Path):
+        obs = LocalDiagnostics(
+            root,
+            run_id='run-agent07-loss',
+            invocation_id='inv-agent07-loss',
+            max_recent=32,
+            max_priority=16,
+            max_journal_bytes=1,
+        )
+        obs.record(
+            'ready.requested',
+            owner_system='anka_workflow',
+            boundary='workflow.ready_request',
+            account_id='acct-cra',
+        )
+        obs.record(
+            'execution.admitted',
+            owner_system='anka_execution',
+            boundary='execution.pre_input_authorization',
+            account_id='acct-cra',
+            physical_input_state='NOT_SENT',
+        )
+        obs.record(
+            'execution.input_sent',
+            owner_system='anka_execution',
+            boundary='execution.external_boundary',
+            account_id='acct-cra',
+            physical_input_state='SENT',
+        )
+        obs.record(
+            'protocol.ready_missing',
+            severity='ERROR',
+            owner_system='anka_protocol',
+            boundary='protocol.ready_observation',
+            account_id='acct-cra',
+            failure_code='READY_SERVER_EVIDENCE_MISSING',
+            physical_input_state='SENT',
+        )
+        path = obs.export_incident(
+            'READY_SERVER_EVIDENCE_MISSING',
+            boundary='protocol.ready_observation',
+            trace_spec=READY_TRACE,
+            control_state='BLOCKED',
+        )
+        return obs, path
+
+    @staticmethod
+    def _rewrite_json_artifacts(path: Path, mutations: dict[str, object]) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        manifest = json.loads(files['manifest.json'])
+        for name, mutate in mutations.items():
+            payload = json.loads(files[name])
+            mutate(payload)
+            blob = (json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+            files[name] = blob
+            manifest['files'][name] = {'sha256': sha256(blob).hexdigest(), 'bytes': len(blob)}
+        files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, blob in files.items():
+                z.writestr(name, blob)
+
+    def test_known_recorder_loss_downgrades_retained_high_confidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs, path = self._partial_ready_incident(Path(td))
+            try:
+                self.assertGreater(obs.dropped, 0)
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    gpt = json.loads(z.read('analysis/gpt_summary.json'))
+                    diagnosis = json.loads(z.read('analysis/diagnosis.json'))
+                self.assertEqual(gpt['finding_status'], 'DIVERGENCE_CANDIDATE')
+                self.assertEqual(gpt['retained_evidence_confidence'], 'HIGH')
+                self.assertEqual(gpt['confidence'], 'MEDIUM')
+                self.assertEqual(diagnosis['retained_evidence_confidence'], 'HIGH')
+                self.assertEqual(diagnosis['confidence'], 'MEDIUM')
+                self.assertFalse(gpt['absence_is_conclusive'])
+                self.assertEqual(gpt['first_divergence_scope'], 'INCLUDED_EVIDENCE_ONLY')
+                self.assertEqual(gpt['cause_scope'], 'INCLUDED_EVIDENCE_ONLY')
+                self.assertTrue(gpt['candidate_causes_may_be_incomplete'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_bundle_cannot_claim_complete_cause_scope_after_loss(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs, path = self._partial_ready_incident(Path(td))
+            try:
+                self._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/gpt_summary.json': lambda payload: payload.update({
+                            'cause_scope':'COMPLETE_RECORDER_EVIDENCE',
+                            'candidate_causes_may_be_incomplete':False,
+                        }),
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_CAUSE_SCOPE_MISMATCH', result['errors'])
+                self.assertIn('GPT_SUMMARY_CAUSE_COMPLETENESS_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_bundle_cannot_restore_high_confidence_after_loss(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs, path = self._partial_ready_incident(Path(td))
+            try:
+                self._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/gpt_summary.json': lambda payload: payload.__setitem__('confidence', 'HIGH'),
+                        'analysis/diagnosis.json': lambda payload: payload.__setitem__('confidence', 'HIGH'),
+                        'diagnosis.json': lambda payload: payload.__setitem__('confidence', 'HIGH'),
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_LOSS_CONFIDENCE_MISMATCH', result['errors'])
+                self.assertIn('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07PreActionCausalIndex(unittest.TestCase):
+    def test_decision_wait_is_indexed_without_action_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-decision-wait', invocation_id='inv-agent07-decision-wait')
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=4,
+                    turn_epoch=9,
+                    payload={
+                        'frame_id':'frame-agent07-wait',
+                        'disposition':'WAIT',
+                        'reason':'DECISION_BUDGET_EXHAUSTED',
+                        'required_evidence':['planner_budget'],
+                    },
+                )
+                report = action_lifecycle_report(obs.recent)
+                self.assertEqual(report['actions'], [])
+                self.assertEqual(report['total_pre_action_outcome_count'], 1)
+                row = report['pre_action_outcomes'][0]
+                self.assertEqual(row['state'], 'DECISION_WAIT')
+                self.assertEqual(row['reason'], 'DECISION_BUDGET_EXHAUSTED')
+                self.assertEqual(row['required_evidence'], ['planner_budget'])
+                self.assertIsNone(row['action_id'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_successful_plan_results_do_not_flood_reserved_priority_lane(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-plan-priority',
+                invocation_id='inv-agent07-plan-priority',
+                max_recent=64,
+                max_priority=2,
+            )
+            try:
+                for i in range(20):
+                    obs.record(
+                        'decision.plan_result',
+                        owner_system='anka_decision',
+                        boundary='decision.plan',
+                        account_id='acct-cra',
+                        payload={
+                            'frame_id':f'frame-agent07-plan-{i}',
+                            'disposition':'PLAN',
+                            'reason':'PLAN_READY',
+                            'plan_id':f'plan-agent07-{i}',
+                            'kind':'CAST',
+                        },
+                    )
+                obs.record(
+                    'execution.outcome_missing',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome',
+                    failure_code='AUTHORITATIVE_OUTCOME_MISSING',
+                    account_id='acct-cra',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                priority_names=[row.get('event_name') for row in obs.priority]
+                self.assertIn('execution.outcome_missing', priority_names)
+                self.assertNotIn('decision.plan_result', priority_names)
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_decision_plan_result_survives_recent_ring_overwrite_for_forensics(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-plan-retention',
+                invocation_id='inv-agent07-plan-retention',
+                max_recent=2,
+                max_priority=8,
+            )
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=8,
+                    turn_epoch=21,
+                    payload={
+                        'frame_id':'frame-agent07-retained-wait',
+                        'disposition':'WAIT',
+                        'reason':'TARGETS_NOT_PROVEN',
+                        'required_evidence':['targets'],
+                    },
+                )
+                for i in range(12):
+                    obs.record(
+                        'workflow.heartbeat',
+                        owner_system='anka_workflow',
+                        boundary='workflow.watchdog',
+                        payload={'i':i},
+                    )
+                self.assertGreater(obs.recent_overwrites, 0)
+                self.assertNotIn(
+                    'decision.plan_result',
+                    {row.get('event_name') for row in obs.recent},
+                )
+                self.assertIn(
+                    'decision.plan_result',
+                    {row.get('event_name') for row in obs.priority},
+                )
+
+                path = obs.export_incident('PLAN_RETENTION_AUDIT', boundary='decision.plan')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['state'], 'DECISION_WAIT')
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['reason'], 'TARGETS_NOT_PROVEN')
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_authorization_blocker_is_correlated_before_action_id_and_surfaced_for_gpt(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-auth-block', invocation_id='inv-agent07-auth-block')
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=5,
+                    turn_epoch=11,
+                    payload={
+                        'frame_id':'frame-agent07-auth',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-auth',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_authorization_blocked',
+                    severity='WARNING',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    failure_code='COORDINATION_TURN_OWNER_UNPROVEN',
+                    account_id='acct-cra',
+                    fight_epoch=5,
+                    turn_epoch=11,
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'plan_id':'plan-agent07-auth',
+                        'reason':'COORDINATION_TURN_OWNER_UNPROVEN',
+                    },
+                )
+                path = obs.export_incident('NOTHING_HAPPENED', boundary='workflow.action_authorization')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                    gpt = json.loads(z.read('analysis/gpt_summary.json'))
+                self.assertEqual(lifecycles['actions'], [])
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['state'], 'AUTHORIZATION_BLOCKED')
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['plan_id'], 'plan-agent07-auth')
+                self.assertIsNone(lifecycles['pre_action_outcomes'][-1]['action_id'])
+                self.assertEqual(gpt['latest_included_pre_action_outcome'], lifecycles['pre_action_outcomes'][-1])
+                self.assertEqual(gpt['pre_action_outcomes_omitted'], lifecycles['pre_action_outcomes_omitted'])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_included_pre_action_outcome', None)},
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_PRE_ACTION_MISMATCH', tampered['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07CausalSkeletonSaturation(unittest.TestCase):
+    def test_current_pre_action_leadup_survives_old_ordinary_skeleton_flood(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-skeleton-current',
+                invocation_id='inv-agent07-skeleton-current',
+                max_recent=1800,
+                max_priority=1800,
+                max_pinned=1,
+                pin_window=1,
+            )
+            try:
+                # Historical unresolved risk should remain protected even while
+                # ordinary healthy causal edges are saturated.
+                obs.record(
+                    'execution.input_may_have_sent',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id='action-agent07-old-risk',
+                    attempt_id='attempt-agent07-old-risk',
+                    failure_code='OLD_ACK_UNKNOWN',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                for i in range(1500):
+                    obs.record(
+                        'execution.admitted',
+                        severity='SETTLEMENT',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id='acct-cra',
+                        action_id=f'action-agent07-old-{i:04d}',
+                        attempt_id=f'attempt-agent07-old-{i:04d}',
+                        physical_input_state='NOT_SENT',
+                    )
+
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    payload={
+                        'frame_id':'frame-agent07-current',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-current',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    action_id='action-agent07-current',
+                    trace_id='trace-agent07-current',
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'plan_id':'plan-agent07-current',
+                    },
+                )
+                obs.record(
+                    'execution.outcome_missing',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome',
+                    account_id='acct-cra',
+                    fight_epoch=9,
+                    turn_epoch=22,
+                    action_id='action-agent07-current',
+                    trace_id='trace-agent07-current',
+                    failure_code='CURRENT_OUTCOME_MISSING',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+
+                path = obs.export_incident('CURRENT_OUTCOME_MISSING', boundary='execution.outcome')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    rows = [
+                        json.loads(line)
+                        for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                        if line
+                    ]
+                    run_manifest = json.loads(z.read('run_manifest.json'))
+
+                names = {row.get('event_name') for row in rows}
+                ids = {row.get('action_id') for row in rows}
+                plan_ids = {
+                    row.get('payload', {}).get('plan_id')
+                    for row in rows
+                    if isinstance(row.get('payload'), dict)
+                }
+                self.assertIn('decision.plan_result', names)
+                self.assertIn('plan-agent07-current', plan_ids)
+                self.assertIn('action-agent07-current', ids)
+                self.assertIn('action-agent07-old-risk', ids)
+                self.assertGreater(
+                    run_manifest['flight_recorder']['causal_skeleton_events_omitted_for_size'],
+                    0,
+                )
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07ExecutionStageProjection(unittest.TestCase):
+    def test_client_admission_rejection_is_explicit_not_sent_stage(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-client-reject', invocation_id='inv-agent07-client-reject')
+            try:
+                action_id='action-agent07-client-reject'
+                trace_id='trace-agent07-client-reject'
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    payload={
+                        'frame_id':'frame-agent07-client-reject',
+                        'disposition':'PLAN',
+                        'reason':'PLAN_READY',
+                        'plan_id':'plan-agent07-client-reject',
+                        'kind':'CAST',
+                    },
+                )
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST','plan_id':'plan-agent07-client-reject'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST'},
+                )
+                obs.record(
+                    'workflow.action_dispatch_result',
+                    severity='INFO',
+                    owner_system='anka_workflow',
+                    boundary='workflow.execution_dispatch',
+                    account_id='acct-cra',
+                    fight_epoch=6,
+                    turn_epoch=13,
+                    trace_id=trace_id,
+                    action_id=action_id,
+                    payload={
+                        'scope':'TURN',
+                        'kind':'CAST',
+                        'outcome_status':'REJECTED_NOT_SENT',
+                        'outcome_reason':'CLIENT_ATTESTATION_UNAVAILABLE',
+                    },
+                )
+                path = obs.export_incident('CLIENT_ACTION_REJECTED', boundary='execution.pre_input_authorization')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                    facts = json.loads(z.read('analysis/proven_facts.json'))
+                    gpt = json.loads(z.read('analysis/gpt_summary.json'))
+                row = next(item for item in lifecycles['actions'] if item['action_id']==action_id)
+                self.assertEqual(row['state'], 'NOT_SENT')
+                self.assertEqual(row['not_sent_stage'], 'ADMISSION')
+                self.assertEqual(row['not_sent_event_name'], 'execution.rejected')
+                self.assertEqual(row['not_sent_boundary'], 'execution.pre_input_authorization')
+                self.assertEqual(row['not_sent_failure_code'], 'CLIENT_ATTESTATION_UNAVAILABLE')
+                self.assertEqual(gpt['latest_included_action_lifecycle'], row)
+                self.assertEqual(gpt['action_lifecycles_omitted'], lifecycles['actions_omitted'])
+                self.assertEqual(facts['unresolved_actions'], [])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {'analysis/gpt_summary.json': lambda payload: payload.__setitem__('latest_included_action_lifecycle', None)},
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH', tampered['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07ReadyBatchCorrelation(unittest.TestCase):
+    def test_incompatible_shared_ready_barrier_cannot_be_skipped_for_later_good_barrier(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-shared',
+                invocation_id='inv-agent07-ready-shared',
+            )
+            try:
+                fight_epoch=10
+                for account in ('acct-cra','acct-enu'):
+                    action_id='action-agent07-shared-'+account
+                    batch='batch-agent07-shared-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    obs.record(
+                        'protocol.ready_observed',
+                        owner_system='anka_protocol',
+                        boundary='protocol.ready_observation',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch},
+                    )
+                    obs.record(
+                        'canonical.ready_committed',
+                        owner_system='anka_canonical',
+                        boundary='canonical.ready_commit',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch},
+                    )
+
+                bad = obs.record(
+                    'coordination.ready_barrier_satisfied',
+                    owner_system='anka_coordination',
+                    boundary='coordination.ready_barrier',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    fight_epoch=fight_epoch,
+                    payload={'required_accounts':['acct-cra']},
+                )
+                self.assertIn(bad, ('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'coordination.ready_barrier_satisfied',
+                    owner_system='anka_coordination',
+                    boundary='coordination.ready_barrier',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    fight_epoch=fight_epoch,
+                    payload={'required_accounts':['acct-cra','acct-enu']},
+                )
+
+                result = PartyReadyAnalyzer().analyze(
+                    obs.recent,
+                    ('acct-cra','acct-enu'),
+                    control_state='BLOCKED',
+                )
+                self.assertIsNotNone(result.finding)
+                self.assertEqual(
+                    result.finding.first_divergent_boundary,
+                    'coordination.ready_barrier',
+                )
+                self.assertEqual(result.shared_graph[-1]['status'], 'INVALID_CORRELATION')
+                self.assertEqual(result.shared_graph[-1]['invalid_field'], 'required_accounts')
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_protocol_ready_without_batch_span_cannot_float_to_any_canonical_commit(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-batch',
+                invocation_id='inv-agent07-ready-batch',
+            )
+            try:
+                fight_epoch=9
+                for account, batch in (
+                    ('acct-cra','batch-agent07-cra'),
+                    ('acct-enu',None),
+                ):
+                    action_id='action-agent07-ready-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    payload = {} if batch is None else {'batch_span_id':batch}
+                    obs.record(
+                        'protocol.ready_observed',
+                        owner_system='anka_protocol',
+                        boundary='protocol.ready_observation',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload=payload,
+                    )
+                    obs.record(
+                        'canonical.ready_committed',
+                        owner_system='anka_canonical',
+                        boundary='canonical.ready_commit',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        payload={'batch_span_id':batch or 'batch-unrelated'},
+                    )
+
+                result = PartyReadyAnalyzer().analyze(
+                    obs.recent,
+                    ('acct-cra','acct-enu'),
+                    control_state='BLOCKED',
+                )
+                self.assertIsNotNone(result.finding)
+                self.assertEqual(
+                    result.finding.first_divergent_boundary,
+                    'protocol.ready_observation',
+                )
+                enu = next(
+                    graph for graph in result.account_graphs
+                    if graph['account_id']=='acct-enu'
+                )
+                protocol_edge = next(
+                    edge for edge in enu['edges']
+                    if edge['event_name']=='protocol.ready_observed'
+                )
+                self.assertEqual(protocol_edge['status'], 'INVALID_CORRELATION')
+                self.assertIsNone(protocol_edge['batch_span_id'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+    def test_party_ready_finding_owns_primary_boundary_graph(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-ready-primary-graph',
+                invocation_id='inv-agent07-ready-primary-graph',
+            )
+            try:
+                fight_epoch=12
+                # CRA has a complete per-account READY path. ENU reaches the
+                # physical send boundary but has no Protocol READY observation.
+                # A generic uncorrelated READY trace can borrow CRA's Protocol
+                # row and move its apparent gap to the later shared barrier.
+                for account, complete in (('acct-cra',True),('acct-enu',False)):
+                    action_id='action-agent07-primary-'+account
+                    batch='batch-agent07-primary-'+account
+                    obs.record(
+                        'ready.requested',
+                        owner_system='anka_workflow',
+                        boundary='workflow.ready_request',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.admitted',
+                        owner_system='anka_execution',
+                        boundary='execution.pre_input_authorization',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                    )
+                    obs.record(
+                        'execution.input_sent',
+                        owner_system='anka_execution',
+                        boundary='execution.external_boundary',
+                        account_id=account,
+                        fight_epoch=fight_epoch,
+                        action_id=action_id,
+                        physical_input_state='SENT',
+                    )
+                    if complete:
+                        obs.record(
+                            'protocol.ready_observed',
+                            owner_system='anka_protocol',
+                            boundary='protocol.ready_observation',
+                            account_id=account,
+                            fight_epoch=fight_epoch,
+                            payload={'batch_span_id':batch},
+                        )
+                        obs.record(
+                            'canonical.ready_committed',
+                            owner_system='anka_canonical',
+                            boundary='canonical.ready_commit',
+                            account_id=account,
+                            fight_epoch=fight_epoch,
+                            payload={'batch_span_id':batch},
+                        )
+
+                path = obs.export_incident(
+                    'READY_PARTY_GRAPH_SOURCE_TEST',
+                    boundary='protocol.ready_observation',
+                    trace_spec=READY_TRACE,
+                    control_state='BLOCKED',
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    diagnosis = json.loads(z.read('analysis/diagnosis.json'))
+                    graph = json.loads(z.read('analysis/boundary_graph.json'))
+                    party = json.loads(z.read('analysis/party_ready.json'))
+
+                self.assertEqual(diagnosis['finding_source'], 'PARTY_READY')
+                self.assertEqual(
+                    diagnosis['first_divergent_boundary'],
+                    'protocol.ready_observation',
+                )
+                self.assertEqual(graph['analysis_mode'], 'PARTY_READY')
+                expected_edges = [
+                    edge
+                    for account_graph in party['account_graphs']
+                    for edge in account_graph['edges']
+                ] + party['shared_graph']
+                self.assertEqual(graph['edges'], expected_edges)
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/boundary_graph.json': lambda payload: payload.__setitem__(
+                            'analysis_mode',
+                            'GENERIC_TRACE',
+                        ),
+                    },
+                )
+                tampered = verify_incident(path)
+                self.assertEqual(tampered['status'], 'FAIL')
+                self.assertIn(
+                    'DIAGNOSIS_BOUNDARY_GRAPH_SOURCE_MISMATCH',
+                    tampered['errors'],
+                )
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+class TestAgent07WorkflowLifecycleClassification(unittest.TestCase):
+    def test_rejected_signal_does_not_turn_completed_cycle_into_blocked(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-workflow-reject',
+                invocation_id='inv-agent07-workflow-reject',
+            )
+            try:
+                transitions=(
+                    ('WORLD','ENCOUNTER_SELECTED'),
+                    ('ENCOUNTER_SELECTED','FIGHT_ENTRY'),
+                    ('FIGHT_ENTRY','PARTY_JOIN'),
+                    ('PARTY_JOIN','PLACEMENT'),
+                    ('PLACEMENT','READY'),
+                    ('READY','FIGHT_ACTIVE'),
+                    ('FIGHT_ACTIVE','FIGHT_END_RECONCILIATION'),
+                    ('FIGHT_END_RECONCILIATION','WORLD_REENTRY'),
+                    ('WORLD_REENTRY','COMPLETED'),
+                )
+                for index,(old,new) in enumerate(transitions):
+                    obs.record(
+                        'workflow.phase_changed',
+                        owner_system='anka_workflow',
+                        boundary='workflow.transition',
+                        fight_epoch=1,
+                        payload={
+                            'from_phase':old,
+                            'to_phase':new,
+                            'reason':'AGENT07_TEST_PROGRESS',
+                        },
+                    )
+                    if index==1:
+                        obs.record(
+                            'workflow.signal_rejected',
+                            severity='WARNING',
+                            owner_system='anka_workflow',
+                            boundary='workflow.signal_validation',
+                            failure_code='STALE_SIGNAL',
+                            fight_epoch=1,
+                            payload={'reason':'STALE_SIGNAL'},
+                        )
+
+                report=workflow_lifecycle_report(obs.recent)
+                self.assertEqual(report['status'],'COMPLETE_CYCLE')
+                self.assertEqual(report['current_phase'],'COMPLETED')
+                self.assertIsNone(report['blocking_event'])
+                self.assertIsNotNone(report['rejected_signal'])
+                self.assertEqual(report['rejected_signal']['failure_code'],'STALE_SIGNAL')
+
+                path=obs.export_incident(
+                    'WORKFLOW_REJECTED_SIGNAL_TEST',
+                    boundary='workflow.transition',
+                )
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07EndTurnHandoffCorrelation(unittest.TestCase):
+    def test_end_turn_handoff_cannot_report_complete_over_contradictory_action_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-conflict',
+                invocation_id='inv-agent07-endturn-conflict',
+            )
+            try:
+                action_id='action-agent07-endturn-conflict'
+                attempt_id='attempt-agent07-endturn-conflict'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-conflict'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    account_id='acct-cra',
+                    fight_epoch=13,
+                    turn_epoch=40,
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',
+                    fight_epoch=13,
+                    turn_epoch=41,
+                )
+
+                report=turn_handoff_report(obs.recent)
+                self.assertEqual(report['status'],'CONTRADICTORY_ACTION_EVIDENCE')
+                self.assertIn('PRE_SEND_TERMINAL_WITH_SEND',report['hard_conflicts'])
+                self.assertEqual(report['next_owner_account_id'],'acct-enu')
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_same_owner_reappearance_is_not_skipped_for_later_other_account(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-borrow',
+                invocation_id='inv-agent07-endturn-borrow',
+            )
+            try:
+                action_id='action-agent07-endturn-borrow'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-borrow'},
+                )
+                obs.record(
+                    'execution.admitted',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=30,
+                    action_id=action_id,
+                    physical_input_state='SENT',
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                first_owner = obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-cra',
+                    fight_epoch=12,
+                    turn_epoch=31,
+                )
+                self.assertIn(first_owner, ('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'coordination.turn_owner_proved',
+                    owner_system='anka_coordination',
+                    boundary='coordination.first_turn',
+                    evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',
+                    fight_epoch=12,
+                    turn_epoch=32,
+                )
+
+                report = turn_handoff_report(obs.recent)
+                self.assertEqual(report['status'], 'SETTLED_SAME_OWNER_REPROVED')
+                self.assertEqual(report['next_owner_account_id'], 'acct-cra')
+                self.assertEqual(report['next_turn_epoch'], 31)
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+    @staticmethod
+    def _handoff_event(seq, name, *, action_id=None, attempt_id=None,
+                       account_id='acct-cra', fight_epoch=20, turn_epoch=7,
+                       physical_input_state=None, evidence_class='DERIVED',
+                       severity='INFO', failure_code=None, payload=None):
+        owner_system={
+            'workflow':'anka_workflow',
+            'execution':'anka_execution',
+            'coordination':'anka_coordination',
+        }[name.split('.',1)[0]]
+        boundary={
+            'workflow.action_requested':'workflow.action_authorization',
+            'execution.admitted':'execution.pre_input_authorization',
+            'execution.send_started':'execution.external_boundary',
+            'execution.input_sent':'execution.external_boundary',
+            'execution.input_not_sent':'execution.external_boundary',
+            'execution.input_may_have_sent':'execution.external_boundary',
+            'execution.exception_after_send_started':'execution.external_boundary',
+            'execution.rejected':'execution.pre_input_authorization',
+            'execution.outcome_settled':'execution.outcome_settlement',
+            'execution.outcome_terminal_unresolved':'execution.outcome_settlement',
+            'coordination.turn_owner_proved':'coordination.first_turn',
+        }[name]
+        event_payload=dict(payload or {})
+        if name=='workflow.action_requested':
+            event_payload.setdefault('scope','TURN')
+            event_payload.setdefault('kind','END_TURN')
+            event_payload.setdefault('plan_id','plan-agent07-endturn-order')
+        return DiagnosticEvent(
+            1,
+            f"evt-agent07-handoff-{seq}-{name.replace('.','-')}",
+            name,
+            severity,
+            f'2026-10-25T12:00:{seq % 60:02d}Z',
+            seq,
+            seq,
+            'inv-agent07-handoff-order',
+            'run-agent07-handoff-order',
+            account_id=account_id,
+            fight_epoch=fight_epoch,
+            turn_epoch=turn_epoch,
+            action_id=action_id,
+            attempt_id=attempt_id,
+            owner_system=owner_system,
+            physical_input_state=physical_input_state,
+            failure_code=failure_code,
+            boundary=boundary,
+            evidence_class=evidence_class,
+            payload=event_payload,
+        )
+
+    @classmethod
+    def _ordered_handoff(cls, *, owner_rows=(), send_name='execution.input_sent',
+                         include_admitted=True, include_started=True,
+                         include_settled=True):
+        action_id='action-agent07-endturn-order'
+        attempt_id='attempt-agent07-endturn-order'
+        rows=[
+            cls._handoff_event(10,'workflow.action_requested',action_id=action_id),
+        ]
+        if include_admitted:
+            rows.append(cls._handoff_event(
+                20,'execution.admitted',action_id=action_id,
+                physical_input_state='NOT_SENT'))
+        if include_started:
+            rows.append(cls._handoff_event(
+                30,'execution.send_started',action_id=action_id,attempt_id=attempt_id,
+                physical_input_state='SEND_STARTED',severity='SAFETY'))
+        if send_name is not None:
+            physical={
+                'execution.input_sent':'SENT',
+                'execution.input_not_sent':'NOT_SENT',
+                'execution.input_may_have_sent':'MAY_HAVE_SENT',
+                'execution.exception_after_send_started':'MAY_HAVE_SENT',
+            }[send_name]
+            rows.append(cls._handoff_event(
+                40,send_name,action_id=action_id,attempt_id=attempt_id,
+                physical_input_state=physical,
+                severity='SAFETY' if physical=='MAY_HAVE_SENT' else 'INFO',
+                failure_code='SEND_UNCERTAIN' if physical=='MAY_HAVE_SENT' else None))
+        if include_settled:
+            rows.append(cls._handoff_event(
+                60,'execution.outcome_settled',action_id=action_id,attempt_id=attempt_id,
+                severity='SETTLEMENT',payload={'status':'SETTLED_SUCCESS'}))
+        for row in owner_rows:
+            seq,account,fight,turn=row
+            rows.append(cls._handoff_event(
+                seq,'coordination.turn_owner_proved',account_id=account,
+                fight_epoch=fight,turn_epoch=turn,evidence_class='AUTHORITY_COMMITTED'))
+        return turn_handoff_report(rows)
+
+    def test_owner_proof_before_request_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((5,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_owner_proof_between_request_and_admission_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((15,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_owner_proof_between_admission_and_send_started_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((25,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_owner_proof_between_send_started_and_input_sent_is_not_selected(self):
+        report=self._ordered_handoff(owner_rows=((35,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_first_strictly_post_input_sent_owner_is_eligible(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertEqual(report['next_owner_account_id'],'acct-enu')
+        self.assertEqual(report['next_turn_epoch'],8)
+
+    def test_pre_send_same_owner_does_not_block_post_send_other_owner(self):
+        report=self._ordered_handoff(owner_rows=(
+            (35,'acct-cra',20,8),
+            (50,'acct-enu',20,8),
+        ))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertEqual(report['next_owner_account_id'],'acct-enu')
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_first_valid_post_send_same_owner_preserves_same_owner_status(self):
+        report=self._ordered_handoff(owner_rows=(
+            (50,'acct-cra',20,8),
+            (55,'acct-enu',20,9),
+        ))
+        self.assertEqual(report['status'],'SETTLED_SAME_OWNER_REPROVED')
+        self.assertEqual(report['next_owner_account_id'],'acct-cra')
+        self.assertEqual(report['next_turn_epoch'],8)
+
+    def test_wrong_fight_owner_proof_is_not_valid_handoff(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',21,8),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_non_newer_turn_owner_proof_is_not_valid_handoff(self):
+        report=self._ordered_handoff(owner_rows=((50,'acct-enu',20,7),))
+        self.assertEqual(report['status'],'SETTLED_NEXT_OWNER_MISSING')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_input_not_sent_with_later_owner_never_completes(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name='execution.input_not_sent',
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'NOT_SENT')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_may_have_sent_with_later_owner_remains_unresolved(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name='execution.input_may_have_sent',
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'MAY_HAVE_SENT_UNRESOLVED')
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(report['physical_input_state'],'MAY_HAVE_SENT')
+
+    def test_send_started_only_with_later_owner_has_no_proven_handoff(self):
+        report=self._ordered_handoff(
+            owner_rows=((50,'acct-enu',20,8),),
+            send_name=None,
+            include_settled=False,
+        )
+        self.assertEqual(report['status'],'SEND_STARTED_NO_AUTHORITATIVE_SEND')
+        self.assertIsNone(report['next_owner_event_id'])
+
+    def test_input_sent_settlement_and_valid_later_owner_is_complete(self):
+        report=self._ordered_handoff(owner_rows=((70,'acct-enu',20,8),))
+        self.assertEqual(report['status'],'COMPLETE')
+        self.assertIsNotNone(report['send_event_id'])
+        self.assertIsNotNone(report['settlement_event_id'])
+        self.assertIsNotNone(report['next_owner_event_id'])
+
+    def test_multiple_end_turn_attempts_cannot_borrow_pre_send_owner_from_older_attempt(self):
+        old='action-agent07-endturn-old'
+        new='action-agent07-endturn-new'
+        rows=[
+            self._handoff_event(1,'workflow.action_requested',action_id=old),
+            self._handoff_event(2,'execution.admitted',action_id=old,physical_input_state='NOT_SENT'),
+            self._handoff_event(3,'execution.send_started',action_id=old,attempt_id='attempt-old',physical_input_state='SEND_STARTED',severity='SAFETY'),
+            self._handoff_event(4,'execution.input_sent',action_id=old,attempt_id='attempt-old',physical_input_state='SENT'),
+            self._handoff_event(10,'workflow.action_requested',action_id=new),
+            self._handoff_event(11,'execution.admitted',action_id=new,physical_input_state='NOT_SENT'),
+            self._handoff_event(12,'execution.send_started',action_id=new,attempt_id='attempt-new',physical_input_state='SEND_STARTED',severity='SAFETY'),
+            self._handoff_event(20,'execution.input_sent',action_id=new,attempt_id='attempt-new',physical_input_state='SENT'),
+            # Even though this owner proof is after the selected attempt's send,
+            # the same fight/turn already had another END_TURN attempt and the
+            # Coordination row carries no action_id. Attribution is ambiguous.
+            self._handoff_event(25,'coordination.turn_owner_proved',account_id='acct-enu',fight_epoch=20,turn_epoch=8,evidence_class='AUTHORITY_COMMITTED'),
+            self._handoff_event(30,'execution.outcome_settled',action_id=new,attempt_id='attempt-new',severity='SETTLEMENT',payload={'status':'SETTLED_SUCCESS'}),
+        ]
+        report=turn_handoff_report(rows)
+        self.assertEqual(report['action_id'],new)
+        self.assertEqual(report['status'],'OWNER_PROOF_AMBIGUOUS_ACROSS_ATTEMPTS')
+        self.assertTrue(report['owner_attribution_ambiguous'])
+        self.assertIn(old,report['competing_action_ids'])
+        self.assertIsNone(report['next_owner_event_id'])
+        self.assertEqual(len(report['noncausal_owner_event_ids']),1)
+
+    def test_rehashed_bundle_cannot_promote_pre_send_owner_to_causal_handoff(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs=LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-endturn-rehash',
+                invocation_id='inv-agent07-endturn-rehash',
+            )
+            try:
+                action_id='action-agent07-endturn-rehash'
+                obs.record(
+                    'workflow.action_requested',owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    payload={'scope':'TURN','kind':'END_TURN','plan_id':'plan-agent07-endturn-rehash'})
+                obs.record(
+                    'execution.admitted',owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,physical_input_state='NOT_SENT')
+                owner_status=obs.record(
+                    'coordination.turn_owner_proved',owner_system='anka_coordination',
+                    boundary='coordination.first_turn',evidence_class='AUTHORITY_COMMITTED',
+                    account_id='acct-enu',fight_epoch=22,turn_epoch=6)
+                self.assertIn(owner_status,('RECORDED','DROPPED','UNAVAILABLE'))
+                obs.record(
+                    'execution.send_started',owner_system='anka_execution',
+                    boundary='execution.external_boundary',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',severity='SAFETY',
+                    physical_input_state='SEND_STARTED')
+                obs.record(
+                    'execution.input_sent',owner_system='anka_execution',
+                    boundary='execution.external_boundary',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',physical_input_state='SENT')
+                obs.record(
+                    'execution.outcome_settled',owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',account_id='acct-cra',
+                    fight_epoch=22,turn_epoch=5,action_id=action_id,
+                    attempt_id='attempt-agent07-endturn-rehash',severity='SETTLEMENT',
+                    payload={'status':'SETTLED_SUCCESS'})
+                path=obs.export_incident('END_TURN_CAUSAL_ORDER_TEST',boundary='coordination.first_turn')
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
+                with ZipFile(path) as z:
+                    handoff=json.loads(z.read('analysis/turn_handoff.json'))
+                    timeline=[json.loads(line) for line in z.read('timeline.jsonl').decode('utf8').splitlines() if line]
+                pre_owner=next(row for row in timeline if row['event_name']=='coordination.turn_owner_proved')
+                self.assertEqual(handoff['status'],'SETTLED_NEXT_OWNER_MISSING')
+                self.assertIsNone(handoff['next_owner_event_id'])
+                self.assertIn(pre_owner['event_id'],handoff['noncausal_owner_event_ids'])
+
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/turn_handoff.json': lambda payload: payload.update({
+                            'status':'COMPLETE',
+                            'next_owner_event_id':pre_owner['event_id'],
+                            'next_owner_account_id':'acct-enu',
+                            'next_turn_epoch':6,
+                        }),
+                    },
+                )
+                tampered=verify_incident(path)
+                self.assertEqual(tampered['status'],'FAIL')
+                self.assertIn('TURN_HANDOFF_DERIVATION_MISMATCH',tampered['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
+    def test_rejected_before_send_then_sent_is_explicit_contradiction(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-reject-send-conflict', invocation_id='inv-agent07-reject-send-conflict')
+            try:
+                action_id='action-agent07-reject-send-conflict'
+                attempt_id='attempt-agent07-reject-send-conflict'
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    payload={'scope':'TURN','kind':'CAST','plan_id':'plan-agent07-reject-send-conflict'},
+                )
+                obs.record(
+                    'execution.rejected',
+                    severity='WARNING',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    physical_input_state='NOT_SENT',
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    account_id='acct-cra',
+                    fight_epoch=7,
+                    turn_epoch=14,
+                    trace_id='trace-agent07-reject-send-conflict',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                report = action_lifecycle_report(obs.recent)
+                row = next(item for item in report['actions'] if item['action_id']==action_id)
+                self.assertEqual(row['state'], 'CONTRADICTORY_EVIDENCE')
+                self.assertIn('PRE_SEND_TERMINAL_WITH_SEND', row['hard_conflicts'])
+                self.assertEqual(report['contradictory_action_count'], 1)
+            finally:
+                obs.finish('BLOCKED')
+
+
+class TestAgent07ExternalEventSequenceIsolation(unittest.TestCase):
+    def test_foreign_run_event_cannot_consume_future_sequence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-seq-foreign', invocation_id='inv-agent07-seq-foreign')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                previous_seq = obs._seq
+                bad = DiagnosticEvent(
+                    1,
+                    'evt-agent07-foreign-seq',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:00Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 100,
+                    obs.invocation_id,
+                    'run-agent07-foreign-other',
+                    owner_system='anka_observability',
+                )
+                self.assertEqual(obs.emit(bad), 'DROPPED')
+                self.assertEqual(obs._seq, previous_seq)
+
+                good = DiagnosticEvent(
+                    1,
+                    'evt-agent07-foreign-followup',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:01Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 1,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertIn(obs.emit(good), ('RECORDED', 'DROPPED', 'UNAVAILABLE'))
+                self.assertEqual(obs._seq, previous_seq + 1)
+                self.assertIn('evt-agent07-foreign-followup', {row.get('event_id') for row in obs.recent})
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_monotonic_regression_cannot_consume_future_sequence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-seq-mono', invocation_id='inv-agent07-seq-mono')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                previous_seq = obs._seq
+                bad = DiagnosticEvent(
+                    1,
+                    'evt-agent07-mono-seq',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:00Z',
+                    max(0, obs._last_monotonic_ns - 1),
+                    previous_seq + 100,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertEqual(obs.emit(bad), 'DROPPED')
+                self.assertEqual(obs._seq, previous_seq)
+                self.assertIn('EVENT_MONOTONIC_REGRESSION', obs.errors)
+
+                good = DiagnosticEvent(
+                    1,
+                    'evt-agent07-mono-followup',
+                    'debug.external',
+                    'INFO',
+                    '2026-10-25T12:00:01Z',
+                    obs._last_monotonic_ns + 1,
+                    previous_seq + 1,
+                    obs.invocation_id,
+                    obs.run_id,
+                    owner_system='anka_observability',
+                )
+                self.assertIn(obs.emit(good), ('RECORDED', 'DROPPED', 'UNAVAILABLE'))
+                self.assertEqual(obs._seq, previous_seq + 1)
+                self.assertIn('evt-agent07-mono-followup', {row.get('event_id') for row in obs.recent})
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07IncidentExportPathSafety(unittest.TestCase):
+    def test_symlinked_primary_incident_directory_falls_back_without_external_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(
+                root,
+                run_id='run-agent07-export-link',
+                invocation_id='inv-agent07-export-link',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                outside = root / 'outside-incidents'
+                outside.mkdir()
+                incidents = obs.folder / 'incidents'
+                try:
+                    incidents.symlink_to(outside, target_is_directory=True)
+                except (OSError, NotImplementedError):
+                    self.skipTest('directory symlink unavailable')
+
+                path = obs.export_incident(
+                    'EXPORT_PATH_SYMLINK_TEST',
+                    boundary='observability.bundle',
+                )
+                self.addCleanup(path.unlink, missing_ok=True)
+                self.assertFalse(str(path).startswith(str(outside)))
+                self.assertEqual(list(outside.iterdir()), [])
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    manifest = json.loads(z.read('manifest.json'))
+                self.assertTrue(manifest['primary_export_failed'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
+    @staticmethod
+    def _rewrite_timeline_aliases(path: Path, mutate) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        rows = [json.loads(line) for line in files['timeline.jsonl'].decode('utf8').splitlines() if line]
+        mutate(rows)
+        blob = b''.join(
+            (json.dumps(row, sort_keys=True, ensure_ascii=True, separators=(',', ':')) + '\n').encode('utf8')
+            for row in rows
+        )
+        files['timeline.jsonl'] = blob
+        files['logs/relevant_timeline.jsonl'] = blob
+        manifest = json.loads(files['manifest.json'])
+        for name in ('timeline.jsonl', 'logs/relevant_timeline.jsonl'):
+            manifest['files'][name] = {'sha256': sha256(blob).hexdigest(), 'bytes': len(blob)}
+        files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_bundle_rejects_event_id_outside_live_namespace(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-id-bundle', invocation_id='inv-agent07-id-bundle')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('IDENTITY_NAMESPACE_TEST', boundary='workflow.watchdog')
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                invalid_event_id = 'evt-' + ('a' * 113)
+                self._rewrite_timeline_aliases(
+                    path,
+                    lambda rows: rows[0].__setitem__('event_id', invalid_event_id),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('TIMELINE_EVENT_ID_INVALID', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_bundle_rejects_invalid_parent_event_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-parent-id', invocation_id='inv-agent07-parent-id')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('PARENT_ID_NAMESPACE_TEST', boundary='workflow.watchdog')
+                self._rewrite_timeline_aliases(
+                    path,
+                    lambda rows: rows[0].__setitem__('parent_event_id', 'bad-parent-id'),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('TIMELINE_PARENT_EVENT_ID_INVALID', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_crash_recovery_rejects_broken_symlink_marker_without_writing_target(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(
+                root,
+                run_id='run-agent07-recovery-marker-link',
+                invocation_id='inv-agent07-recovery-marker-link',
+            )
+            obs.record(
+                'workflow.heartbeat',
+                owner_system='anka_workflow',
+                boundary='workflow.watchdog',
+            )
+            self.assertTrue(obs.flush_journals())
+
+            marker = obs.folder / 'unclean_recovery.json'
+            outside = root / 'outside-recovery-marker.json'
+            try:
+                marker.symlink_to(outside)
+            except (OSError, NotImplementedError):
+                self.skipTest('symlink unavailable')
+
+            self.assertTrue(marker.is_symlink())
+            self.assertFalse(outside.exists())
+            self.assertIsNone(recover_unclean_run(obs.folder))
+            self.assertFalse(outside.exists())
+
+
+    def test_crash_recovery_rejects_mixed_invocation_journal_when_state_identity_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-mixed', invocation_id='inv-agent07-recovery-a')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+
+            state_path = obs.folder / 'run_state.json'
+            state = json.loads(state_path.read_text(encoding='utf8'))
+            state.pop('invocation_id', None)
+            state_path.write_text(json.dumps(state, sort_keys=True) + '\n', encoding='utf8')
+
+            event_path = obs.folder / 'events.jsonl'
+            rows = [json.loads(line) for line in event_path.read_text(encoding='utf8').splitlines() if line]
+            self.assertEqual(len(rows), 1)
+            mixed = dict(rows[0])
+            mixed['event_id'] = 'evt-agent07-mixed-invocation'
+            mixed['invocation_id'] = 'inv-agent07-recovery-b'
+            mixed['producer_seq'] = rows[0]['producer_seq'] + 1
+            mixed['monotonic_ns'] = rows[0]['monotonic_ns'] + 1
+            event_path.write_text(
+                ''.join(json.dumps(row, sort_keys=True, separators=(',', ':')) + '\n' for row in (rows[0], mixed)),
+                encoding='utf8',
+            )
+
+            self.assertIsNone(recover_unclean_run(obs.folder))
+            self.assertFalse((obs.folder / 'unclean_recovery.json').exists())
+
+
+    def test_crash_recovery_reads_only_bounded_tail_of_oversized_sparse_journal(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-bound', invocation_id='inv-agent07-recovery-bound')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+
+            event_path = obs.folder / 'events.jsonl'
+            original_rows = [line for line in event_path.read_bytes().splitlines() if line]
+            self.assertEqual(len(original_rows), 1)
+            with event_path.open('wb') as handle:
+                handle.seek(4 * 1024 * 1024)
+                handle.write(b'\n')
+                handle.write(original_rows[0] + b'\n')
+
+            path = recover_unclean_run(obs.folder)
+            self.assertIsNotNone(path)
+            result = verify_incident(path)
+            self.assertEqual(result['status'], 'PASS', result['errors'])
+            with ZipFile(path) as z:
+                recovered_rows = [
+                    json.loads(line)
+                    for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                    if line
+                ]
+                run_manifest = json.loads(z.read('run_manifest.json'))
+            self.assertEqual(len(recovered_rows), 1)
+            self.assertEqual(recovered_rows[0]['event_name'], 'workflow.heartbeat')
+            self.assertIn('RECOVERY_JOURNAL_TRUNCATED_TO_BOUND', run_manifest['observer_errors'])
+            self.assertEqual(run_manifest['evidence_completeness'], 'PARTIAL')
+
+
+    def test_crash_recovery_skips_journal_event_live_recorder_would_reject(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-id', invocation_id='inv-agent07-recovery-id')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+            event_path = obs.folder / 'events.jsonl'
+            rows = [json.loads(line) for line in event_path.read_text(encoding='utf8').splitlines() if line]
+            self.assertTrue(rows)
+            rows[0]['event_id'] = 'evt-' + ('x' * 113)
+            event_path.write_text(
+                ''.join(json.dumps(row, sort_keys=True, separators=(',', ':')) + '\n' for row in rows),
+                encoding='utf8',
+            )
+            path = recover_unclean_run(obs.folder)
+            self.assertIsNotNone(path)
+            result = verify_incident(path)
+            self.assertEqual(result['status'], 'PASS', result['errors'])
+            with ZipFile(path) as z:
+                recovered_rows = [
+                    json.loads(line)
+                    for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                    if line
+                ]
+                run_manifest = json.loads(z.read('run_manifest.json'))
+            self.assertNotIn('evt-' + ('x' * 113), {row.get('event_id') for row in recovered_rows})
+            self.assertIn('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED', run_manifest['observer_errors'])
+
+
+
+
+class TestAgent07CausalDiagnosisDerivation(unittest.TestCase):
+    def test_coherently_rehashed_diagnosis_gpt_and_markdown_cannot_change_first_divergence(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-causal-rehash',
+                invocation_id='inv-agent07-causal-rehash',
+            )
+            try:
+                obs.record(
+                    'workflow.action_requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.action_authorization',
+                    account_id='acct-cra',
+                    action_id='action-agent07-causal-rehash',
+                )
+                obs.record(
+                    'execution.guard_failed',
+                    severity='ERROR',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    failure_code='CLIENT_ATTESTATION_UNAVAILABLE',
+                    account_id='acct-cra',
+                    action_id='action-agent07-causal-rehash',
+                )
+                trace = OperationTraceSpec(
+                    'AGENT07_CAUSAL_REHASH',
+                    (
+                        BoundaryExpectation(
+                            'workflow.action_requested',
+                            'workflow.action_authorization',
+                            'anka_workflow',
+                            'workflow',
+                        ),
+                        BoundaryExpectation(
+                            'execution.admitted',
+                            'execution.pre_input_authorization',
+                            'anka_execution',
+                            'execution',
+                        ),
+                        BoundaryExpectation(
+                            'execution.input_sent',
+                            'execution.external_boundary',
+                            'anka_execution',
+                            'execution',
+                        ),
+                    ),
+                    ('action_id',),
+                )
+                path = obs.export_incident(
+                    'AGENT07_CAUSAL_REHASH',
+                    boundary='execution.pre_input_authorization',
+                    trace_spec=trace,
+                    control_state='BLOCKED',
+                )
+                initial = verify_incident(path)
+                self.assertEqual(initial['status'], 'PASS', initial['errors'])
+
+                with ZipFile(path) as z:
+                    files = {name: z.read(name) for name in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                root_diag = json.loads(files['diagnosis.json'])
+                diag = json.loads(files['analysis/diagnosis.json'])
+                gpt = json.loads(files['analysis/gpt_summary.json'])
+                facts = json.loads(files['analysis/proven_facts.json'])
+                workflow = json.loads(files['analysis/workflow_lifecycle.json'])
+                handoff = json.loads(files['analysis/turn_handoff.json'])
+                run_manifest = json.loads(files['run_manifest.json'])
+
+                root_diag['first_divergent_boundary'] = 'client.fake_boundary'
+                root_diag['suspected_owner'] = 'anka_client'
+                diag['first_divergent_boundary'] = 'client.fake_boundary'
+                diag['suspected_owner'] = 'anka_client'
+                gpt['first_divergence'] = 'client.fake_boundary'
+                gpt['suspected_owner'] = 'anka_client'
+
+                def store_json(name, payload):
+                    blob = (
+                        json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                    ).encode('utf8')
+                    files[name] = blob
+                    manifest['files'][name] = {
+                        'sha256': sha256(blob).hexdigest(),
+                        'bytes': len(blob),
+                    }
+
+                store_json('diagnosis.json', root_diag)
+                store_json('analysis/diagnosis.json', diag)
+                store_json('analysis/gpt_summary.json', gpt)
+                summary_sha = sha256(files['analysis/gpt_summary.json']).hexdigest()
+                read_first = _render_read_first(
+                    gpt,
+                    diag,
+                    facts,
+                    workflow,
+                    handoff,
+                    run_manifest,
+                    summary_sha,
+                    primary_export_failed=bool(manifest.get('primary_export_failed')),
+                )
+                files['GPT_READ_FIRST.md'] = read_first
+                manifest['files']['GPT_READ_FIRST.md'] = {
+                    'sha256': sha256(read_first).hexdigest(),
+                    'bytes': len(read_first),
+                }
+                files['manifest.json'] = (
+                    json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                ).encode('utf8')
+
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for name, data in files.items():
+                        z.writestr(name, data)
+
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn(
+                    'DIAGNOSIS_DERIVATION_MISMATCH:first_divergent_boundary',
+                    result['errors'],
+                )
+                self.assertIn(
+                    'DIAGNOSIS_DERIVATION_MISMATCH:suspected_owner',
+                    result['errors'],
+                )
+                self.assertNotIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                self.assertNotIn('DIAGNOSIS_ALIAS_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07SchemaDowngradeIntegrity(unittest.TestCase):
+    def test_modern_bundle_cannot_bypass_checks_by_rewriting_manifest_schema_to_one(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-schema-downgrade',
+                invocation_id='inv-agent07-schema-downgrade',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'SCHEMA_DOWNGRADE_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                with ZipFile(path) as z:
+                    files = {name: z.read(name) for name in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                self.assertEqual(manifest['schema_version'], 2)
+                manifest['schema_version'] = 1
+                files['manifest.json'] = (
+                    json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+                ).encode('utf8')
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for name, data in files.items():
+                        z.writestr(name, data)
+
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('SCHEMA_DOWNGRADE_SUSPECTED', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07EvidenceMatrixDerivation(unittest.TestCase):
+    @staticmethod
+    def _rewrite_json_files(path: Path, mutations: dict[str, object]) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        manifest = json.loads(files['manifest.json'])
+        for name, mutate in mutations.items():
+            payload = json.loads(files[name])
+            mutate(payload)
+            blob = (
+                json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+            ).encode('utf8')
+            files[name] = blob
+            manifest['files'][name] = {
+                'sha256': sha256(blob).hexdigest(),
+                'bytes': len(blob),
+            }
+        files['manifest.json'] = (
+            json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+        ).encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_matrix_cannot_claim_protocol_evidence_absent_from_timeline(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-matrix-derive',
+                invocation_id='inv-agent07-matrix-derive',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'MATRIX_DERIVATION_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+
+                def promote_protocol(matrix):
+                    matrix['sections']['protocol'] = 'PRESENT'
+
+                def remove_protocol_gap(gaps):
+                    gaps['gaps'] = [
+                        row for row in gaps['gaps']
+                        if row.get('section') != 'protocol'
+                    ]
+
+                def promote_protocol_summary(summary):
+                    summary['status'] = 'PRESENT'
+
+                self._rewrite_json_files(
+                    path,
+                    {
+                        'evidence_matrix.json': promote_protocol,
+                        'analysis/evidence_gaps.json': remove_protocol_gap,
+                        'metadata/capture_protocol_summary.json': promote_protocol_summary,
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('EVIDENCE_MATRIX_DERIVATION_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_gpt_coverage_gaps_must_match_verified_matrix(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-gpt-gaps',
+                invocation_id='inv-agent07-gpt-gaps',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'GPT_COVERAGE_GAPS_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/gpt_summary.json': lambda payload: payload.__setitem__(
+                            'diagnostic_coverage_gaps', []
+                        ),
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_COVERAGE_GAPS_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07ReadFirstDerivationIntegrity(unittest.TestCase):
+    @staticmethod
+    def _rewrite_read_first(path: Path, mutate) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        original = files['GPT_READ_FIRST.md'].decode('utf8')
+        rewritten = mutate(original).encode('utf8')
+        files['GPT_READ_FIRST.md'] = rewritten
+        manifest = json.loads(files['manifest.json'])
+        manifest['files']['GPT_READ_FIRST.md'] = {
+            'sha256': sha256(rewritten).hexdigest(),
+            'bytes': len(rewritten),
+        }
+        files['manifest.json'] = (
+            json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+        ).encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_read_first_cannot_add_false_causal_claim(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-read-first',
+                invocation_id='inv-agent07-read-first',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'READ_FIRST_DERIVATION_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                self._rewrite_read_first(
+                    path,
+                    lambda text: text.replace(
+                        '# ANKA diagnostic incident\n\n',
+                        '# ANKA diagnostic incident\n\n'
+                        '**ROOT CAUSE:** Protocol definitely failed.\n\n',
+                        1,
+                    ),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                # The machine-summary marker was deliberately preserved. Exact
+                # rendering, not only marker presence, must detect the lie.
+                self.assertNotIn('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_nested_action_lifecycle_read_first_is_roundtrip_canonical(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-read-first-nested',
+                invocation_id='inv-agent07-read-first-nested',
+            )
+            try:
+                action_id='action-agent07-read-first-nested'
+                attempt_id='attempt-agent07-read-first-nested'
+                obs.record(
+                    'execution.admitted',
+                    owner_system='anka_execution',
+                    boundary='execution.pre_input_authorization',
+                    action_id=action_id,
+                )
+                obs.record(
+                    'execution.send_started',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SEND_STARTED',
+                )
+                obs.record(
+                    'execution.input_sent',
+                    owner_system='anka_execution',
+                    boundary='execution.external_boundary',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    physical_input_state='SENT',
+                )
+                obs.record(
+                    'execution.outcome_settled',
+                    severity='SETTLEMENT',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    payload={'status':'SETTLED_SUCCESS'},
+                )
+                obs.record(
+                    'execution.outcome_terminal_unresolved',
+                    severity='SAFETY',
+                    owner_system='anka_execution',
+                    boundary='execution.outcome_settlement',
+                    action_id=action_id,
+                    attempt_id=attempt_id,
+                    failure_code='LATE_UNRESOLVED',
+                    physical_input_state='MAY_HAVE_SENT',
+                )
+                path=obs.export_incident(
+                    'READ_FIRST_NESTED_ROUNDTRIP',
+                    boundary='execution.outcome_settlement',
+                )
+                result=verify_incident(path)
+                self.assertEqual(result['status'],'PASS',result['errors'])
+                with ZipFile(path) as z:
+                    text=z.read('GPT_READ_FIRST.md').decode('utf8')
+                self.assertIn('CONTRADICTORY_EVIDENCE',text)
+                self.assertIn(action_id,text)
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_emergency_read_first_cannot_add_false_root_cause(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-emergency-read-first',
+                invocation_id='inv-agent07-emergency-read-first',
+            )
+            try:
+                obs.record(
+                    'ready.requested',
+                    owner_system='anka_workflow',
+                    boundary='workflow.ready_request',
+                    account_id='acct-cra',
+                )
+                with patch(
+                    'anka_observability.bundle._build_artifacts',
+                    side_effect=RuntimeError('agent07-forced-analysis-failure'),
+                ):
+                    path = obs.export_incident(
+                        'EMERGENCY_READ_FIRST_TEST',
+                        boundary='protocol.ready_observation',
+                        trace_spec=READY_TRACE,
+                        control_state='BLOCKED',
+                    )
+                initial = verify_incident(path)
+                self.assertEqual(initial['status'], 'PASS', initial['errors'])
+                with ZipFile(path) as z:
+                    manifest = json.loads(z.read('manifest.json'))
+                    self.assertTrue(manifest['advanced_analysis_failed'])
+
+                self._rewrite_read_first(
+                    path,
+                    lambda text: text.replace(
+                        '# ANKA emergency diagnostic incident\n\n',
+                        '# ANKA emergency diagnostic incident\n\n'
+                        '**ROOT CAUSE:** Client definitely failed.\n\n',
+                        1,
+                    ),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_READ_FIRST_DERIVATION_MISMATCH', result['errors'])
+                self.assertNotIn('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
+class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
+    @staticmethod
+    def _rewrite_json_artifact(path: Path, name: str, mutate) -> None:
+        with ZipFile(path) as z:
+            files = {entry: z.read(entry) for entry in z.namelist()}
+        payload = json.loads(files[name])
+        mutate(payload)
+        blob = (json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+        files[name] = blob
+        manifest = json.loads(files['manifest.json'])
+        manifest['files'][name] = {'sha256': sha256(blob).hexdigest(), 'bytes': len(blob)}
+        files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for entry, data in files.items():
+                z.writestr(entry, data)
+
+    def test_rehashed_bundle_with_unredacted_sensitive_key_fails_verification(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-privacy', invocation_id='inv-agent07-privacy')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('PRIVACY_REHASH_TEST', boundary='observability.bundle')
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                self._rewrite_json_artifact(
+                    path,
+                    'analysis/gpt_summary.json',
+                    lambda payload: payload.__setitem__('access_token', 'agent07-super-secret'),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertTrue(
+                    any(code.startswith('UNREDACTED_SENSITIVE_DATA:analysis/gpt_summary.json') for code in result['errors']),
+                    result['errors'],
+                )
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_manifest_with_unredacted_sensitive_field_fails_verification(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-manifest-privacy', invocation_id='inv-agent07-manifest-privacy')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('MANIFEST_PRIVACY_TEST', boundary='observability.bundle')
+                with ZipFile(path) as z:
+                    files = {entry: z.read(entry) for entry in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                manifest['access_token'] = 'agent07-manifest-secret'
+                files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for entry, data in files.items():
+                        z.writestr(entry, data)
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('UNREDACTED_SENSITIVE_DATA:manifest.json', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_sensitive_detector_allows_redacted_value_and_safe_token_count(self):
+        self.assertFalse(has_unredacted_sensitive_data({'access_token': '[REDACTED]', 'token_count': 7}))
+        self.assertTrue(has_unredacted_sensitive_data({'access_token': 'plain-secret'}))
+        self.assertTrue(has_unredacted_sensitive_data('Bearer plain-secret'))
+
+
+if __name__ == '__main__':
+    unittest.main()

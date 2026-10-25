@@ -7,20 +7,23 @@ from __future__ import annotations
 from hashlib import sha256
 from datetime import datetime
 from pathlib import Path
-from tempfile import gettempdir
+from tempfile import mkdtemp
 from uuid import uuid4
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import re
 
-from anka_contracts.diagnostics import DiagnosticEvent, OperationTraceSpec, now_utc
+from anka_contracts.diagnostics import BoundaryExpectation, DiagnosticEvent, OperationTraceSpec, now_utc
 from anka_observability.forensics import (
     FirstDivergenceAnalyzer, PartyReadyAnalyzer, action_lifecycle_report, evidence_matrix,
     historical_similarity_report, recovery_history_report, proven_fact_report,
     workflow_lifecycle_report, turn_handoff_report,
 )
-from anka_observability.redaction import sanitize,sanitize_export,has_diagnostic_truncation
-from anka_observability.api import is_priority_event
+from anka_observability.redaction import sanitize,sanitize_export,has_diagnostic_truncation,has_unredacted_sensitive_data
+from anka_observability.api import (
+    is_priority_event,
+    DIAGNOSTIC_EVENT_ID_RE, DIAGNOSTIC_INVOCATION_ID_RE, DIAGNOSTIC_RUN_ID_RE,
+)
 
 BUNDLE_SCHEMA=2
 EVIDENCE_STATUS=('PRESENT','PRESENT_STALE','PARTIAL','MISSING','NOT_APPLICABLE','EXPORT_FAILED')
@@ -68,6 +71,99 @@ def _semantic_artifact(value:object)->object:
     if isinstance(value,list):return [_semantic_artifact(v) for v in value]
     if isinstance(value,tuple):return [_semantic_artifact(v) for v in value]
     return value
+
+
+def _loss_adjusted_confidence(confidence:str, evidence_loss:bool)->str:
+    """Downgrade causal certainty when recorder evidence is known incomplete.
+
+    Analyzer confidence describes the retained slice. A bundle that knows rows
+    were overwritten, dropped, truncated or lost must not present that same level
+    as confidence in the true first divergence across the whole run.
+    """
+    if not evidence_loss:return confidence
+    return {'HIGH':'MEDIUM','MEDIUM':'LOW','LOW':'LOW','UNDETERMINED':'UNDETERMINED'}.get(confidence,'UNDETERMINED')
+
+
+def _canonical_display(value:object)->object:
+    """Return sanitized presentation data with deterministic mapping order."""
+    clean=sanitize(value)
+    def ordered(obj):
+        if isinstance(obj,dict):return {key:ordered(obj[key]) for key in sorted(obj)}
+        if isinstance(obj,list):return [ordered(item) for item in obj]
+        if isinstance(obj,tuple):return [ordered(item) for item in obj]
+        return obj
+    return ordered(clean)
+
+
+def _render_read_first(gpt:dict,diagnosis:dict,proven_facts:dict,workflow_lifecycle:dict,
+                       turn_handoff:dict,run_manifest:dict,summary_sha256:str,*,primary_export_failed:bool=False)->bytes:
+    """Canonical human/GPT entrypoint derived only from machine-checked artifacts."""
+    flight=run_manifest.get('flight_recorder',{}) if isinstance(run_manifest,dict) else {}
+    source_tail=bool(gpt.get('source_tail_uncertain',False))
+    candidate_causes=gpt.get('candidate_causes',[]) or []
+    support_refs=gpt.get('supporting_evidence_ids',[]) or []
+    missing=gpt.get('expected_missing_evidence',[]) or []
+    unresolved=gpt.get('unresolved_actions',[]) or []
+    historical_ids=gpt.get('historical_similarity_case_ids',[]) or []
+    gap_summary=gpt.get('diagnostic_coverage_gaps',[]) or []
+    snapshot_names=gpt.get('snapshot_names',[]) or []
+    snapshot_omissions=gpt.get('snapshot_omissions',[]) or []
+    observer_errors=gpt.get('observer_errors',[]) or []
+    latest_pre=gpt.get('latest_included_pre_action_outcome')
+    latest_action=gpt.get('latest_included_action_lifecycle')
+    return (
+        '# ANKA diagnostic incident\n\n'
+        f'**Code:** {_canonical_display(gpt.get("incident_code"))}\n\n'
+        f'**Attempted operation:** {_canonical_display(gpt.get("attempted_operation"))}\n\n'
+        f'**First divergence:** {_canonical_display(gpt.get("first_divergence"))}\n\n'
+        f'**Finding status:** {gpt.get("finding_status")}; scope={gpt.get("first_divergence_scope")}; absence_conclusive={gpt.get("absence_is_conclusive")}.\n\n'
+        + ('**Crash-tail warning:** source tail is uncertain; missing post-crash events cannot prove that an action failed or never happened.\n\n' if source_tail else '')
+        + f'**Observed/export boundary:** {_canonical_display(gpt.get("observed_export_boundary"))}\n\n'
+        f'**Suspected owner:** {_canonical_display(gpt.get("suspected_owner"))}\n\n'
+        f'**Confidence:** {gpt.get("confidence")}\n\n'
+        f'**Cause status:** {gpt.get("cause_status")}; scope={gpt.get("cause_scope")}; candidates_may_be_incomplete={gpt.get("candidate_causes_may_be_incomplete")}; candidates={_canonical_display(candidate_causes) if candidate_causes else "none established"}.\n\n'
+        f'**Supporting evidence IDs:** {_canonical_display(support_refs) if support_refs else "none uniquely identified"}\n\n'
+        f'**Control state:** {_canonical_display(gpt.get("control_state"))}\n\n'
+        f'**Physical input state:** {gpt.get("physical_input_state")} (from included diagnostic evidence; UNKNOWN if absent).\n\n'
+        f'**Detail:** {_canonical_display(diagnosis.get("explanation",""))}\n\n'
+        f'**Expected-but-missing evidence:** {_canonical_display(missing) if missing else "not uniquely established"}\n\n'
+        f'**Next targeted verification:** {_canonical_display(gpt.get("next_targeted_verification"))}\n\n'
+        f'**Proven diagnostic facts:** {len(proven_facts.get("facts",[]) if isinstance(proven_facts,dict) else [])} observed trace edges; '
+        f'{gpt.get("settled_action_count",0)} settled actions; unresolved={_canonical_display(unresolved)}.\n\n'
+        f'**Recorded recovery/watchdog attempts:** {gpt.get("recovery_attempt_count",0)}.\n\n'
+        f'**Workflow lifecycle index:** {gpt.get("workflow_lifecycle_status")} at phase {gpt.get("workflow_current_phase")}; next={_canonical_display(workflow_lifecycle.get("next_expected_transition") if isinstance(workflow_lifecycle,dict) else None)}.\n\n'
+        f'**End Turn handoff index:** {gpt.get("turn_handoff_status")}; next_owner={_canonical_display(turn_handoff.get("next_owner_account_id") if isinstance(turn_handoff,dict) else None)}.\n\n'
+        f'**Latest included pre-action causal outcome:** {_canonical_display(latest_pre) if latest_pre else "none included"}; omitted={gpt.get("pre_action_outcomes_omitted",0)}.\n\n'
+        f'**Latest included action lifecycle:** {_canonical_display(latest_action) if latest_action else "none included"}; omitted={gpt.get("action_lifecycles_omitted",0)}.\n\n'
+        f'**Historical similarity hints (not root-cause proof):** {_canonical_display(historical_ids) if historical_ids else "none"}.\n\n'
+        f'**Evidence completeness:** {gpt.get("evidence_completeness")}; flight recorder overwrites={flight.get("recent_overwrites",0)}; '
+        f'observer dropped events={run_manifest.get("observer_dropped_events",0) if isinstance(run_manifest,dict) else 0}; size omissions={flight.get("timeline_events_omitted_for_size",0)}.\n\n'
+        f'**Diagnostic coverage gaps:** {_canonical_display(gap_summary) if gap_summary else "none declared"}.\n\n'
+        f'**Available shipped bounded snapshots:** {_canonical_display(snapshot_names) if snapshot_names else "none"}.\n\n'
+        f'**Snapshot omissions:** {_canonical_display(snapshot_omissions) if snapshot_omissions else "none"}.\n\n'
+        '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
+        f'**Machine summary SHA-256:** {summary_sha256}\n\n'
+        f'**Observer health:** storage_available={flight.get("persistent_storage_available",False)}; errors={_canonical_display(observer_errors)}.\n\n'
+        + ('**INCIDENT_PRIMARY_EXPORT_FAILED:** primary run-folder ZIP write failed; this is the bounded fallback artifact.\n\n' if primary_export_failed else '')
+        + 'Raw packet captures, credentials and environment dumps are excluded by default. '
+        'The evidence matrix explicitly declares missing/partial sections; observer output never grants gameplay authority.\n'
+    ).encode('utf8')
+
+
+def _render_emergency_read_first(gpt:dict,diagnosis:dict,summary_sha256:str)->bytes:
+    return (
+        '# ANKA emergency diagnostic incident\n\n'
+        f'**Code:** {_canonical_display(gpt.get("incident_code"))}\n\n'
+        f'**Observed boundary:** {_canonical_display(gpt.get("observed_export_boundary"))}\n\n'
+        '**Forensic status:** ADVANCED_ANALYSIS_FAILED. The original application failure is preserved; '
+        'no root cause is asserted by this fallback.\n\n'
+        f'**Control state:** {_canonical_display(gpt.get("control_state"))}\n\n'
+        f'**Physical input state:** {gpt.get("physical_input_state")} (most conservative state present in included evidence).\n\n'
+        f'**Detail:** {_canonical_display(diagnosis.get("explanation",""))}\n\n'
+        'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n\n'
+        '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
+        f'**Machine summary SHA-256:** {summary_sha256}\n'
+    ).encode('utf8')
 
 
 def _aggregate_physical_input_state(events) -> str:
@@ -124,7 +220,21 @@ _CAUSAL_SKELETON_EVENTS=frozenset({
     # READY and turn-handoff causal edges.
     'ready.requested','protocol.ready_observed','canonical.ready_committed',
     'coordination.ready_barrier_satisfied','coordination.turn_owner_proved','decision.frame_created',
+    # Pre-action Decision result is required to distinguish deliberate WAIT/
+    # NO_ACTION/FAULT from a later Workflow/Coordination authorization stop.
+    'decision.plan_result',
 })
+
+def _causal_risk_row(row:dict)->bool:
+    """Return skeleton evidence whose safety/risk value outranks routine history."""
+    if row.get('severity') in ('ERROR','CRITICAL','SAFETY'):return True
+    if row.get('failure_code'):return True
+    if row.get('physical_input_state')=='MAY_HAVE_SENT':return True
+    return row.get('event_name') in (
+        'execution.input_may_have_sent','execution.exception_after_send_started',
+        'execution.outcome_terminal_unresolved','execution.outcome_missing',
+    )
+
 
 def _causal_skeleton_row(row:dict)->bool:
     """Return evidence that must outrank routine priority chatter at export.
@@ -186,7 +296,20 @@ def _bounded_timeline(observer, *, incident_code:str|None=None, incident_boundar
     # therefore lost its final End-Turn/fight-end/world-reentry edges and the
     # forensic report falsely looked IN_PROGRESS.
     skeleton=[e for e in priority_only if _causal_skeleton_row(e)]
-    skeleton_kept,skeleton_blob,skeleton_omitted=_fit_lines(skeleton,priority_limit)
+    # Preserve explicit safety/risk evidence first. The remaining ordinary causal
+    # skeleton prefers the newest rows so thousands of healthy historical actions
+    # cannot crowd out the Decision/Workflow/Execution lead-up to the current
+    # incident. Exact trigger and pinned anomaly context are already reserved.
+    risk_skeleton=[e for e in skeleton if _causal_risk_row(e)]
+    risk_kept,risk_blob,risk_omitted=_fit_lines(risk_skeleton,priority_limit)
+    risk_ids={e['event_id'] for e in risk_kept}
+    remaining_skeleton=max(0,priority_limit-len(risk_blob))
+    ordinary_skeleton=[e for e in skeleton if e.get('event_id') not in risk_ids and not _causal_risk_row(e)]
+    ordinary_skeleton_kept,ordinary_skeleton_blob,ordinary_skeleton_omitted=_fit_lines(
+        ordinary_skeleton,remaining_skeleton,prefer_latest=True)
+    skeleton_kept=sorted(risk_kept+ordinary_skeleton_kept,key=_event_key)
+    skeleton_blob=risk_blob+ordinary_skeleton_blob
+    skeleton_omitted=risk_omitted+ordinary_skeleton_omitted
     skeleton_ids={e['event_id'] for e in skeleton_kept}
     remaining_priority=max(0,priority_limit-len(skeleton_blob))
     routine_priority=[e for e in priority_only if e.get('event_id') not in skeleton_ids and not _causal_skeleton_row(e)]
@@ -288,10 +411,11 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
 
     physical_input_state=_aggregate_physical_input_state(events)
 
-    finding=None;boundary_graph=[]
+    finding=None;boundary_graph=[];finding_source='NONE';boundary_graph_mode='NONE'
     if trace_spec is not None:
         analysis=FirstDivergenceAnalyzer().analyze(trace_spec,events,fallback_failure_code=code,control_state=control_state)
-        finding=analysis.finding;boundary_graph=list(analysis.boundary_graph)
+        finding=analysis.finding;boundary_graph=list(analysis.boundary_graph);boundary_graph_mode='GENERIC_TRACE'
+        if finding is not None:finding_source='GENERIC_TRACE'
 
     # READY is a party operation: prove each account's request→send→server→
     # Canonical chain independently before accepting the shared barrier.  Keep
@@ -306,24 +430,36 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
             'shared_graph':list(party_ready.shared_graph),'matched_event_ids':list(party_ready.matched_event_ids),
             'finding':party_ready.finding.to_dict() if party_ready.finding else None}
         if (trace_spec is not None and trace_spec.operation.upper().startswith('READY')) or 'READY' in code or 'ready' in boundary.lower():
-            if party_ready.finding is not None:finding=party_ready.finding
+            if party_ready.finding is not None:
+                # When the party analyzer becomes the primary diagnosis, its
+                # graph must become the primary graph too. Otherwise a generic
+                # trace can borrow another account's edge and ship a different
+                # first gap than the selected per-account READY finding.
+                finding=party_ready.finding;finding_source='PARTY_READY';boundary_graph_mode='PARTY_READY'
+                boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
             elif trace_spec is not None and trace_spec.operation.upper().startswith('READY'):
-                finding=None
+                finding=None;finding_source='NONE';boundary_graph_mode='PARTY_READY'
                 boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
 
     finding_scope='INCLUDED_EVIDENCE_ONLY' if loss else 'COMPLETE_RECORDER_EVIDENCE'
+    retained_confidence=(finding.confidence if finding is not None else 'UNDETERMINED')
+    confidence=_loss_adjusted_confidence(retained_confidence,bool(loss))
     if finding is None:
         diagnosis=_legacy_diagnosis(code,boundary,detail,observer,events)
-        diagnosis.update({'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope})
+        diagnosis.update({'finding_source':'NONE','evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope,
+                          'cause_scope':finding_scope,'candidate_causes_may_be_incomplete':bool(loss)})
         first_boundary='NOT_ESTABLISHED';confidence='UNDETERMINED';missing=[]
         next_test='Collect the earliest missing authoritative boundary evidence.'
     else:
         cause_status=('MULTIPLE_PLAUSIBLE' if len(finding.candidate_causes)>1 else
                       'SINGLE_SUPPORTED' if len(finding.candidate_causes)==1 else 'UNDETERMINED')
-        diagnosis={'schema_version':2,**finding.to_dict(),'cause_status':cause_status,'explanation':sanitize(detail),
+        diagnosis={'schema_version':2,**finding.to_dict(),'finding_source':finding_source,'confidence':confidence,
+                   'retained_evidence_confidence':retained_confidence,
+                   'cause_status':cause_status,'cause_scope':finding_scope,
+                   'candidate_causes_may_be_incomplete':bool(loss),'explanation':sanitize(detail),
                    'observer_dropped_events':observer.dropped,'observer_errors':list(observer.errors[-10:]),
                    'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope}
-        first_boundary=finding.first_divergent_boundary;confidence=finding.confidence
+        first_boundary=finding.first_divergent_boundary
         missing=list(finding.missing_evidence);next_test=finding.recommended_next_test
 
     suspected_owner=(finding.suspected_owner if finding is not None else 'NOT_ESTABLISHED')
@@ -331,7 +467,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     candidate_causes=(list(finding.candidate_causes) if finding is not None else [])
     errors=[e for e in events if e.get('severity') in ('ERROR','CRITICAL','SAFETY')]
     error_lines=b''.join(_json_line(e) for e in errors)
-    gaps=[{'section':key,'status':value} for key,value in sections.items() if value not in ('PRESENT','NOT_APPLICABLE')]
+    gaps=[{'section':key,'status':value} for key,value in sorted(sections.items()) if value not in ('PRESENT','NOT_APPLICABLE')]
     evidence_payload={'schema_version':2,'sections':sections,
         'note':'Statuses describe diagnostic evidence availability only; they never promote observer data to gameplay authority.'}
     evidence_completeness='PARTIAL' if any(v not in ('PRESENT','NOT_APPLICABLE') for v in sections.values()) else 'PRESENT'
@@ -343,8 +479,20 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'evidence_completeness':evidence_completeness,
     }
     next_verification={'schema_version':1,'recommended_next_test':next_test,'missing_evidence':missing}
-    graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,'edges':boundary_graph}
+    trace_payload=(None if trace_spec is None else {
+        'operation':trace_spec.operation,'correlation_keys':list(trace_spec.correlation_keys),
+        'expectations':[{
+            'event_name':expectation.event_name,'boundary':expectation.boundary,
+            'owner_system':expectation.owner_system,'evidence_section':expectation.evidence_section,
+        } for expectation in trace_spec.expectations],
+    })
+    graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,
+                   'analysis_mode':boundary_graph_mode,'trace_spec':trace_payload,'edges':boundary_graph}
     action_lifecycles=action_lifecycle_report(events)
+    pre_action_outcomes=action_lifecycles.get('pre_action_outcomes',[]) if isinstance(action_lifecycles,dict) else []
+    latest_included_pre_action_outcome=(pre_action_outcomes[-1] if pre_action_outcomes else None)
+    action_rows=action_lifecycles.get('actions',[]) if isinstance(action_lifecycles,dict) else []
+    latest_included_action_lifecycle=(action_rows[-1] if action_rows else None)
     historical_matches=historical_similarity_report(events,code=code,boundary=boundary)
     recovery_history=recovery_history_report(events)
     workflow_lifecycle=workflow_lifecycle_report(events)
@@ -359,18 +507,24 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     gpt_finding_status=('NOT_ESTABLISHED' if finding is None else ('DIVERGENCE_CANDIDATE' if loss else 'DIVERGENCE_IDENTIFIED'))
     gpt_summary={
         'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(attempted_operation),
-        'finding_status':gpt_finding_status,
+        'finding_status':gpt_finding_status,'finding_source':finding_source,
         'first_divergence':sanitize(first_boundary),'first_divergence_scope':finding_scope,
         'absence_is_conclusive':not bool(loss),'source_tail_uncertain':bool(flight.get('source_tail_uncertain',False)),
         'observed_export_boundary':sanitize(boundary),
         'suspected_owner':sanitize(suspected_owner),'confidence':confidence,
-        'cause_status':cause_status,'candidate_causes':candidate_causes,
+        'retained_evidence_confidence':retained_confidence,
+        'cause_status':cause_status,'cause_scope':finding_scope,
+        'candidate_causes_may_be_incomplete':bool(loss),'candidate_causes':candidate_causes,
         'supporting_evidence_ids':support_refs,'control_state':sanitize(control_state),
         'physical_input_state':physical_input_state,'expected_missing_evidence':missing,
         'next_targeted_verification':sanitize(next_test),'diagnostic_coverage_gaps':gap_summary,
         'snapshot_names':snapshot_names,'snapshot_omissions':snapshot_omissions,
         'settled_action_count':proven_facts.get('settled_action_count',0),
-        'unresolved_actions':unresolved_actions,'recovery_attempt_count':recovery_count,
+        'unresolved_actions':unresolved_actions,'latest_included_pre_action_outcome':latest_included_pre_action_outcome,
+        'latest_included_action_lifecycle':latest_included_action_lifecycle,
+        'pre_action_outcomes_omitted':action_lifecycles.get('pre_action_outcomes_omitted',0),
+        'action_lifecycles_omitted':action_lifecycles.get('actions_omitted',0),
+        'recovery_attempt_count':recovery_count,
         'historical_similarity_case_ids':historical_ids,'workflow_lifecycle_status':workflow_lifecycle.get('status'),
         'workflow_current_phase':workflow_lifecycle.get('current_phase'),'turn_handoff_status':turn_handoff.get('status'),
         'evidence_completeness':evidence_completeness,
@@ -378,40 +532,10 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.',
     }
 
-    read_first=(
-        '# ANKA diagnostic incident\n\n'
-        f'**Code:** {sanitize(code)}\n\n'
-        f'**Attempted operation:** {sanitize(attempted_operation)}\n\n'
-        f'**First divergence:** {sanitize(first_boundary)}\n\n'
-        f'**Finding status:** {gpt_finding_status}; scope={finding_scope}; absence_conclusive={not bool(loss)}.\n\n'
-        + ('**Crash-tail warning:** source tail is uncertain; missing post-crash events cannot prove that an action failed or never happened.\n\n' if flight.get('source_tail_uncertain',False) else '')
-        + f'**Observed/export boundary:** {sanitize(boundary)}\n\n'
-        f'**Suspected owner:** {sanitize(suspected_owner)}\n\n'
-        f'**Confidence:** {confidence}\n\n'
-        f'**Cause status:** {cause_status}; candidates={sanitize(candidate_causes) if candidate_causes else "none established"}.\n\n'
-        f'**Supporting evidence IDs:** {sanitize(support_refs) if support_refs else "none uniquely identified"}\n\n'
-        f'**Control state:** {sanitize(control_state)}\n\n'
-        f'**Physical input state:** {physical_input_state} (from included diagnostic evidence; UNKNOWN if absent).\n\n'
-        f'**Detail:** {sanitize(detail)}\n\n'
-        f'**Expected-but-missing evidence:** {sanitize(missing) if missing else "not uniquely established"}\n\n'
-        f'**Next targeted verification:** {sanitize(next_test)}\n\n'
-        f'**Proven diagnostic facts:** {len(proven_facts.get("facts",[]))} observed trace edges; '
-        f'{proven_facts.get("settled_action_count",0)} settled actions; unresolved={sanitize(unresolved_actions)}.\n\n'
-        f'**Recorded recovery/watchdog attempts:** {recovery_count}.\n\n'
-        f'**Workflow lifecycle index:** {workflow_lifecycle.get("status")} at phase {workflow_lifecycle.get("current_phase")}; next={sanitize(workflow_lifecycle.get("next_expected_transition"))}.\n\n'
-        f'**End Turn handoff index:** {turn_handoff.get("status")}; next_owner={sanitize(turn_handoff.get("next_owner_account_id"))}.\n\n'
-        f'**Historical similarity hints (not root-cause proof):** {sanitize(historical_ids) if historical_ids else "none"}.\n\n'
-        f'**Evidence completeness:** {evidence_completeness}; flight recorder overwrites={flight["recent_overwrites"]}; '
-        f'journal drops={observer.dropped}; size omissions={flight["timeline_events_omitted_for_size"]}.\n\n'
-        f'**Diagnostic coverage gaps:** {sanitize(gap_summary) if gap_summary else "none declared"}.\n\n'
-        f'**Available shipped bounded snapshots:** {sanitize(snapshot_names) if snapshot_names else "none"}.\n\n'
-        f'**Snapshot omissions:** {sanitize(snapshot_omissions) if snapshot_omissions else "none"}.\n\n'
-        '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
-        f'**Observer health:** storage_available={flight["persistent_storage_available"]}; errors={sanitize(list(observer.errors[-10:]))}.\n\n'
-        + ('**INCIDENT_PRIMARY_EXPORT_FAILED:** primary run-folder ZIP write failed; this is the bounded fallback artifact.\n\n' if primary_export_failed else '')
-        + 'Raw packet captures, credentials and environment dumps are excluded by default. '
-        'The evidence matrix explicitly declares missing/partial sections; observer output never grants gameplay authority.\n'
-    ).encode('utf8')
+    gpt_summary_blob=_serialized(gpt_summary)
+    gpt_summary_sha256=sha256(gpt_summary_blob).hexdigest()
+    read_first=_render_read_first(gpt_summary,diagnosis,proven_facts,workflow_lifecycle,turn_handoff,
+        run_manifest,gpt_summary_sha256,primary_export_failed=primary_export_failed)
 
     artifacts={
         'diagnosis.json':_serialized(diagnosis),'evidence_matrix.json':_serialized(evidence_payload),
@@ -429,7 +553,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'analysis/next_verification.json':_serialized(next_verification),
         'analysis/snapshot_index.json':_serialized({'schema_version':1,'snapshots':snapshot_names,'omitted':snapshot_omissions,
             'note':'Only shipped snapshot names are listed as available. Omitted snapshots are explicit; all snapshot content is bounded, sanitized diagnostic context and is not gameplay authority.'}),
-        'analysis/gpt_summary.json':_serialized(gpt_summary),
+        'analysis/gpt_summary.json':gpt_summary_blob,
         'logs/relevant_timeline.jsonl':timeline,'logs/priority_timeline.jsonl':priority_timeline,
         'logs/relevant_errors.jsonl':error_lines,
         'metadata/flight_recorder.json':_serialized({'schema_version':1,**flight}),
@@ -474,16 +598,22 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
                   'control_state':control_state,'observer_dropped_events':int(getattr(observer,'dropped',0)),
                   'observer_errors':errors,'bounded_recent_event_count':len(events),'physical_input_state':physical_input_state,
                   'flight_recorder':flight,'evidence_completeness':'PARTIAL'}
-    read_first=(
-        '# ANKA emergency diagnostic incident\n\n'
-        f'**Code:** {sanitize(code)}\n\n**Observed boundary:** {sanitize(boundary)}\n\n'
-        '**Forensic status:** ADVANCED_ANALYSIS_FAILED. The original application failure is preserved; '
-        'no root cause is asserted by this fallback.\n\n'
-        f'**Control state:** {sanitize(control_state)}\n\n'
-        f'**Physical input state:** {physical_input_state} (most conservative state present in included evidence).\n\n'
-        f'**Detail:** {sanitize(detail)}\n\n'
-        'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n'
-    ).encode('utf8')
+    emergency_gpt_summary={'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
+        'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
+        'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
+        'cause_status':'UNDETERMINED','cause_scope':'INCLUDED_EVIDENCE_ONLY',
+        'candidate_causes_may_be_incomplete':True,'candidate_causes':[],
+        'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
+        'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
+        'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
+        'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'latest_included_pre_action_outcome':None,
+        'latest_included_action_lifecycle':None,'pre_action_outcomes_omitted':0,'action_lifecycles_omitted':0,
+        'recovery_attempt_count':0,
+        'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
+        'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}
+    emergency_gpt_blob=_serialized(emergency_gpt_summary)
+    emergency_gpt_sha256=sha256(emergency_gpt_blob).hexdigest()
+    read_first=_render_emergency_read_first(emergency_gpt_summary,diagnosis,emergency_gpt_sha256)
     artifacts={
         'diagnosis.json':_serialized(diagnosis),'analysis/diagnosis.json':_serialized(diagnosis),
         'evidence_matrix.json':_serialized({'schema_version':2,'sections':sections}),
@@ -492,7 +622,9 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'GPT_READ_FIRST.md':read_first,'run_manifest.json':_serialized(run_manifest),
         'analysis/boundary_graph.json':_serialized({'schema_version':1,'operation':None,'edges':[]}),
         'analysis/party_ready.json':_serialized({'schema_version':1,'status':'ANALYSIS_UNAVAILABLE','required_accounts':[],'account_graphs':[],'shared_graph':[],'matched_event_ids':[]}),
-        'analysis/action_lifecycles.json':_serialized({'schema_version':1,'actions':[],'authorization_blockers':[],'status':'ANALYSIS_UNAVAILABLE'}),
+        'analysis/action_lifecycles.json':_serialized({'schema_version':1,'actions':[],'pre_action_outcomes':[],
+            'total_pre_action_outcome_count':0,'pre_action_outcomes_omitted':0,
+            'authorization_blockers':[],'status':'ANALYSIS_UNAVAILABLE'}),
         'analysis/evidence_gaps.json':_serialized({'schema_version':1,'gaps':[{'section':'observability','status':'EXPORT_FAILED'}]}),
         'analysis/historical_matches.json':_serialized({'schema_version':1,'matches':[],'note':'Advanced historical similarity analysis unavailable.'}),
         'analysis/recovery_history.json':_serialized({'schema_version':1,'attempts':[],'count':0,'note':'Advanced recovery analysis unavailable.'}),
@@ -501,16 +633,7 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'analysis/proven_facts.json':_serialized({'schema_version':1,'facts':[],'settled_action_count':0,'unresolved_actions':[],'note':'Advanced fact extraction unavailable.'}),
         'analysis/next_verification.json':_serialized({'schema_version':1,'recommended_next_test':'Rerun forensic analysis offline.','missing_evidence':['ADVANCED_FORENSIC_ANALYSIS']}),
         'analysis/snapshot_index.json':_serialized({'schema_version':1,'snapshots':[], 'note':'Advanced snapshot indexing unavailable.'}),
-        'analysis/gpt_summary.json':_serialized({'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
-            'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
-            'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
-            'cause_status':'UNDETERMINED','candidate_causes':[],
-            'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
-            'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
-            'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
-            'snapshot_names':[],'settled_action_count':0,'unresolved_actions':[],'recovery_attempt_count':0,
-            'historical_similarity_case_ids':[],'evidence_completeness':'PARTIAL','observer_errors':errors,
-            'authority_note':'Diagnostic conclusions are evidence indexes only and never grant gameplay authority.'}),
+        'analysis/gpt_summary.json':emergency_gpt_blob,
         'analysis/evidence_request.json':_serialized({'schema_version':1,'raw_network_evidence_required_for_protocol_reverse_engineering':False}),
         'metadata/flight_recorder.json':_serialized({'schema_version':1,**flight}),
         'metadata/artifact_integrity.json':_serialized({'schema_version':1,'verification':'see manifest.json'}),
@@ -521,9 +644,16 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
 
 def _write_zip(path:Path, artifacts:dict[str,bytes], manifest:dict) -> None:
     path.parent.mkdir(parents=True,exist_ok=True)
-    with ZipFile(path,'w',compression=ZIP_DEFLATED) as z:
-        for name,data in artifacts.items():z.writestr(name,data)
-        z.writestr('manifest.json',_serialized(manifest))
+    # Incident names are UUID-derived and therefore must be new. Refuse an
+    # attacker-controlled output link/directory instead of following it outside
+    # the intended diagnostic location. Exclusive creation also prevents a target
+    # symlink or stale collision from being silently overwritten.
+    if path.parent.is_symlink() or path.is_symlink():
+        raise RuntimeError('UNSAFE_INCIDENT_EXPORT_SYMLINK')
+    with path.open('xb') as out:
+        with ZipFile(out,'w',compression=ZIP_DEFLATED) as z:
+            for name,data in artifacts.items():z.writestr(name,data)
+            z.writestr('manifest.json',_serialized(manifest))
 
 
 def _manifest(observer,id_:str,artifacts:dict[str,bytes],sections:dict,*,primary_failed:bool,advanced_failed:bool)->dict:
@@ -564,7 +694,11 @@ def export_incident(observer,code:str,*,boundary:str,detail:str='',trace_spec:Op
         # ZIP construction/compression/path failures are observer failures, not
         # application authority.  RuntimeError/ValueError from the ZIP layer are
         # just as important to contain as OSError.
-        fallback=Path(gettempdir())/'ANKA_NEXT'/'incidents'/(id_+'.zip')
+        # Use a freshly created private temporary directory rather than a fixed
+        # shared path that can be pre-created/replaced by a symlink. This keeps a
+        # primary diagnostic-path failure from turning Observability into a
+        # runtime failure or writing outside the intended fallback location.
+        fallback=Path(mkdtemp(prefix='ANKA_NEXT-incident-'))/(id_+'.zip')
         # Rebuild normal artifacts so the evidence matrix truthfully marks the
         # primary export path as failed. If that advanced rebuild fails too, the
         # emergency envelope remains independent of the analyzer.
@@ -617,8 +751,16 @@ def verify_incident(path:Path)->dict:
             try:m=json.loads(z.read('manifest.json'))
             except (json.JSONDecodeError,UnicodeDecodeError,ValueError):add('MANIFEST_JSON_INVALID');return {'status':'FAIL','errors':errors}
             if not isinstance(m,dict):add('MANIFEST_SHAPE_INVALID');return {'status':'FAIL','errors':errors}
-            if m.get('schema_version') not in (1,2):add('SCHEMA_MISMATCH')
-            if m.get('schema_version')==2:
+            if has_unredacted_sensitive_data(m):add('UNREDACTED_SENSITIVE_DATA:manifest.json')
+            declared_schema=m.get('schema_version')
+            if declared_schema not in (1,2):add('SCHEMA_MISMATCH')
+            modern_markers={
+                'analysis/gpt_summary.json','analysis/workflow_lifecycle.json','analysis/turn_handoff.json',
+                'analysis/snapshot_index.json','metadata/flight_recorder.json',
+            }
+            modern_bundle=(declared_schema==2 or bool(modern_markers & set(names)))
+            if declared_schema==1 and modern_bundle:add('SCHEMA_DOWNGRADE_SUSPECTED')
+            if modern_bundle:
                 missing_required=sorted(REQUIRED_SCHEMA2_FILES-set(names))
                 for required_name in missing_required[:32]:add('MISSING_REQUIRED_ARTIFACT:'+required_name)
             declared=m.get('files')
@@ -635,6 +777,31 @@ def verify_incident(path:Path)->dict:
                 if (not isinstance(expected_hash,str) or len(expected_hash)!=64 or type(expected_bytes) is not int or expected_bytes<0):
                     add('MANIFEST_FILE_RECEIPT_INVALID:'+name[:120]);continue
                 if expected_hash!=sha256(data).hexdigest() or expected_bytes!=len(data):add('BAD_CHECKSUM:'+name[:120])
+                # A hostile bundle can update both a file and its checksum. The
+                # verifier therefore re-applies the privacy invariant to decoded
+                # artifacts instead of treating hashes as a secrecy guarantee.
+                try:
+                    if name.endswith('.json'):
+                        privacy_obj=json.loads(data)
+                        if has_unredacted_sensitive_data(privacy_obj):add('UNREDACTED_SENSITIVE_DATA:'+name[:120])
+                    elif name.endswith('.jsonl'):
+                        for privacy_line in data.decode('utf8').splitlines():
+                            if privacy_line and has_unredacted_sensitive_data(json.loads(privacy_line)):
+                                add('UNREDACTED_SENSITIVE_DATA:'+name[:120]);break
+                    elif name.endswith('.md'):
+                        if has_unredacted_sensitive_data(data.decode('utf8')):add('UNREDACTED_SENSITIVE_DATA:'+name[:120])
+                except (json.JSONDecodeError,UnicodeDecodeError,ValueError,TypeError):
+                    # Dedicated structural parsers below report malformed data.
+                    pass
+
+            if modern_bundle and 'GPT_READ_FIRST.md' in names and 'analysis/gpt_summary.json' in names:
+                try:
+                    read_first_text=z.read('GPT_READ_FIRST.md').decode('utf8')
+                    summary_hash=sha256(z.read('analysis/gpt_summary.json')).hexdigest()
+                    expected_marker='**Machine summary SHA-256:** '+summary_hash
+                    if expected_marker not in read_first_text:add('GPT_READ_FIRST_SUMMARY_HASH_MISMATCH')
+                except UnicodeDecodeError:
+                    add('GPT_READ_FIRST_UTF8_INVALID')
 
             matrix=None
             if 'evidence_matrix.json' in names:
@@ -644,7 +811,7 @@ def verify_incident(path:Path)->dict:
                     if not isinstance(matrix,dict) or not isinstance(matrix.get('sections'),dict):add('EVIDENCE_MATRIX_SHAPE_INVALID')
                     else:
                         sections=matrix['sections'];present=set(sections)
-                        required=set(CRITICAL_SECTIONS if m.get('schema_version')==2 else ('bootstrap','configuration','identity','capture','protocol','canonical','live_state','coordination','decision','execution','outcome'))
+                        required=set(CRITICAL_SECTIONS if modern_bundle else ('bootstrap','configuration','identity','capture','protocol','canonical','live_state','coordination','decision','execution','outcome'))
                         if not required.issubset(present):add('INCOMPLETE_EVIDENCE_MATRIX')
                         if any(not isinstance(k,str) or v not in EVIDENCE_STATUS for k,v in sections.items()):add('BAD_EVIDENCE_STATUS')
             if m.get('raw_protocol_included') is not False:add('RAW_PROTOCOL_DEFAULT_POLICY_VIOLATION')
@@ -654,7 +821,7 @@ def verify_incident(path:Path)->dict:
             # `timeline.jsonl` and `logs/relevant_timeline.jsonl` are deliberate
             # aliases for GPT/operator ergonomics; disagreement means the bundle
             # is self-contradictory even if both files are individually valid.
-            rows=[];priority_rows=[];error_rows=[];run_manifest=None
+            rows=[];priority_rows=[];error_rows=[];run_manifest=None;recorder_loss=False
             relevant_blob=z.read('logs/relevant_timeline.jsonl') if 'logs/relevant_timeline.jsonl' in names else b''
             if 'logs/relevant_timeline.jsonl' in names:
                 rows=_parse_jsonl(relevant_blob,add,'TIMELINE')
@@ -672,16 +839,22 @@ def verify_incident(path:Path)->dict:
                 except (json.JSONDecodeError,UnicodeDecodeError):run_manifest={};add('RUN_MANIFEST_JSON_INVALID')
                 if isinstance(run_manifest,dict):
                     run_id=run_manifest.get('run_id');invocation_id=run_manifest.get('invocation_id')
+                    if not isinstance(run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(run_id) is None:
+                        add('RUN_MANIFEST_RUN_ID_INVALID')
+                    if not isinstance(invocation_id,str) or DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(invocation_id) is None:
+                        add('RUN_MANIFEST_INVOCATION_ID_INVALID')
                     flight=run_manifest.get('flight_recorder',{})
                     if isinstance(flight,dict):
-                        loss=any(int(flight.get(k,0) or 0)>0 for k in ('recent_overwrites','priority_overwrites','pinned_context_omissions','sanitization_truncations','timeline_events_omitted_for_size','journal_dropped_events','journal_queue_drops','priority_journal_queue_drops','snapshot_export_omissions')) or not bool(flight.get('persistent_storage_available',True)) or bool(flight.get('source_tail_uncertain',False))
-                        if loss and run_manifest.get('evidence_completeness')=='PRESENT':add('LOSS_CLAIMED_COMPLETE')
+                        recorder_loss=any(int(flight.get(k,0) or 0)>0 for k in ('recent_overwrites','priority_overwrites','pinned_context_omissions','sanitization_truncations','timeline_events_omitted_for_size','journal_dropped_events','journal_queue_drops','priority_journal_queue_drops','snapshot_export_omissions')) or not bool(flight.get('persistent_storage_available',True)) or bool(flight.get('source_tail_uncertain',False))
+                        if recorder_loss and run_manifest.get('evidence_completeness')=='PRESENT':add('LOSS_CLAIMED_COMPLETE')
             for obj in rows:
                 try:event=DiagnosticEvent.from_dict(obj)
                 except (TypeError,ValueError):add('TIMELINE_EVENT_INVALID');continue
-                if not event.event_id.startswith('evt-'):add('TIMELINE_EVENT_ID_INVALID')
-                if not event.invocation_id.startswith('inv-'):add('TIMELINE_INVOCATION_ID_INVALID')
-                if event.run_id is None or not event.run_id.startswith('run-'):add('TIMELINE_RUN_ID_INVALID')
+                if DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None:add('TIMELINE_EVENT_ID_INVALID')
+                if event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None:
+                    add('TIMELINE_PARENT_EVENT_ID_INVALID')
+                if DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None:add('TIMELINE_INVOCATION_ID_INVALID')
+                if event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None:add('TIMELINE_RUN_ID_INVALID')
                 try:
                     stamp=datetime.fromisoformat(event.occurred_utc.replace('Z','+00:00'))
                     if stamp.tzinfo is None:raise ValueError('naive')
@@ -696,7 +869,35 @@ def verify_incident(path:Path)->dict:
                 seqs.add(seq_key)
                 if run_id is not None and event.run_id!=run_id:add('TIMELINE_RUN_ID_MISMATCH')
                 if invocation_id is not None and event.invocation_id!=invocation_id:add('TIMELINE_INVOCATION_ID_MISMATCH')
-            if m.get('run_id') is not None and run_id is not None and m.get('run_id')!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
+            manifest_run_id=m.get('run_id')
+            if manifest_run_id is None:
+                if modern_bundle:add('MANIFEST_RUN_ID_INVALID')
+            elif not isinstance(manifest_run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(manifest_run_id) is None:
+                add('MANIFEST_RUN_ID_INVALID')
+            if manifest_run_id is not None and run_id is not None and manifest_run_id!=run_id:add('MANIFEST_RUN_ID_MISMATCH')
+            if (modern_bundle and not bool(m.get('advanced_analysis_failed'))
+                    and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict)
+                    and isinstance(run_manifest,dict)):
+                derived_sections=evidence_matrix(
+                    rows,
+                    dropped=int(bool(recorder_loss)),
+                    observer_errors=run_manifest.get('observer_errors',[]) or (),
+                )
+                actual_sections=matrix['sections']
+                for section,expected_status in derived_sections.items():
+                    actual_status=actual_sections.get(section)
+                    # Export may conservatively mark these caller-context sections
+                    # PARTIAL when the incident boundary names the subsystem even
+                    # if no concrete producer row survived. Never permit PRESENT
+                    # without event evidence, but preserve that conservative mode.
+                    if (section in ('bootstrap','configuration','identity')
+                            and expected_status=='MISSING' and actual_status in ('MISSING','PARTIAL')):
+                        continue
+                    if section=='observability' and bool(m.get('primary_export_failed')):
+                        if actual_status!='EXPORT_FAILED':add('EVIDENCE_MATRIX_DERIVATION_MISMATCH')
+                        continue
+                    if actual_status!=expected_status:add('EVIDENCE_MATRIX_DERIVATION_MISMATCH')
+
             if isinstance(run_manifest,dict):
                 if run_manifest.get('physical_input_state')!=_aggregate_physical_input_state(rows):
                     add('RUN_MANIFEST_PHYSICAL_STATE_MISMATCH')
@@ -845,7 +1046,7 @@ def verify_incident(path:Path)->dict:
                     if isinstance(root_diag,dict):
                         analysis_legacy=dict(diag);analysis_legacy.pop('physical_input_state',None)
                         if root_diag!=analysis_legacy:add('DIAGNOSIS_ALIAS_MISMATCH')
-            graph={}
+            graph={};recomputed_trace_finding=None;graph_analysis_mode=None
             if 'analysis/boundary_graph.json' in names:
                 try:graph=json.loads(z.read('analysis/boundary_graph.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):graph={};add('BOUNDARY_GRAPH_JSON_INVALID')
@@ -858,6 +1059,37 @@ def verify_incident(path:Path)->dict:
                         ref=edge.get('event_id')
                         if ref is not None and (not isinstance(ref,str) or ref not in event_ids):
                             add('BOUNDARY_GRAPH_EVIDENCE_REF_MISSING')
+                    graph_analysis_mode=graph.get('analysis_mode')
+                    if modern_bundle and not bool(m.get('advanced_analysis_failed')):
+                        if graph_analysis_mode not in ('NONE','GENERIC_TRACE','PARTY_READY'):
+                            add('BOUNDARY_GRAPH_ANALYSIS_MODE_INVALID')
+                        if graph_analysis_mode=='GENERIC_TRACE':
+                            trace_meta=graph.get('trace_spec')
+                            if not isinstance(trace_meta,dict):
+                                add('BOUNDARY_GRAPH_TRACE_SPEC_MISSING')
+                            else:
+                                try:
+                                    raw_expectations=trace_meta.get('expectations')
+                                    raw_keys=trace_meta.get('correlation_keys',[])
+                                    if not isinstance(raw_expectations,list) or not isinstance(raw_keys,list):
+                                        raise ValueError('trace-shape')
+                                    expectations=tuple(BoundaryExpectation(
+                                        row['event_name'],row['boundary'],row['owner_system'],row['evidence_section'])
+                                        for row in raw_expectations if isinstance(row,dict)
+                                    )
+                                    if len(expectations)!=len(raw_expectations):raise ValueError('trace-expectation-shape')
+                                    spec=OperationTraceSpec(str(trace_meta.get('operation') or ''),expectations,tuple(raw_keys))
+                                    if graph.get('operation')!=spec.operation:raise ValueError('trace-operation-mismatch')
+                                    expected_trace=FirstDivergenceAnalyzer().analyze(
+                                        spec,rows,fallback_failure_code='EVIDENCE_GAP',
+                                        control_state=(run_manifest.get('control_state','UNKNOWN') if isinstance(run_manifest,dict) else 'UNKNOWN'),
+                                    )
+                                    recomputed_trace_finding=expected_trace.finding
+                                    if _semantic_artifact(graph.get('edges',[]))!=_semantic_artifact(list(expected_trace.boundary_graph)):
+                                        add('BOUNDARY_GRAPH_DERIVATION_MISMATCH')
+                                except (KeyError,TypeError,ValueError):
+                                    add('BOUNDARY_GRAPH_TRACE_SPEC_INVALID')
+            recomputed_party_finding=None;expected_party_for_graph=None
             if 'analysis/party_ready.json' in names:
                 try:party=json.loads(z.read('analysis/party_ready.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):party={};add('PARTY_READY_JSON_INVALID')
@@ -876,11 +1108,69 @@ def verify_incident(path:Path)->dict:
                         if len(ready_accounts)>=2:
                             ready_result=PartyReadyAnalyzer().analyze(rows,ready_accounts,
                                 control_state=(run_manifest.get('control_state','UNKNOWN') if isinstance(run_manifest,dict) else 'UNKNOWN'))
+                            recomputed_party_finding=ready_result.finding
                             expected_party={'schema_version':1,'status':'DIVERGED' if ready_result.finding else 'COMPLETE',
                                 'required_accounts':list(ready_accounts),'account_graphs':list(ready_result.account_graphs),
                                 'shared_graph':list(ready_result.shared_graph),'matched_event_ids':list(ready_result.matched_event_ids),
                                 'finding':ready_result.finding.to_dict() if ready_result.finding else None}
+                            expected_party_for_graph=[edge for account_graph in ready_result.account_graphs for edge in account_graph['edges']]+list(ready_result.shared_graph)
                         if _semantic_artifact(party)!=_semantic_artifact(expected_party):add('PARTY_READY_DERIVATION_MISMATCH')
+                        if graph_analysis_mode=='PARTY_READY':
+                            if expected_party_for_graph is None:
+                                add('BOUNDARY_GRAPH_PARTY_READY_UNAVAILABLE')
+                            elif _semantic_artifact(graph.get('edges',[]))!=_semantic_artifact(expected_party_for_graph):
+                                add('BOUNDARY_GRAPH_DERIVATION_MISMATCH')
+            if (modern_bundle and not bool(m.get('advanced_analysis_failed')) and isinstance(diag,dict)):
+                finding_source=diag.get('finding_source')
+                if finding_source not in ('NONE','GENERIC_TRACE','PARTY_READY'):
+                    add('DIAGNOSIS_FINDING_SOURCE_INVALID')
+                if finding_source in ('GENERIC_TRACE','PARTY_READY') and graph_analysis_mode!=finding_source:
+                    add('DIAGNOSIS_BOUNDARY_GRAPH_SOURCE_MISMATCH')
+                expected_finding=(recomputed_trace_finding if finding_source=='GENERIC_TRACE'
+                                  else recomputed_party_finding if finding_source=='PARTY_READY' else None)
+                if finding_source in ('GENERIC_TRACE','PARTY_READY'):
+                    if expected_finding is None:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                    else:
+                        expected_retained=expected_finding.confidence
+                        expected_confidence=_loss_adjusted_confidence(expected_retained,bool(recorder_loss))
+                        expected_causes=list(expected_finding.candidate_causes)
+                        expected_cause_status=('MULTIPLE_PLAUSIBLE' if len(expected_causes)>1 else
+                                               'SINGLE_SUPPORTED' if len(expected_causes)==1 else 'UNDETERMINED')
+                        expected_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
+                        checks=(
+                            ('first_divergent_boundary',expected_finding.first_divergent_boundary),
+                            ('suspected_owner',expected_finding.suspected_owner),
+                            ('retained_evidence_confidence',expected_retained),
+                            ('confidence',expected_confidence),
+                            ('supporting_evidence_ids',list(expected_finding.supporting_evidence_ids)),
+                            ('contradicting_evidence_ids',list(expected_finding.contradicting_evidence_ids)),
+                            ('missing_evidence',list(expected_finding.missing_evidence)),
+                            ('candidate_causes',expected_causes),
+                            ('cause_status',expected_cause_status),
+                            ('control_state',expected_finding.control_state),
+                            ('recommended_next_test',expected_finding.recommended_next_test),
+                            ('first_divergence_scope',expected_scope),('cause_scope',expected_scope),
+                            ('candidate_causes_may_be_incomplete',bool(recorder_loss)),
+                        )
+                        for field,expected_value in checks:
+                            actual=diag.get(field)
+                            if isinstance(actual,tuple):actual=list(actual)
+                            if actual!=expected_value:add('DIAGNOSIS_DERIVATION_MISMATCH:'+field)
+                        if (expected_finding.failure_code!='EVIDENCE_GAP'
+                                and diag.get('failure_code')!=expected_finding.failure_code):
+                            add('DIAGNOSIS_DERIVATION_MISMATCH:failure_code')
+                elif finding_source=='NONE':
+                    if 'first_divergent_boundary' in diag:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                    if graph_analysis_mode=='GENERIC_TRACE' and recomputed_trace_finding is not None:
+                        add('DIAGNOSIS_FINDING_SOURCE_MISMATCH')
+                if isinstance(run_manifest,dict):
+                    if diag.get('observer_dropped_events')!=run_manifest.get('observer_dropped_events'):
+                        add('DIAGNOSIS_DROPPED_EVENTS_MISMATCH')
+                    if diag.get('observer_errors')!=run_manifest.get('observer_errors'):
+                        add('DIAGNOSIS_OBSERVER_ERRORS_MISMATCH')
+
             if 'analysis/recovery_history.json' in names:
                 try:recovery=json.loads(z.read('analysis/recovery_history.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):recovery={};add('RECOVERY_HISTORY_JSON_INVALID')
@@ -916,6 +1206,8 @@ def verify_incident(path:Path)->dict:
                         if isinstance(row,dict) and isinstance(row.get('event_id'),str):refs.append(row['event_id'])
                     block=lifecycle.get('blocking_event')
                     if isinstance(block,dict) and isinstance(block.get('event_id'),str):refs.append(block['event_id'])
+                    rejected=lifecycle.get('rejected_signal')
+                    if isinstance(rejected,dict) and isinstance(rejected.get('event_id'),str):refs.append(rejected['event_id'])
                     if any(not isinstance(ref,str) or ref not in event_ids for ref in refs):add('WORKFLOW_LIFECYCLE_EVIDENCE_REF_MISSING')
                     if not bool(m.get('advanced_analysis_failed')):
                         try:
@@ -936,6 +1228,7 @@ def verify_incident(path:Path)->dict:
                             if handoff!=turn_handoff_report(rows):add('TURN_HANDOFF_DERIVATION_MISMATCH')
                         except Exception:add('TURN_HANDOFF_RECOMPUTE_FAILED')
 
+            gpt={}
             if 'analysis/gpt_summary.json' in names:
                 try:gpt=json.loads(z.read('analysis/gpt_summary.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):gpt={};add('GPT_SUMMARY_JSON_INVALID')
@@ -945,8 +1238,25 @@ def verify_incident(path:Path)->dict:
                     if not isinstance(refs,list) or any(not isinstance(x,str) or x not in event_ids for x in refs):
                         add('GPT_SUMMARY_EVIDENCE_REF_MISSING')
                     status=gpt.get('finding_status')
+                    gpt_confidence=gpt.get('confidence')
+                    retained_gpt_confidence=gpt.get('retained_evidence_confidence',gpt_confidence)
+                    allowed_confidence=('HIGH','MEDIUM','LOW','UNDETERMINED')
+                    if gpt_confidence not in allowed_confidence:add('GPT_SUMMARY_CONFIDENCE_INVALID')
+                    if retained_gpt_confidence not in allowed_confidence:add('GPT_SUMMARY_RETAINED_CONFIDENCE_INVALID')
                     if status not in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE','NOT_ESTABLISHED','ADVANCED_ANALYSIS_UNAVAILABLE'):
                         add('GPT_SUMMARY_FINDING_STATUS_INVALID')
+                    if modern_bundle:
+                        try:
+                            summary_sha=sha256(z.read('analysis/gpt_summary.json')).hexdigest()
+                            if status=='ADVANCED_ANALYSIS_UNAVAILABLE':
+                                expected_read_first=_render_emergency_read_first(gpt,diag,summary_sha)
+                            else:
+                                expected_read_first=_render_read_first(gpt,diag,facts,lifecycle,handoff,run_manifest or {},summary_sha,
+                                    primary_export_failed=bool(m.get('primary_export_failed')))
+                            if z.read('GPT_READ_FIRST.md')!=expected_read_first:
+                                add('GPT_READ_FIRST_DERIVATION_MISMATCH')
+                        except Exception:
+                            add('GPT_READ_FIRST_RECOMPUTE_FAILED')
                     if status=='NOT_ESTABLISHED' and gpt.get('first_divergence')!='NOT_ESTABLISHED':
                         add('GPT_SUMMARY_FALSE_DIVERGENCE')
                     if status=='DIVERGENCE_CANDIDATE' and gpt.get('absence_is_conclusive') is not False:
@@ -978,6 +1288,22 @@ def verify_incident(path:Path)->dict:
                                 expected_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
                                 if gpt.get('first_divergence_scope')!=expected_scope:
                                     add('GPT_SUMMARY_DIVERGENCE_SCOPE_MISMATCH')
+                                expected_cause_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
+                                if gpt.get('cause_scope')!=expected_cause_scope:
+                                    add('GPT_SUMMARY_CAUSE_SCOPE_MISMATCH')
+                                if gpt.get('candidate_causes_may_be_incomplete') is not bool(recorder_loss):
+                                    add('GPT_SUMMARY_CAUSE_COMPLETENESS_MISMATCH')
+                                if status=='DIVERGENCE_CANDIDATE' and recorder_loss:
+                                    expected_confidence=_loss_adjusted_confidence(retained_gpt_confidence,True)
+                                    if gpt_confidence!=expected_confidence:
+                                        add('GPT_SUMMARY_LOSS_CONFIDENCE_MISMATCH')
+                                    if gpt_confidence=='HIGH':
+                                        add('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED')
+                    if status!='ADVANCED_ANALYSIS_UNAVAILABLE' and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict):
+                        expected_gap_summary=[f'{key}={value}' for key,value in sorted(matrix['sections'].items())
+                                              if value not in ('PRESENT','NOT_APPLICABLE')]
+                        if gpt.get('diagnostic_coverage_gaps')!=expected_gap_summary:
+                            add('GPT_SUMMARY_COVERAGE_GAPS_MISMATCH')
                     if status!='ADVANCED_ANALYSIS_UNAVAILABLE':
                         cause_status=gpt.get('cause_status')
                         causes=gpt.get('candidate_causes')
@@ -992,11 +1318,19 @@ def verify_incident(path:Path)->dict:
                         elif cause_status=='MULTIPLE_PLAUSIBLE' and len(causes)<2:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
                     if isinstance(diag,dict) and status in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE'):
+                        if gpt.get('finding_source')!=diag.get('finding_source'):
+                            add('GPT_SUMMARY_FINDING_SOURCE_MISMATCH')
                         if gpt.get('first_divergence')!=diag.get('first_divergent_boundary') or gpt.get('suspected_owner')!=diag.get('suspected_owner'):
                             add('GPT_SUMMARY_FINDING_MISMATCH')
+                        if gpt.get('confidence')!=diag.get('confidence'):
+                            add('GPT_SUMMARY_CONFIDENCE_MISMATCH')
+                        if gpt.get('retained_evidence_confidence')!=diag.get('retained_evidence_confidence'):
+                            add('GPT_SUMMARY_RETAINED_CONFIDENCE_MISMATCH')
                         diag_causes=diag.get('candidate_causes',[]) or []
                         if gpt.get('candidate_causes')!=list(diag_causes) or gpt.get('cause_status')!=diag.get('cause_status'):
                             add('GPT_SUMMARY_CAUSE_MISMATCH')
+                        if gpt.get('cause_scope')!=diag.get('cause_scope') or gpt.get('candidate_causes_may_be_incomplete')!=diag.get('candidate_causes_may_be_incomplete'):
+                            add('GPT_SUMMARY_CAUSE_SCOPE_DIAGNOSIS_MISMATCH')
             if 'analysis/historical_matches.json' in names:
                 try:history=json.loads(z.read('analysis/historical_matches.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):history={};add('HISTORICAL_MATCHES_JSON_INVALID')
@@ -1014,8 +1348,9 @@ def verify_incident(path:Path)->dict:
                     add('ACTION_LIFECYCLES_SHAPE_INVALID')
                 else:
                     actions=lifecycles.get('actions',[])
+                    pre_action=lifecycles.get('pre_action_outcomes',[])
                     blockers=lifecycles.get('authorization_blockers',[])
-                    if not isinstance(actions,list) or not isinstance(blockers,list):
+                    if not isinstance(actions,list) or not isinstance(pre_action,list) or not isinstance(blockers,list):
                         add('ACTION_LIFECYCLES_SHAPE_INVALID')
                     else:
                         if not bool(m.get('advanced_analysis_failed')):
@@ -1036,6 +1371,9 @@ def verify_incident(path:Path)->dict:
                             decision_ref=row.get('decision_event_id')
                             if decision_ref is not None and (not isinstance(decision_ref,str) or decision_ref not in event_ids):
                                 add('ACTION_LIFECYCLE_DECISION_REF_MISSING')
+                            not_sent_ref=row.get('not_sent_event_id')
+                            if not_sent_ref is not None and (not isinstance(not_sent_ref,str) or not_sent_ref not in event_ids):
+                                add('ACTION_LIFECYCLE_NOT_SENT_REF_MISSING')
                             trace_id=row.get('trace_id')
                             if trace_id is not None and (not isinstance(trace_id,str) or not trace_id.startswith('trace-')):
                                 add('ACTION_LIFECYCLE_TRACE_ID_INVALID')
@@ -1051,12 +1389,37 @@ def verify_incident(path:Path)->dict:
                                         add('ACTION_LIFECYCLE_CONTEXT_REF_MISSING')
                             if row.get('nearby_semantic_context_is_causal_proof') is not False:
                                 add('ACTION_LIFECYCLE_CONTEXT_CAUSALITY_INVALID')
+                        for pre_row in pre_action:
+                            if not isinstance(pre_row,dict):
+                                add('PRE_ACTION_OUTCOME_INVALID');continue
+                            refs=pre_row.get('event_ids',[])
+                            if not isinstance(refs,list) or any(not isinstance(ref,str) or ref not in event_ids for ref in refs):
+                                add('PRE_ACTION_OUTCOME_EVIDENCE_REF_MISSING')
+                            decision_ref=pre_row.get('decision_event_id')
+                            if not isinstance(decision_ref,str) or decision_ref not in event_ids:
+                                add('PRE_ACTION_DECISION_REF_MISSING')
+                            downstream_ref=pre_row.get('downstream_event_id')
+                            if downstream_ref is not None and (not isinstance(downstream_ref,str) or downstream_ref not in event_ids):
+                                add('PRE_ACTION_DOWNSTREAM_REF_MISSING')
                         for blocker in blockers:
                             if not isinstance(blocker,dict):
                                 add('ACTION_AUTHORIZATION_BLOCKER_INVALID');continue
                             ref=blocker.get('event_id')
                             if not isinstance(ref,str) or ref not in event_ids:
                                 add('ACTION_AUTHORIZATION_BLOCKER_REF_MISSING')
+                        if isinstance(gpt,dict) and gpt:
+                            lifecycle_pre=lifecycles.get('pre_action_outcomes',[])
+                            expected_latest_pre=(lifecycle_pre[-1] if isinstance(lifecycle_pre,list) and lifecycle_pre else None)
+                            if gpt.get('latest_included_pre_action_outcome')!=expected_latest_pre:
+                                add('GPT_SUMMARY_PRE_ACTION_MISMATCH')
+                            lifecycle_actions=lifecycles.get('actions',[])
+                            expected_latest_action=(lifecycle_actions[-1] if isinstance(lifecycle_actions,list) and lifecycle_actions else None)
+                            if gpt.get('latest_included_action_lifecycle')!=expected_latest_action:
+                                add('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH')
+                            if gpt.get('pre_action_outcomes_omitted')!=lifecycles.get('pre_action_outcomes_omitted',0):
+                                add('GPT_SUMMARY_PRE_ACTION_OMISSION_MISMATCH')
+                            if gpt.get('action_lifecycles_omitted')!=lifecycles.get('actions_omitted',0):
+                                add('GPT_SUMMARY_ACTION_OMISSION_MISMATCH')
                         if not bool(m.get('advanced_analysis_failed')) and isinstance(facts,dict) and isinstance(graph,dict):
                             try:
                                 expected_facts=proven_fact_report(rows,graph.get('edges',[]),lifecycles)

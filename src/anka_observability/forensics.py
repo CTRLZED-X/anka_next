@@ -236,11 +236,19 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
                            and e.payload.get('plan_id')==plan_id),None)
         admissions=[e for e in items if e.event_name=='execution.admitted']
         starts=[e for e in items if e.event_name=='execution.send_started']
+        pre_send_terminal_events=[e for e in items if e.event_name in (
+            'execution.rejected','execution.ledger_prepare_rejected','execution.input_lease_rejected',
+            'execution.final_guard_rejected','execution.exception_before_send')]
+        if not starts:
+            pre_send_terminal_events.extend(e for e in items if e.event_name=='execution.safety_fault'
+                                            and e.boundary=='execution.input_arbitration'
+                                            and e.physical_input_state!='MAY_HAVE_SENT')
         send_results=[e for e in items if e.event_name in ('execution.input_sent','execution.input_not_sent','execution.input_may_have_sent','execution.exception_after_send_started')]
         settlements=[e for e in items if e.event_name=='execution.outcome_settled']
         terminal_unresolveds=[e for e in items if e.event_name=='execution.outcome_terminal_unresolved']
         admitted=admissions[0] if admissions else None
         started=starts[0] if starts else None
+        pre_send_terminal=pre_send_terminal_events[-1] if pre_send_terminal_events else None
         sent=send_results[0] if send_results else None
         settled=settlements[-1] if settlements else None
         dispatch=next((e for e in reversed(items) if e.event_name=='workflow.action_dispatch_result'),None)
@@ -261,6 +269,8 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             if len({e.event_name for e in send_results})>1:hard_conflicts.append('CONFLICTING_SEND_RESULTS')
         if len(settlements)>1:lifecycle_anomalies.append('MULTIPLE_SETTLEMENTS')
         if len(terminal_unresolveds)>1:lifecycle_anomalies.append('MULTIPLE_TERMINAL_UNRESOLVED')
+        if len(pre_send_terminal_events)>1:lifecycle_anomalies.append('MULTIPLE_PRE_SEND_TERMINALS')
+        if pre_send_terminal_events and (starts or send_results):hard_conflicts.append('PRE_SEND_TERMINAL_WITH_SEND')
         # Missing earlier lifecycle edges are not themselves contradictions in a
         # bounded incident: the recorder may have omitted them. Only positive,
         # mutually incompatible included evidence is allowed to create a hard
@@ -277,6 +287,7 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
         elif may_have_sent is not None:state='MAY_HAVE_SENT_UNRESOLVED'
         elif sent is not None and sent.event_name=='execution.input_not_sent':state='NOT_SENT'
         elif sent is not None:state='SENT_AWAITING_OUTCOME'
+        elif pre_send_terminal is not None:state='NOT_SENT'
         elif started is not None:state='SEND_STARTED_NO_FINAL_SEND_RECORD'
         elif admitted is not None:state='ADMITTED_NOT_SENT'
         else:state='REQUESTED_OR_PARTIAL'
@@ -300,6 +311,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             nearby.append({'event_id':e.event_id,'event_name':e.event_name,'owner_system':e.owner_system,
                            'boundary':e.boundary,'producer_seq':e.producer_seq,'evidence_class':e.evidence_class})
             if len(nearby)>=20:break
+        pre_send_stage={
+            'execution.rejected':'ADMISSION','execution.ledger_prepare_rejected':'DURABLE_PREPARE',
+            'execution.input_lease_rejected':'INPUT_ARBITRATION','execution.final_guard_rejected':'FINAL_GUARD',
+            'execution.exception_before_send':'EXCEPTION_BEFORE_SEND','execution.safety_fault':'INPUT_ARBITRATION',
+        }.get(pre_send_terminal.event_name) if pre_send_terminal is not None else None
         rows.append({
             'action_id':action_id,'account_id':account,'fight_epoch':fight_epoch,'turn_epoch':turn_epoch,
             'trace_id':trace_id,'plan_id':plan_id,'decision_event_id':decision.event_id if decision else None,
@@ -310,6 +326,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'settlement_status':settled.payload.get('status') if settled else None,
             'settlement_reason':settled.payload.get('reason') if settled else None,
             'settlement_evidence_id':settled.payload.get('evidence_id') if settled else None,
+            'not_sent_stage':pre_send_stage,
+            'not_sent_event_id':pre_send_terminal.event_id if pre_send_terminal is not None else None,
+            'not_sent_event_name':pre_send_terminal.event_name if pre_send_terminal is not None else None,
+            'not_sent_boundary':pre_send_terminal.boundary if pre_send_terminal is not None else None,
+            'not_sent_failure_code':pre_send_terminal.failure_code if pre_send_terminal is not None else None,
             'dispatch_outcome_status':dispatch.payload.get('outcome_status') if dispatch else None,
             'dispatch_outcome_reason':dispatch.payload.get('outcome_reason') if dispatch else None,
             'event_ids':[e.event_id for e in items],
@@ -318,6 +339,87 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'nearby_semantic_context':nearby,'semantic_context_window_end':context_window_end,
             'nearby_semantic_context_is_causal_proof':False,
         })
+    # Pre-action causal index: Decision and authorization can terminate before
+    # Workflow creates an action_id.  Without this lane, a "nothing happened"
+    # incident can look like a missing action even when the planner deliberately
+    # waited or Coordination denied the plan before Execution admission.
+    pre_action_all=[]
+    decision_results=[e for e in ordered if e.event_name=='decision.plan_result']
+    for index,decision_event in enumerate(decision_results):
+        disposition=decision_event.payload.get('disposition')
+        disposition=disposition if isinstance(disposition,str) else 'UNKNOWN'
+        plan_id=decision_event.payload.get('plan_id')
+        plan_id=plan_id if isinstance(plan_id,str) else None
+
+        # WorkflowTurnController handles one planner result synchronously. Bound
+        # downstream matching to the next Decision result for the same account so
+        # a later attempt cannot be borrowed to make this attempt look healthy.
+        next_same_account_seq=None
+        for later_decision in decision_results[index+1:]:
+            if later_decision.account_id==decision_event.account_id:
+                next_same_account_seq=later_decision.producer_seq
+                break
+
+        def same_attempt_window(event:DiagnosticEvent)->bool:
+            if event.producer_seq<=decision_event.producer_seq:return False
+            if next_same_account_seq is not None and event.producer_seq>=next_same_account_seq:return False
+            if decision_event.account_id is not None and event.account_id not in (None,decision_event.account_id):return False
+            if decision_event.fight_epoch is not None and event.fight_epoch not in (None,decision_event.fight_epoch):return False
+            if decision_event.turn_epoch is not None and event.turn_epoch not in (None,decision_event.turn_epoch):return False
+            return True
+
+        downstream=None
+        state=('DECISION_'+disposition if disposition in ('WAIT','NO_ACTION','FAULT') else 'DECISION_RESULT_UNKNOWN')
+        if disposition=='PLAN':
+            candidates=[]
+            if plan_id is not None:
+                for event in ordered:
+                    if not same_attempt_window(event):continue
+                    if event.event_name=='workflow.action_authorization_blocked' and event.payload.get('plan_id')==plan_id:
+                        candidates.append(event)
+                    elif event.event_name=='workflow.action_requested' and event.payload.get('plan_id')==plan_id:
+                        candidates.append(event)
+            if candidates:
+                downstream=min(candidates,key=lambda e:(e.producer_seq,e.monotonic_ns,e.event_id))
+                state=('AUTHORIZATION_BLOCKED' if downstream.event_name=='workflow.action_authorization_blocked'
+                       else 'ACTION_REQUESTED')
+            else:
+                state='PLAN_WITHOUT_WORKFLOW_OUTCOME'
+
+        reason=(downstream.payload.get('reason') if downstream is not None else decision_event.payload.get('reason'))
+        if reason is None and downstream is not None:reason=downstream.failure_code
+        downstream_payload=(downstream.payload if downstream is not None else {})
+        event_ids=[decision_event.event_id]
+        if downstream is not None:event_ids.append(downstream.event_id)
+        required_evidence=decision_event.payload.get('required_evidence',[])
+        if not isinstance(required_evidence,list):required_evidence=[]
+        pre_action_all.append({
+            'state':state,'account_id':decision_event.account_id,'fight_epoch':decision_event.fight_epoch,
+            'turn_epoch':decision_event.turn_epoch,'frame_id':decision_event.payload.get('frame_id'),
+            'plan_id':plan_id,'disposition':disposition,'reason':reason,
+            'failure_code':(downstream.failure_code if downstream is not None else decision_event.failure_code),
+            'scope':downstream_payload.get('scope'),'kind':downstream_payload.get('kind',decision_event.payload.get('kind')),
+            'action_id':downstream.action_id if downstream is not None else None,
+            'trace_id':downstream.trace_id if downstream is not None else None,
+            'decision_event_id':decision_event.event_id,
+            'downstream_event_id':downstream.event_id if downstream is not None else None,
+            'required_evidence':list(required_evidence),'event_ids':event_ids,
+            'producer_seq':decision_event.producer_seq,
+        })
+
+    # Failure/no-progress rows outrank routine ACTION_REQUESTED rows. Then fill
+    # remaining capacity with the newest ordinary attempts. Omissions are explicit.
+    selected_pre=[]
+    selected_pre_ids=set()
+    for row in reversed([x for x in pre_action_all if x['state']!='ACTION_REQUESTED']):
+        if len(selected_pre)>=limit:break
+        selected_pre.append(row);selected_pre_ids.add(row['decision_event_id'])
+    for row in reversed(pre_action_all):
+        if len(selected_pre)>=limit:break
+        if row['decision_event_id'] in selected_pre_ids:continue
+        selected_pre.append(row);selected_pre_ids.add(row['decision_event_id'])
+    pre_action_outcomes=sorted(selected_pre,key=lambda row:(row['producer_seq'],row['decision_event_id']))
+
     blockers=[]
     for e in ordered:
         if e.event_name=='workflow.action_authorization_blocked':
@@ -330,9 +432,11 @@ def action_lifecycle_report(events: Iterable[DiagnosticEvent | dict], *, limit: 
             'priority_action_count':priority_action_count,'priority_actions_included':included_priority_count,
             'priority_actions_omitted':max(0,priority_action_count-included_priority_count),
             'selection_policy':'RISK_FIRST_THEN_RECENT',
+            'pre_action_outcomes':pre_action_outcomes,'total_pre_action_outcome_count':len(pre_action_all),
+            'pre_action_outcomes_omitted':max(0,len(pre_action_all)-len(pre_action_outcomes)),
             'authorization_blockers':blockers[-32:],'total_authorization_blocker_count':len(blockers),
             'authorization_blockers_omitted':max(0,len(blockers)-min(len(blockers),32)),
-            'note':'Nearby Protocol/Canonical/Live-State rows are timing/scope context only, never automatic action-outcome proof. High-risk/unresolved actions are retained before recent normal actions; bounded omissions are counted explicitly.'}
+            'note':'Decision and authorization outcomes are indexed even when no action_id exists. Nearby Protocol/Canonical/Live-State rows are timing/scope context only, never automatic action-outcome proof. High-risk/unresolved actions are retained before recent normal actions; bounded omissions are counted explicitly.'}
 
 
 _MAJOR_WORKFLOW_TRANSITIONS=(
@@ -372,14 +476,16 @@ def workflow_lifecycle_report(events:Iterable[DiagnosticEvent|dict])->dict:
     cycle=transitions[starts[-1]:] if starts else transitions
     latest_fight_epoch=max((row['fight_epoch'] for row in cycle if isinstance(row['fight_epoch'],int) and row['fight_epoch']>0),default=None)
     current=cycle[-1]['to_phase']
-    blocking=None
+    blocking=None;rejected_signal=None
     cycle_start_seq=cycle[0]['producer_seq']
     for e in ordered:
         if e.producer_seq<cycle_start_seq:continue
-        if e.event_name in ('workflow.blocked','workflow.signal_rejected'):
+        if e.event_name=='workflow.signal_rejected':
+            rejected_signal={'event_id':e.event_id,'event_name':e.event_name,'failure_code':e.failure_code,
+                             'boundary':e.boundary,'producer_seq':e.producer_seq}
+        elif e.event_name=='workflow.blocked':
             blocking={'event_id':e.event_id,'event_name':e.event_name,'failure_code':e.failure_code,
                       'boundary':e.boundary,'producer_seq':e.producer_seq}
-            break
 
     # Validate the major path in order while allowing action-fence self
     # transitions to exist outside this filtered list.
@@ -412,54 +518,161 @@ def workflow_lifecycle_report(events:Iterable[DiagnosticEvent|dict])->dict:
         next_expected={'from_phase':'WORLD_REENTRY','to_phase':'WORLD|COMPLETED|STOPPED'}
 
     if contradiction is not None:status='CONTRADICTORY'
-    elif blocking is not None:status='BLOCKED'
+    elif current=='BLOCKED' or blocking is not None:status='BLOCKED'
     elif reentry is not None:status='COMPLETE_CYCLE'
     else:status='IN_PROGRESS'
     return {'schema_version':1,'status':status,'current_phase':current,'latest_fight_epoch':latest_fight_epoch,
             'transitions':cycle,'next_expected_transition':next_expected,'blocking_event':blocking,
-            'contradiction':contradiction,'matched_event_ids':matched,
-            'note':'Progress index over authoritative Workflow transition diagnostics. IN_PROGRESS alone is not a failure claim.'}
+            'rejected_signal':rejected_signal,'contradiction':contradiction,'matched_event_ids':matched,
+            'note':'Rejected Workflow signals are surfaced as non-terminal diagnostic context. BLOCKED requires an authoritative blocked phase/event; IN_PROGRESS alone is not a failure claim.'}
 
 
 def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
-    """Reconstruct the newest END_TURN attempt and next-owner proof."""
+    """Reconstruct the newest END_TURN attempt and its post-send owner proof.
+
+    A Coordination owner observation is causal handoff evidence only when it is
+    strictly later than authoritative ``execution.input_sent`` for the selected
+    END_TURN action. Owner observations before that boundary remain diagnostic
+    context but can never make the handoff successful.
+    """
     ordered=sorted((_as_event(e) for e in events),key=lambda e:(e.producer_seq,e.monotonic_ns,e.event_id))
     requests=[e for e in ordered if e.event_name=='workflow.action_requested' and e.payload.get('kind')=='END_TURN'
               and isinstance(e.action_id,str)]
     if not requests:
         return {'schema_version':1,'status':'NOT_APPLICABLE','action_id':None,'event_ids':[],
                 'next_owner_event_id':None,'next_owner_account_id':None,
+                'noncausal_owner_event_ids':[],
                 'note':'No END_TURN action request was included in the bounded incident timeline.'}
-    req=requests[-1];items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
+
+    # Diagnose the newest END_TURN attempt only. Older attempts cannot lend their
+    # send/settlement evidence to a later request.
+    req=requests[-1]
+    competing_attempts=[e for e in requests[:-1]
+                        if e.action_id!=req.action_id and e.fight_epoch==req.fight_epoch
+                        and e.turn_epoch==req.turn_epoch]
+    items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
     admitted=next((e for e in items if e.event_name=='execution.admitted'),None)
-    sent=next((e for e in items if e.event_name in ('execution.input_sent','execution.input_may_have_sent','execution.input_not_sent')),None)
-    settled=next((e for e in items if e.event_name=='execution.outcome_settled'),None)
-    unresolved=next((e for e in items if e.event_name in ('execution.outcome_terminal_unresolved','execution.outcome_missing')),None)
-    next_owner=None
+    starts=[e for e in items if e.event_name=='execution.send_started']
+    started=starts[0] if starts else None
+    send_results=[e for e in items if e.event_name in (
+        'execution.input_sent','execution.input_may_have_sent','execution.input_not_sent',
+        'execution.exception_after_send_started')]
+    authoritative_sends=[e for e in send_results if e.event_name=='execution.input_sent']
+    uncertain_sends=[e for e in send_results if e.event_name in (
+        'execution.input_may_have_sent','execution.exception_after_send_started')]
+    not_sent_results=[e for e in send_results if e.event_name=='execution.input_not_sent']
+    sent=authoritative_sends[0] if authoritative_sends else None
+    send_result=send_results[0] if send_results else None
+    settlements=[e for e in items if e.event_name=='execution.outcome_settled']
+    unresolveds=[e for e in items if e.event_name in (
+        'execution.outcome_terminal_unresolved','execution.outcome_missing')]
+    pre_send_terminals=[e for e in items if e.event_name in (
+        'execution.rejected','execution.ledger_prepare_rejected','execution.input_lease_rejected',
+        'execution.final_guard_rejected','execution.exception_before_send')]
+    settled=settlements[-1] if settlements else None
+    unresolved=unresolveds[-1] if unresolveds else None
+
+    hard_conflicts=[]
+    if len({e.event_name for e in send_results})>1:hard_conflicts.append('CONFLICTING_SEND_RESULTS')
+    if len(authoritative_sends)>1:hard_conflicts.append('MULTIPLE_INPUT_SENT')
+    if settlements and unresolveds:hard_conflicts.append('CONFLICTING_TERMINAL_OUTCOMES')
+    attempts={e.attempt_id for e in starts+send_results+settlements+unresolveds if e.attempt_id is not None}
+    if len(attempts)>1:hard_conflicts.append('ATTEMPT_ID_CONFLICT')
+    if pre_send_terminals and (starts or send_results):hard_conflicts.append('PRE_SEND_TERMINAL_WITH_SEND')
+    # Missing bounded edges are not automatically contradictory. Impossible
+    # ordering among edges that are actually included is.
+    if admitted is not None and started is not None and started.producer_seq<=admitted.producer_seq:
+        hard_conflicts.append('SEND_STARTED_BEFORE_ADMISSION')
+    if admitted is not None and sent is not None and sent.producer_seq<=admitted.producer_seq:
+        hard_conflicts.append('INPUT_SENT_BEFORE_ADMISSION')
+    if started is not None and sent is not None and sent.producer_seq<=started.producer_seq:
+        hard_conflicts.append('INPUT_SENT_BEFORE_SEND_STARTED')
+    if sent is not None and settled is not None and settled.producer_seq<=sent.producer_seq:
+        hard_conflicts.append('SETTLEMENT_BEFORE_INPUT_SENT')
+    hard_conflicts=sorted(dict.fromkeys(hard_conflicts))
+
+    # Owner proof is intentionally anchored to authoritative physical send, never
+    # to request/admission/send-start. Wrong-fight and non-newer-turn rows are not
+    # eligible. The first eligible post-send owner proof wins even when it proves
+    # the same owner again; later different-owner rows cannot be borrowed.
+    owner_scope_candidates=[]
     for e in ordered:
         if e.producer_seq<=req.producer_seq or e.event_name!='coordination.turn_owner_proved':continue
+        if e.evidence_class!='AUTHORITY_COMMITTED':continue
         if req.fight_epoch is not None and e.fight_epoch!=req.fight_epoch:continue
         if req.turn_epoch is not None and (e.turn_epoch is None or e.turn_epoch<=req.turn_epoch):continue
-        if req.account_id is not None and e.account_id==req.account_id:continue
-        next_owner=e;break
-    refs=[e.event_id for e in (req,admitted,sent,settled,unresolved,next_owner) if e is not None]
-    if unresolved is not None:status='OUTCOME_UNRESOLVED'
-    elif admitted is None:status='REQUEST_NOT_ADMITTED'
-    elif sent is None:status='ADMITTED_NO_SEND_EVIDENCE'
-    elif sent.event_name=='execution.input_not_sent':status='NOT_SENT'
-    elif settled is None and next_owner is None:status='SENT_AWAITING_SETTLEMENT_AND_NEXT_OWNER'
-    elif settled is None:status='NEXT_OWNER_PROVED_AWAITING_SETTLEMENT'
-    elif next_owner is None:status='SETTLED_NEXT_OWNER_MISSING'
-    else:status='COMPLETE'
-    return {'schema_version':1,'status':status,'action_id':req.action_id,'account_id':req.account_id,
-            'fight_epoch':req.fight_epoch,'turn_epoch':req.turn_epoch,'event_ids':refs,
-            'send_event_id':sent.event_id if sent else None,'settlement_event_id':settled.event_id if settled else None,
-            'next_owner_event_id':next_owner.event_id if next_owner else None,
-            'next_owner_account_id':next_owner.account_id if next_owner else None,
-            'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
-            'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
-                                       key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
-            'note':'Next-owner proof is correlated to the same fight and a strictly newer turn epoch; this is diagnostic evidence only.'}
+        owner_scope_candidates.append(e)
+
+    next_owner=None
+    post_send_owner=None
+    if sent is not None:
+        post_send_owner=next((e for e in owner_scope_candidates if e.producer_seq>sent.producer_seq),None)
+    owner_attribution_ambiguous=bool(competing_attempts and post_send_owner is not None)
+    if not owner_attribution_ambiguous:
+        next_owner=post_send_owner
+    noncausal_owner=[e for e in owner_scope_candidates
+                     if sent is None or e.producer_seq<=sent.producer_seq]
+    if owner_attribution_ambiguous and post_send_owner is not None:
+        noncausal_owner.append(post_send_owner)
+
+    refs=[]
+    for e in (req,admitted,started,send_result,sent,settled,unresolved,next_owner):
+        if e is not None and e.event_id not in refs:refs.append(e.event_id)
+    for e in noncausal_owner[:16]:
+        if e.event_id not in refs:refs.append(e.event_id)
+
+    same_owner_reproved=(next_owner is not None and req.account_id is not None
+                         and next_owner.account_id==req.account_id)
+    if hard_conflicts:
+        status='CONTRADICTORY_ACTION_EVIDENCE'
+    elif unresolved is not None:
+        status='OUTCOME_UNRESOLVED'
+    elif sent is None and not_sent_results:
+        status='NOT_SENT'
+    elif sent is None and uncertain_sends:
+        status='MAY_HAVE_SENT_UNRESOLVED'
+    elif sent is None and started is not None:
+        status='SEND_STARTED_NO_AUTHORITATIVE_SEND'
+    elif sent is None and admitted is not None:
+        status='ADMITTED_NO_SEND_EVIDENCE'
+    elif sent is None:
+        status='REQUEST_NOT_ADMITTED'
+    elif owner_attribution_ambiguous:
+        status='OWNER_PROOF_AMBIGUOUS_ACROSS_ATTEMPTS'
+    elif admitted is None:
+        status='SENT_ADMISSION_EVIDENCE_MISSING'
+    elif settled is None and next_owner is None:
+        status='SENT_AWAITING_SETTLEMENT_AND_NEXT_OWNER'
+    elif same_owner_reproved and settled is None:
+        status='SAME_OWNER_REPROVED_AWAITING_SETTLEMENT'
+    elif same_owner_reproved:
+        status='SETTLED_SAME_OWNER_REPROVED'
+    elif settled is None:
+        status='NEXT_OWNER_PROVED_AWAITING_SETTLEMENT'
+    elif next_owner is None:
+        status='SETTLED_NEXT_OWNER_MISSING'
+    else:
+        status='COMPLETE'
+
+    return {
+        'schema_version':1,'status':status,'action_id':req.action_id,'account_id':req.account_id,
+        'fight_epoch':req.fight_epoch,'turn_epoch':req.turn_epoch,'event_ids':refs,
+        'admission_event_id':admitted.event_id if admitted else None,
+        'send_started_event_id':started.event_id if started else None,
+        'send_result_event_id':send_result.event_id if send_result else None,
+        'send_event_id':sent.event_id if sent else None,
+        'settlement_event_id':settled.event_id if settled else None,
+        'next_owner_event_id':next_owner.event_id if next_owner else None,
+        'next_owner_account_id':next_owner.account_id if next_owner else None,
+        'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
+        'noncausal_owner_event_ids':[e.event_id for e in noncausal_owner[:16]],
+        'owner_attribution_ambiguous':owner_attribution_ambiguous,
+        'competing_action_ids':[e.action_id for e in competing_attempts[-8:]],
+        'hard_conflicts':hard_conflicts,
+        'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
+                                   key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
+        'note':'Only the first authoritative same-fight/newer-turn owner proof strictly after execution.input_sent is causal handoff evidence. Pre-send owner evidence is context only; same-owner reproof is explicit; later owners cannot be borrowed; same-fight/same-turn competing END_TURN attempts make action attribution fail closed.'
+    }
 
 READY_TRACE = OperationTraceSpec('READY', (
     # Requested intent alone is not proof that any input was sent.
@@ -580,7 +793,18 @@ class PartyReadyAnalyzer:
                         missing='ready.requested.action_id' if action_id is None else 'ready.requested.fight_epoch'
                         if finding is None:finding=self._finding(missing,boundary,owner,account_id=account,events=ordered,cursor=idx,control_state=control_state)
                         break
-                if event_name=='protocol.ready_observed':batch_span=e.payload.get('batch_span_id')
+                if event_name=='protocol.ready_observed':
+                    candidate_batch=e.payload.get('batch_span_id')
+                    if not isinstance(candidate_batch,str) or not candidate_batch:
+                        matched.append(e.event_id);last_seq=max(last_seq,e.producer_seq);cursor=idx+1
+                        edges.append({'account_id':account,'fight_epoch':target_fight_epoch,'event_name':event_name,
+                                      'boundary':boundary,'owner_system':owner,'status':'INVALID_CORRELATION',
+                                      'event_id':e.event_id,'action_id':action_id,'batch_span_id':None})
+                        if finding is None:
+                            finding=self._finding('protocol.ready_observed.batch_span_id',boundary,owner,
+                                                  account_id=account,events=ordered,cursor=idx,control_state=control_state)
+                        break
+                    batch_span=candidate_batch
                 matched.append(e.event_id);last_seq=max(last_seq,e.producer_seq);cursor=idx+1
                 edges.append({'account_id':account,'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,'owner_system':owner,'status':'OBSERVED','event_id':e.event_id,'action_id':action_id,'batch_span_id':batch_span})
             graphs.append({'account_id':account,'fight_epoch':target_fight_epoch,'edges':edges})
@@ -592,14 +816,15 @@ class PartyReadyAnalyzer:
             while cursor<len(ordered) and ordered[cursor].producer_seq<=last_seq:cursor+=1
             owner_account=None
             for event_name,boundary,owner in self._SHARED_STEPS:
-                idx=None
+                idx=None;invalid_correlation=None
                 for i in range(cursor,len(ordered)):
                     e=ordered[i]
                     if e.event_name!=event_name or e.boundary!=boundary or e.owner_system!=owner:continue
                     if target_fight_epoch is not None and e.fight_epoch!=target_fight_epoch:continue
                     if event_name=='coordination.ready_barrier_satisfied':
                         required=e.payload.get('required_accounts')
-                        if not isinstance(required,(list,tuple)) or set(required)!=set(accounts):continue
+                        if not isinstance(required,(list,tuple)) or set(required)!=set(accounts):
+                            idx=i;invalid_correlation='required_accounts';break
                     if event_name=='decision.frame_created' and owner_account is not None and e.account_id!=owner_account:continue
                     idx=i;break
                 if idx is None:
@@ -607,7 +832,24 @@ class PartyReadyAnalyzer:
                     finding=self._finding(event_name,boundary,owner,account_id=None,events=ordered,cursor=cursor,control_state=control_state)
                     break
                 e=ordered[idx]
-                if event_name=='coordination.turn_owner_proved':owner_account=e.account_id
+                if invalid_correlation is not None:
+                    matched.append(e.event_id);cursor=idx+1
+                    shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,
+                                   'owner_system':owner,'status':'INVALID_CORRELATION','event_id':e.event_id,
+                                   'invalid_field':invalid_correlation})
+                    finding=self._finding(event_name+'.'+invalid_correlation,boundary,owner,
+                                          account_id=None,events=ordered,cursor=idx,control_state=control_state)
+                    break
+                if event_name=='coordination.turn_owner_proved':
+                    owner_account=e.account_id
+                    if owner_account not in accounts:
+                        matched.append(e.event_id);cursor=idx+1
+                        shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,
+                                       'owner_system':owner,'status':'INVALID_CORRELATION','event_id':e.event_id,
+                                       'owner_account_id':owner_account,'invalid_field':'owner_account_id'})
+                        finding=self._finding(event_name+'.owner_account_id',boundary,owner,
+                                              account_id=None,events=ordered,cursor=idx,control_state=control_state)
+                        break
                 matched.append(e.event_id);cursor=idx+1
                 shared.append({'fight_epoch':target_fight_epoch,'event_name':event_name,'boundary':boundary,'owner_system':owner,'status':'OBSERVED','event_id':e.event_id,'owner_account_id':owner_account})
         return PartyReadyAnalysis(finding,tuple(graphs),tuple(shared),tuple(dict.fromkeys(matched)))
