@@ -214,6 +214,17 @@ _CAUSAL_SKELETON_EVENTS=frozenset({
     'decision.plan_result',
 })
 
+def _causal_risk_row(row:dict)->bool:
+    """Return skeleton evidence whose safety/risk value outranks routine history."""
+    if row.get('severity') in ('ERROR','CRITICAL','SAFETY'):return True
+    if row.get('failure_code'):return True
+    if row.get('physical_input_state')=='MAY_HAVE_SENT':return True
+    return row.get('event_name') in (
+        'execution.input_may_have_sent','execution.exception_after_send_started',
+        'execution.outcome_terminal_unresolved','execution.outcome_missing',
+    )
+
+
 def _causal_skeleton_row(row:dict)->bool:
     """Return evidence that must outrank routine priority chatter at export.
 
@@ -274,7 +285,20 @@ def _bounded_timeline(observer, *, incident_code:str|None=None, incident_boundar
     # therefore lost its final End-Turn/fight-end/world-reentry edges and the
     # forensic report falsely looked IN_PROGRESS.
     skeleton=[e for e in priority_only if _causal_skeleton_row(e)]
-    skeleton_kept,skeleton_blob,skeleton_omitted=_fit_lines(skeleton,priority_limit)
+    # Preserve explicit safety/risk evidence first. The remaining ordinary causal
+    # skeleton prefers the newest rows so thousands of healthy historical actions
+    # cannot crowd out the Decision/Workflow/Execution lead-up to the current
+    # incident. Exact trigger and pinned anomaly context are already reserved.
+    risk_skeleton=[e for e in skeleton if _causal_risk_row(e)]
+    risk_kept,risk_blob,risk_omitted=_fit_lines(risk_skeleton,priority_limit)
+    risk_ids={e['event_id'] for e in risk_kept}
+    remaining_skeleton=max(0,priority_limit-len(risk_blob))
+    ordinary_skeleton=[e for e in skeleton if e.get('event_id') not in risk_ids and not _causal_risk_row(e)]
+    ordinary_skeleton_kept,ordinary_skeleton_blob,ordinary_skeleton_omitted=_fit_lines(
+        ordinary_skeleton,remaining_skeleton,prefer_latest=True)
+    skeleton_kept=sorted(risk_kept+ordinary_skeleton_kept,key=_event_key)
+    skeleton_blob=risk_blob+ordinary_skeleton_blob
+    skeleton_omitted=risk_omitted+ordinary_skeleton_omitted
     skeleton_ids={e['event_id'] for e in skeleton_kept}
     remaining_priority=max(0,priority_limit-len(skeleton_blob))
     routine_priority=[e for e in priority_only if e.get('event_id') not in skeleton_ids and not _causal_skeleton_row(e)]
