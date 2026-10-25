@@ -228,6 +228,15 @@ class WorkflowRecoveryCorrelation:
             raise ValueError('INVALID_WORKFLOW_RECOVERY_CORRELATION')
 
 
+def next_workflow_recovery_generation(snapshot: WorkflowSnapshot) -> int:
+    """Return the next monotonic recovery namespace without mutating state."""
+    if not isinstance(snapshot,WorkflowSnapshot):
+        raise ValueError('WORKFLOW_SNAPSHOT_REQUIRED')
+    if snapshot.recovery_generation is None:
+        raise ValueError('WORKFLOW_RECOVERY_GENERATION_UNPROVEN')
+    return snapshot.recovery_generation+1
+
+
 def correlate_recovery_outcome(snapshot: WorkflowSnapshot, signal: WorkflowSignal) -> WorkflowRecoveryCorrelation:
     """Correlate a recovery result without granting phase-transition authority.
 
