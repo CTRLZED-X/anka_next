@@ -16,11 +16,17 @@ from anka_app.workflow_persistence import (
     prepare_recovery_outcome_signal,
 )
 from anka_contracts.workflow import (
+    RECOVERY_RESUME_PHASES,
+    EffectiveMissionPlan,
+    MissionConfigSpec,
+    RoutePlan,
     WorkflowSignal,
     WorkflowSnapshot,
     correlate_recovery_outcome,
+    initial_workflow_progress_token,
     next_workflow_recovery_generation,
 )
+from anka_workflow.engine import MissionWorkflow
 
 
 def snap(
@@ -100,6 +106,7 @@ def pristine_created():
         started_fight_epochs=(),
         processed_signal_ids=(),
         progress_generation=0,
+        progress_token=initial_workflow_progress_token('run-issue32'),
         resume_phase=None,
         expected_next_evidence=('START',),
         terminal_reason=None,
@@ -114,6 +121,17 @@ def legacy_payload(snapshot):
     for name in ('recovery_generation','active_recovery_generation','last_processed_tick'):
         payload.pop(name)
     return payload
+
+
+def constructor_created():
+    cfg=MissionConfigSpec(
+        'issue32-route',1,1,1,1,False,True,'c'*64
+    )
+    route=RoutePlan('issue32-route',0,0,('R',),True,'d'*64)
+    plan=EffectiveMissionPlan(
+        'missionplan-issue32-constructor',cfg,route,5,2
+    )
+    return MissionWorkflow('run-issue32-constructor',plan).snapshot()
 
 
 class TestRecoveryIdentityPhaseA(unittest.TestCase):
@@ -190,6 +208,42 @@ class TestRecoveryIdentityPhaseA(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'EXTRANEOUS'):
             WorkflowSignal('wfsig-bad-kind','HEARTBEAT',1,recovery_generation=1)
 
+    def test_recovering_contract_rejects_missing_unknown_self_and_terminal_targets(self):
+        invalid=(None,'BOGUS','RECOVERING','COMPLETED','STOPPED','BLOCKED','CREATED')
+        for target in invalid:
+            with self.subTest(target=target):
+                with self.assertRaisesRegex(ValueError,'INVALID_WORKFLOW_RECOVERY_RESUME_PHASE'):
+                    replace(recovering(),resume_phase=target)
+
+    def test_all_engine_recovery_targets_remain_valid(self):
+        self.assertEqual(
+            set(RECOVERY_RESUME_PHASES),
+            {
+                'PREFLIGHT','WORLD','ENCOUNTER_SELECTED','FIGHT_ENTRY','PARTY_JOIN',
+                'PLACEMENT','READY','FIGHT_ACTIVE','FIGHT_END_RECONCILIATION','WORLD_REENTRY',
+            },
+        )
+        for target in RECOVERY_RESUME_PHASES:
+            with self.subTest(target=target):
+                current=replace(recovering(),resume_phase=target)
+                loaded=load_workflow_snapshot(dump_workflow_snapshot(current))
+                self.assertEqual(loaded.classification,'SAFE')
+                self.assertTrue(loaded.resume_authorized)
+                self.assertEqual(admit_workflow_resume(current,100).status,'ALLOWED')
+
+    def test_current_schema_persistence_rejects_invalid_recovery_targets(self):
+        payload=dump_workflow_snapshot(recovering())
+        for target in (None,'BOGUS','RECOVERING','COMPLETED','STOPPED','BLOCKED','CREATED'):
+            with self.subTest(target=target):
+                malformed={
+                    'schema_version':payload['schema_version'],
+                    'snapshot':dict(payload['snapshot']),
+                }
+                malformed['snapshot']['resume_phase']=target
+                loaded=load_workflow_snapshot(malformed)
+                self.assertEqual(loaded.classification,'INCOMPATIBLE')
+                self.assertFalse(loaded.resume_authorized)
+
     def test_persistence_roundtrip_preserves_active_identity(self):
         original=recovering()
         payload=dump_workflow_snapshot(original)
@@ -223,6 +277,29 @@ class TestRecoveryIdentityPhaseA(unittest.TestCase):
         self.assertEqual(loaded.classification,'SAFE')
         self.assertTrue(loaded.resume_authorized)
         self.assertEqual((loaded.snapshot.recovery_generation,loaded.snapshot.last_processed_tick),(0,0))
+
+    def test_pristine_progress_token_matches_exact_engine_constructor(self):
+        created=constructor_created()
+        self.assertEqual(
+            created.progress_token,
+            initial_workflow_progress_token(created.run_id),
+        )
+        loaded=load_workflow_snapshot(legacy_payload(created))
+        self.assertEqual(loaded.classification,'SAFE')
+        self.assertTrue(loaded.resume_authorized)
+        self.assertEqual(loaded.snapshot.progress_token,created.progress_token)
+
+    def test_valid_hex_but_wrong_pristine_progress_token_is_not_authoritative(self):
+        created=pristine_created()
+        wrong='f'*64 if created.progress_token!='f'*64 else 'e'*64
+        loaded=load_workflow_snapshot(
+            legacy_payload(replace(created,progress_token=wrong))
+        )
+        self.assertEqual(loaded.classification,'AMBIGUOUS')
+        self.assertFalse(loaded.resume_authorized)
+        self.assertIn('LEGACY_CREATED_HISTORY_NOT_PRISTINE',loaded.reasons)
+        self.assertIsNone(loaded.snapshot.recovery_generation)
+        self.assertIsNone(loaded.snapshot.last_processed_tick)
 
     def _assert_created_history_is_non_authoritative(self, snapshot):
         loaded=load_workflow_snapshot(legacy_payload(snapshot))
