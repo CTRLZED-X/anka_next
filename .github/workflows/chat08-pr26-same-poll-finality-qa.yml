@@ -1,4 +1,5 @@
 name: chat08-pr26-same-poll-finality-qa
+# retrigger exact-head QA
 
 on:
   push:
