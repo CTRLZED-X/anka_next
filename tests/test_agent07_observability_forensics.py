@@ -666,6 +666,110 @@ class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
 
 
 
+class TestAgent07EvidenceMatrixDerivation(unittest.TestCase):
+    @staticmethod
+    def _rewrite_json_files(path: Path, mutations: dict[str, object]) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        manifest = json.loads(files['manifest.json'])
+        for name, mutate in mutations.items():
+            payload = json.loads(files[name])
+            mutate(payload)
+            blob = (
+                json.dumps(payload, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+            ).encode('utf8')
+            files[name] = blob
+            manifest['files'][name] = {
+                'sha256': sha256(blob).hexdigest(),
+                'bytes': len(blob),
+            }
+        files['manifest.json'] = (
+            json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n'
+        ).encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_matrix_cannot_claim_protocol_evidence_absent_from_timeline(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-matrix-derive',
+                invocation_id='inv-agent07-matrix-derive',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'MATRIX_DERIVATION_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+
+                def promote_protocol(matrix):
+                    matrix['sections']['protocol'] = 'PRESENT'
+
+                def remove_protocol_gap(gaps):
+                    gaps['gaps'] = [
+                        row for row in gaps['gaps']
+                        if row.get('section') != 'protocol'
+                    ]
+
+                def promote_protocol_summary(summary):
+                    summary['status'] = 'PRESENT'
+
+                self._rewrite_json_files(
+                    path,
+                    {
+                        'evidence_matrix.json': promote_protocol,
+                        'analysis/evidence_gaps.json': remove_protocol_gap,
+                        'metadata/capture_protocol_summary.json': promote_protocol_summary,
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('EVIDENCE_MATRIX_DERIVATION_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_gpt_coverage_gaps_must_match_verified_matrix(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-gpt-gaps',
+                invocation_id='inv-agent07-gpt-gaps',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                path = obs.export_incident(
+                    'GPT_COVERAGE_GAPS_TEST',
+                    boundary='workflow.watchdog',
+                )
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                TestAgent07EvidenceLossCertainty._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/gpt_summary.json': lambda payload: payload.__setitem__(
+                            'diagnostic_coverage_gaps', []
+                        ),
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_COVERAGE_GAPS_MISMATCH', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
 class TestAgent07ReadFirstDerivationIntegrity(unittest.TestCase):
     @staticmethod
     def _rewrite_read_first(path: Path, mutate) -> None:
