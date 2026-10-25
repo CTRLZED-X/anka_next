@@ -979,6 +979,7 @@ def verify_incident(path:Path)->dict:
                             if handoff!=turn_handoff_report(rows):add('TURN_HANDOFF_DERIVATION_MISMATCH')
                         except Exception:add('TURN_HANDOFF_RECOMPUTE_FAILED')
 
+            gpt={}
             if 'analysis/gpt_summary.json' in names:
                 try:gpt=json.loads(z.read('analysis/gpt_summary.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):gpt={};add('GPT_SUMMARY_JSON_INVALID')
@@ -1045,15 +1046,6 @@ def verify_incident(path:Path)->dict:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
                         elif cause_status=='MULTIPLE_PLAUSIBLE' and len(causes)<2:
                             add('GPT_SUMMARY_CAUSE_STATUS_MISMATCH')
-                    if isinstance(lifecycles,dict):
-                        lifecycle_pre=lifecycles.get('pre_action_outcomes',[])
-                        expected_latest_pre=(lifecycle_pre[-1] if isinstance(lifecycle_pre,list) and lifecycle_pre else None)
-                        if gpt.get('latest_pre_action_outcome')!=expected_latest_pre:
-                            add('GPT_SUMMARY_PRE_ACTION_MISMATCH')
-                        lifecycle_actions=lifecycles.get('actions',[])
-                        expected_latest_action=(lifecycle_actions[-1] if isinstance(lifecycle_actions,list) and lifecycle_actions else None)
-                        if gpt.get('latest_action_lifecycle')!=expected_latest_action:
-                            add('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH')
                     if isinstance(diag,dict) and status in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE'):
                         if gpt.get('first_divergence')!=diag.get('first_divergent_boundary') or gpt.get('suspected_owner')!=diag.get('suspected_owner'):
                             add('GPT_SUMMARY_FINDING_MISMATCH')
@@ -1140,6 +1132,15 @@ def verify_incident(path:Path)->dict:
                             ref=blocker.get('event_id')
                             if not isinstance(ref,str) or ref not in event_ids:
                                 add('ACTION_AUTHORIZATION_BLOCKER_REF_MISSING')
+                        if isinstance(gpt,dict) and gpt:
+                            lifecycle_pre=lifecycles.get('pre_action_outcomes',[])
+                            expected_latest_pre=(lifecycle_pre[-1] if isinstance(lifecycle_pre,list) and lifecycle_pre else None)
+                            if gpt.get('latest_pre_action_outcome')!=expected_latest_pre:
+                                add('GPT_SUMMARY_PRE_ACTION_MISMATCH')
+                            lifecycle_actions=lifecycles.get('actions',[])
+                            expected_latest_action=(lifecycle_actions[-1] if isinstance(lifecycle_actions,list) and lifecycle_actions else None)
+                            if gpt.get('latest_action_lifecycle')!=expected_latest_action:
+                                add('GPT_SUMMARY_ACTION_LIFECYCLE_MISMATCH')
                         if not bool(m.get('advanced_analysis_failed')) and isinstance(facts,dict) and isinstance(graph,dict):
                             try:
                                 expected_facts=proven_fact_report(rows,graph.get('edges',[]),lifecycles)
