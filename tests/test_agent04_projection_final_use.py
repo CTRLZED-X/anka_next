@@ -133,6 +133,7 @@ class Agent04ProjectionFinalUseTests(unittest.TestCase):
             calibration=calibration(), bridge=bridge(), loadout=loadout(w),
             observed_monotonic_ns=NOW, expected_map_id=777,
         )
+        self.assertEqual(ctx.prerequisites_status, 'BLOCKED')
         self.assertIn('BINDING_EVIDENCE_SOURCE_UNTRUSTED', ctx.invalidators)
 
     def test_context_turns_malformed_bridge_generation_into_incomplete_proof(self):
