@@ -14,6 +14,8 @@ from anka_contracts.bridge import (BridgeEvidenceReader, BridgeIdentityReport,
 
 MAX_REPLY_BYTES = 2_000_000
 MAX_MAP_CELLS = 560
+EXPECTED_BRIDGE_VERSION = '2.2.77'
+EXPECTED_BRIDGE_ADAPTER = 'dofus_authoritative_cell_map'
 _ALLOWED_ROUTES = frozenset({'/health', '/coordinates'})
 
 
@@ -118,6 +120,10 @@ class ReadOnlyBridgeInspector:
                 raise ValueError('WINDOW_NOT_USABLE')
             if health.get('source') != 'unity_bridge' or not _bool(health, 'available'):
                 raise ValueError('BRIDGE_HEALTH_UNTRUSTED')
+            if health.get('bridgeVersion') != EXPECTED_BRIDGE_VERSION:
+                raise ValueError('BRIDGE_VERSION_UNEXPECTED')
+            if health.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
+                raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
             m = health.get('loadedMapId')
             mg = health.get('mapGeneration')
             cg = health.get('coordinateGeneration')
@@ -214,6 +220,10 @@ class ReadOnlyBridgeInspector:
         if (h.get('status') != 'MAP_COORDINATES_READY' or h.get('source') != 'unity_bridge'
                 or not _bool(h,'available') or not _bool(h,'sourceVerified')):
             raise ValueError('BRIDGE_SOURCE_UNVERIFIED')
+        if h.get('bridgeVersion') != EXPECTED_BRIDGE_VERSION:
+            raise ValueError('BRIDGE_VERSION_UNEXPECTED')
+        if h.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
+            raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
         # The Unity bridge may have different client/window metrics after a UI
         # resize. Never map old coordinates onto a new window.
         if _int(h,'sourceClientWidth',minimum=1)!=w.client_width or _int(h,'sourceClientHeight',minimum=1)!=w.client_height:
