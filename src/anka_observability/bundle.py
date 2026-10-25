@@ -19,7 +19,7 @@ from anka_observability.forensics import (
     historical_similarity_report, recovery_history_report, proven_fact_report,
     workflow_lifecycle_report, turn_handoff_report,
 )
-from anka_observability.redaction import sanitize,sanitize_export,has_diagnostic_truncation
+from anka_observability.redaction import sanitize,sanitize_export,has_diagnostic_truncation,has_unredacted_sensitive_data
 from anka_observability.api import is_priority_event
 
 BUNDLE_SCHEMA=2
@@ -68,6 +68,17 @@ def _semantic_artifact(value:object)->object:
     if isinstance(value,list):return [_semantic_artifact(v) for v in value]
     if isinstance(value,tuple):return [_semantic_artifact(v) for v in value]
     return value
+
+
+def _loss_adjusted_confidence(confidence:str, evidence_loss:bool)->str:
+    """Downgrade causal certainty when recorder evidence is known incomplete.
+
+    Analyzer confidence describes the retained slice. A bundle that knows rows
+    were overwritten, dropped, truncated or lost must not present that same level
+    as confidence in the true first divergence across the whole run.
+    """
+    if not evidence_loss:return confidence
+    return {'HIGH':'MEDIUM','MEDIUM':'LOW','LOW':'LOW','UNDETERMINED':'UNDETERMINED'}.get(confidence,'UNDETERMINED')
 
 
 def _aggregate_physical_input_state(events) -> str:
@@ -312,6 +323,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
                 boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
 
     finding_scope='INCLUDED_EVIDENCE_ONLY' if loss else 'COMPLETE_RECORDER_EVIDENCE'
+    retained_confidence=(finding.confidence if finding is not None else 'UNDETERMINED')
+    confidence=_loss_adjusted_confidence(retained_confidence,bool(loss))
     if finding is None:
         diagnosis=_legacy_diagnosis(code,boundary,detail,observer,events)
         diagnosis.update({'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope})
@@ -320,10 +333,12 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     else:
         cause_status=('MULTIPLE_PLAUSIBLE' if len(finding.candidate_causes)>1 else
                       'SINGLE_SUPPORTED' if len(finding.candidate_causes)==1 else 'UNDETERMINED')
-        diagnosis={'schema_version':2,**finding.to_dict(),'cause_status':cause_status,'explanation':sanitize(detail),
+        diagnosis={'schema_version':2,**finding.to_dict(),'confidence':confidence,
+                   'retained_evidence_confidence':retained_confidence,
+                   'cause_status':cause_status,'explanation':sanitize(detail),
                    'observer_dropped_events':observer.dropped,'observer_errors':list(observer.errors[-10:]),
                    'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope}
-        first_boundary=finding.first_divergent_boundary;confidence=finding.confidence
+        first_boundary=finding.first_divergent_boundary
         missing=list(finding.missing_evidence);next_test=finding.recommended_next_test
 
     suspected_owner=(finding.suspected_owner if finding is not None else 'NOT_ESTABLISHED')
@@ -364,6 +379,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'absence_is_conclusive':not bool(loss),'source_tail_uncertain':bool(flight.get('source_tail_uncertain',False)),
         'observed_export_boundary':sanitize(boundary),
         'suspected_owner':sanitize(suspected_owner),'confidence':confidence,
+        'retained_evidence_confidence':retained_confidence,
         'cause_status':cause_status,'candidate_causes':candidate_causes,
         'supporting_evidence_ids':support_refs,'control_state':sanitize(control_state),
         'physical_input_state':physical_input_state,'expected_missing_evidence':missing,
@@ -635,6 +651,22 @@ def verify_incident(path:Path)->dict:
                 if (not isinstance(expected_hash,str) or len(expected_hash)!=64 or type(expected_bytes) is not int or expected_bytes<0):
                     add('MANIFEST_FILE_RECEIPT_INVALID:'+name[:120]);continue
                 if expected_hash!=sha256(data).hexdigest() or expected_bytes!=len(data):add('BAD_CHECKSUM:'+name[:120])
+                # A hostile bundle can update both a file and its checksum. The
+                # verifier therefore re-applies the privacy invariant to decoded
+                # artifacts instead of treating hashes as a secrecy guarantee.
+                try:
+                    if name.endswith('.json'):
+                        privacy_obj=json.loads(data)
+                        if has_unredacted_sensitive_data(privacy_obj):add('UNREDACTED_SENSITIVE_DATA:'+name[:120])
+                    elif name.endswith('.jsonl'):
+                        for privacy_line in data.decode('utf8').splitlines():
+                            if privacy_line and has_unredacted_sensitive_data(json.loads(privacy_line)):
+                                add('UNREDACTED_SENSITIVE_DATA:'+name[:120]);break
+                    elif name.endswith('.md'):
+                        if has_unredacted_sensitive_data(data.decode('utf8')):add('UNREDACTED_SENSITIVE_DATA:'+name[:120])
+                except (json.JSONDecodeError,UnicodeDecodeError,ValueError,TypeError):
+                    # Dedicated structural parsers below report malformed data.
+                    pass
 
             matrix=None
             if 'evidence_matrix.json' in names:
@@ -654,7 +686,7 @@ def verify_incident(path:Path)->dict:
             # `timeline.jsonl` and `logs/relevant_timeline.jsonl` are deliberate
             # aliases for GPT/operator ergonomics; disagreement means the bundle
             # is self-contradictory even if both files are individually valid.
-            rows=[];priority_rows=[];error_rows=[];run_manifest=None
+            rows=[];priority_rows=[];error_rows=[];run_manifest=None;recorder_loss=False
             relevant_blob=z.read('logs/relevant_timeline.jsonl') if 'logs/relevant_timeline.jsonl' in names else b''
             if 'logs/relevant_timeline.jsonl' in names:
                 rows=_parse_jsonl(relevant_blob,add,'TIMELINE')
@@ -674,8 +706,8 @@ def verify_incident(path:Path)->dict:
                     run_id=run_manifest.get('run_id');invocation_id=run_manifest.get('invocation_id')
                     flight=run_manifest.get('flight_recorder',{})
                     if isinstance(flight,dict):
-                        loss=any(int(flight.get(k,0) or 0)>0 for k in ('recent_overwrites','priority_overwrites','pinned_context_omissions','sanitization_truncations','timeline_events_omitted_for_size','journal_dropped_events','journal_queue_drops','priority_journal_queue_drops','snapshot_export_omissions')) or not bool(flight.get('persistent_storage_available',True)) or bool(flight.get('source_tail_uncertain',False))
-                        if loss and run_manifest.get('evidence_completeness')=='PRESENT':add('LOSS_CLAIMED_COMPLETE')
+                        recorder_loss=any(int(flight.get(k,0) or 0)>0 for k in ('recent_overwrites','priority_overwrites','pinned_context_omissions','sanitization_truncations','timeline_events_omitted_for_size','journal_dropped_events','journal_queue_drops','priority_journal_queue_drops','snapshot_export_omissions')) or not bool(flight.get('persistent_storage_available',True)) or bool(flight.get('source_tail_uncertain',False))
+                        if recorder_loss and run_manifest.get('evidence_completeness')=='PRESENT':add('LOSS_CLAIMED_COMPLETE')
             for obj in rows:
                 try:event=DiagnosticEvent.from_dict(obj)
                 except (TypeError,ValueError):add('TIMELINE_EVENT_INVALID');continue
@@ -945,6 +977,11 @@ def verify_incident(path:Path)->dict:
                     if not isinstance(refs,list) or any(not isinstance(x,str) or x not in event_ids for x in refs):
                         add('GPT_SUMMARY_EVIDENCE_REF_MISSING')
                     status=gpt.get('finding_status')
+                    gpt_confidence=gpt.get('confidence')
+                    retained_gpt_confidence=gpt.get('retained_evidence_confidence',gpt_confidence)
+                    allowed_confidence=('HIGH','MEDIUM','LOW','UNDETERMINED')
+                    if gpt_confidence not in allowed_confidence:add('GPT_SUMMARY_CONFIDENCE_INVALID')
+                    if retained_gpt_confidence not in allowed_confidence:add('GPT_SUMMARY_RETAINED_CONFIDENCE_INVALID')
                     if status not in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE','NOT_ESTABLISHED','ADVANCED_ANALYSIS_UNAVAILABLE'):
                         add('GPT_SUMMARY_FINDING_STATUS_INVALID')
                     if status=='NOT_ESTABLISHED' and gpt.get('first_divergence')!='NOT_ESTABLISHED':
@@ -978,6 +1015,12 @@ def verify_incident(path:Path)->dict:
                                 expected_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
                                 if gpt.get('first_divergence_scope')!=expected_scope:
                                     add('GPT_SUMMARY_DIVERGENCE_SCOPE_MISMATCH')
+                                if status=='DIVERGENCE_CANDIDATE' and recorder_loss:
+                                    expected_confidence=_loss_adjusted_confidence(retained_gpt_confidence,True)
+                                    if gpt_confidence!=expected_confidence:
+                                        add('GPT_SUMMARY_LOSS_CONFIDENCE_MISMATCH')
+                                    if gpt_confidence=='HIGH':
+                                        add('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED')
                     if status!='ADVANCED_ANALYSIS_UNAVAILABLE':
                         cause_status=gpt.get('cause_status')
                         causes=gpt.get('candidate_causes')
@@ -994,6 +1037,10 @@ def verify_incident(path:Path)->dict:
                     if isinstance(diag,dict) and status in ('DIVERGENCE_IDENTIFIED','DIVERGENCE_CANDIDATE'):
                         if gpt.get('first_divergence')!=diag.get('first_divergent_boundary') or gpt.get('suspected_owner')!=diag.get('suspected_owner'):
                             add('GPT_SUMMARY_FINDING_MISMATCH')
+                        if gpt.get('confidence')!=diag.get('confidence'):
+                            add('GPT_SUMMARY_CONFIDENCE_MISMATCH')
+                        if gpt.get('retained_evidence_confidence')!=diag.get('retained_evidence_confidence'):
+                            add('GPT_SUMMARY_RETAINED_CONFIDENCE_MISMATCH')
                         diag_causes=diag.get('candidate_causes',[]) or []
                         if gpt.get('candidate_causes')!=list(diag_causes) or gpt.get('cause_status')!=diag.get('cause_status'):
                             add('GPT_SUMMARY_CAUSE_MISMATCH')
