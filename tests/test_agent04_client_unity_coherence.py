@@ -62,6 +62,16 @@ class SequenceReader:
         return dict(self.payloads.pop(0))
 
 
+class OwnerSequence:
+    def __init__(self, *owners: int | None):
+        self.owners = list(owners)
+
+    def __call__(self, port: int) -> int | None:
+        if not self.owners:
+            raise AssertionError('unexpected extra listener-owner query')
+        return self.owners.pop(0)
+
+
 class Agent04ClientUnityCoherenceTests(unittest.TestCase):
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
@@ -118,6 +128,36 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         )
         self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
         self.assertEqual(report['projection_ready_matches'], 0)
+
+    def test_listener_owner_pid_must_match_health_pid(self):
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(health()),
+            listener_owner_resolver=lambda _port: 9999,
+        )
+        self.assertEqual(report['status'], 'NOT_DETECTED')
+        self.assertEqual(report['listener_owner_rejections'], 1)
+        self.assertEqual(report['projection_ready_matches'], 0)
+
+    def test_listener_owner_must_remain_stable_across_health_read(self):
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(health()),
+            listener_owner_resolver=OwnerSequence(PID, 9999),
+        )
+        self.assertEqual(report['status'], 'NOT_DETECTED')
+        self.assertEqual(report['listener_owner_rejections'], 1)
+
+    def test_verified_listener_owner_allows_exact_window_projection(self):
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(health()),
+            listener_owner_resolver=lambda _port: PID,
+        )
+        self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
+        self.assertTrue(report['listener_owner_proof_active'])
+        self.assertEqual(report['listener_owner_rejections'], 0)
+        self.assertEqual(report['projection_ready_matches'], 1)
 
     def test_native_projection_signature_tracks_hwnd_replacement(self):
         source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
