@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  PYTHONPATH: ${{ github.workspace }}\\src
+  PYTHONPATH: ${{ github.workspace }}/src
 
 concurrency:
   group: integration-release-${{ github.workflow }}-${{ github.ref }}
