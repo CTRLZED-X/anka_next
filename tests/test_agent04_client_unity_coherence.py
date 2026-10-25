@@ -171,9 +171,11 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
 
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
+        payload = health(hwnd=33)
+        payload['windowFingerprint'] = '44:10:20:1280:649'
         report = probe_bridge_range(
             (target,), port_start=PORT, port_count=1,
-            reader_factory=lambda: FakeReader(health(hwnd=44)),
+            reader_factory=lambda: FakeReader(payload),
         )
         self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
         self.assertEqual(report['process_generation_matches'], 1)
@@ -189,7 +191,9 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertEqual(report['projection_ready_matches'], 0)
 
     def test_coordinate_inspector_rejects_wrong_hwnd_before_coordinate_read(self):
-        result = ReadOnlyBridgeInspector(FakeReader(health(hwnd=44))).inspect_coordinates(
+        payload = health(hwnd=33)
+        payload['windowFingerprint'] = '44:10:20:1280:649'
+        result = ReadOnlyBridgeInspector(FakeReader(payload)).inspect_coordinates(
             window(33), PORT, map_id=42042
         )
         self.assertEqual((result.status, result.reason),
@@ -393,8 +397,11 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
             def close(self):
                 pass
 
-        with mock.patch('anka_client.unity_bridge.http.client.HTTPConnection', Connection):
-            with self.assertRaisesRegex(BridgeTransportRejected, 'BRIDGE_COMMUNICATION_FAILED'):
+        with (mock.patch('anka_client.unity_bridge.http.client.HTTPConnection', Connection),
+              mock.patch('anka_client.unity_bridge.json.loads', side_effect=RecursionError('deep-json'))):
+            with self.assertRaisesRegex(
+                    BridgeTransportRejected,
+                    'BRIDGE_COMMUNICATION_FAILED:RecursionError'):
                 LocalLoopbackBridgeReader().get_json(PORT, '/health')
 
     def test_calibration_loader_rejects_string_coordinate_coercion(self):
