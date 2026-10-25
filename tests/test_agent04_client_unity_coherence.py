@@ -11,6 +11,7 @@ from unittest import mock
 
 from anka_client.bridge_discovery import probe_bridge_range
 from anka_client.calibration import load_calibration_profile
+from anka_client.discovery import client_instance_id
 from anka_client.unity_bridge import (
     EXPECTED_BRIDGE_VERSION, BridgeTransportRejected,
     LocalLoopbackBridgeReader, ReadOnlyBridgeInspector
@@ -38,6 +39,7 @@ def health(*, hwnd: int = 33, width: int = 1280, height: int = 649) -> dict:
         'source': 'unity_bridge',
         'bridgeVersion': '2.2.77',
         'adapter': 'dofus_authoritative_cell_map',
+        'clientInstanceId': client_instance_id(window(hwnd, size=(width, height))),
         'available': True,
         'status': 'MAP_COORDINATES_READY',
         'processId': PID,
@@ -136,6 +138,28 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError, 'WINDOW_PROCESS_CHANGED_DURING_INSPECTION'):
             inv._inspect(33, 'Dofus')
         self.assertEqual(inv.kernel.closed, 1)
+
+    def test_bridge_health_wrong_client_instance_is_not_projection_ready(self):
+        payload = health()
+        payload['clientInstanceId'] = 'client-' + ('0' * 16)
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(payload),
+        )
+        self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
+        self.assertEqual(report['projection_ready_matches'], 0)
+
+        identity = ReadOnlyBridgeInspector(FakeReader(payload)).inspect_identity(window(), PORT)
+        self.assertEqual((identity.status, identity.reason),
+                         ('BLOCKED', 'BRIDGE_CLIENT_INSTANCE_MISMATCH'))
+
+    def test_native_observation_rejects_cross_client_and_revision_rollback(self):
+        source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('OBSERVATION_CLIENT_INSTANCE_MISMATCH', source)
+        self.assertIn('OBSERVATION_SCOPE_MISMATCH', source)
+        self.assertIn('STALE_OBSERVATION_REVISION', source)
+        self.assertIn('OBSERVATION_REVISION_CONFLICT', source)
+        self.assertIn('observation.CanonicalRevision < _lastObservation.CanonicalRevision', source)
 
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
@@ -396,6 +420,15 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
                 return;'''
         self.assertIn(tick_loss, source)
         self.assertIn(rebuild_loss, source)
+
+    def test_python_client_instance_derivation_has_known_value_and_native_rule(self):
+        expected = client_instance_id(window())
+        self.assertTrue(expected.startswith('client-'))
+        self.assertEqual(len(expected), len('client-') + 16)
+        source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
+        self.assertIn('return "client-" + digest[..16];', source)
+        self.assertIn('window.Handle.ToInt64()', source)
+        self.assertIn('processStartTime', source)
 
     def test_python_and_native_bridge_version_identity_match(self):
         source = (ROOT / 'native/unity_bridge/Plugin.cs').read_text(encoding='utf8')
