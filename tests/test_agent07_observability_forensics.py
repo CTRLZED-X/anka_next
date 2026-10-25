@@ -519,6 +519,46 @@ class TestAgent07ExternalEventSequenceIsolation(unittest.TestCase):
 
 
 
+class TestAgent07IncidentExportPathSafety(unittest.TestCase):
+    def test_symlinked_primary_incident_directory_falls_back_without_external_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(
+                root,
+                run_id='run-agent07-export-link',
+                invocation_id='inv-agent07-export-link',
+            )
+            try:
+                obs.record(
+                    'workflow.heartbeat',
+                    owner_system='anka_workflow',
+                    boundary='workflow.watchdog',
+                )
+                outside = root / 'outside-incidents'
+                outside.mkdir()
+                incidents = obs.folder / 'incidents'
+                try:
+                    incidents.symlink_to(outside, target_is_directory=True)
+                except (OSError, NotImplementedError):
+                    self.skipTest('directory symlink unavailable')
+
+                path = obs.export_incident(
+                    'EXPORT_PATH_SYMLINK_TEST',
+                    boundary='observability.bundle',
+                )
+                self.assertFalse(str(path).startswith(str(outside)))
+                self.assertEqual(list(outside.iterdir()), [])
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    manifest = json.loads(z.read('manifest.json'))
+                self.assertTrue(manifest['primary_export_failed'])
+            finally:
+                obs.finish('BLOCKED')
+
+
+
+
 class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
     @staticmethod
     def _rewrite_timeline_aliases(path: Path, mutate) -> None:
