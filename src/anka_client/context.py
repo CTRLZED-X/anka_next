@@ -70,7 +70,8 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     vector=ClientGenerationVector(gid,window.client_width,window.client_height,window.dpi,
         window.foreground,window.occluded,map_id,map_gen,coord_gen,calibration.generation,loadout_gen)
     status='PROVEN' if not reasons else ('BLOCKED' if any(x.endswith('MISMATCH') or x in {
-        'IDENTITY_NOT_PROVEN','CLASS_NOT_PROVEN','WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND','WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
+        'IDENTITY_NOT_PROVEN','BINDING_EVIDENCE_SOURCE_UNTRUSTED','CLASS_NOT_PROVEN',
+        'WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND','WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
     return ClientContextProof(character_name,breed,class_id,vector,status,reasons,False)
 
 
