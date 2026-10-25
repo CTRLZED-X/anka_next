@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import unittest
 
-from anka_contracts.protocol import AdapterReleaseDescriptor
+from anka_contracts.protocol import AdapterReleaseDescriptor, ProtocolAdmissionDecision
 from anka_protocol.adapters.dofus_3_7_10_10.adapter import Historical371010Adapter
 from anka_protocol.adapters.dofus_3_7_10_10.manifest import descriptor as historical_descriptor
 from anka_protocol.certification.impact import semantic_impact_report
@@ -16,6 +16,7 @@ from anka_protocol.registry import (
     ProtocolAdapterNotFound,
     ProtocolRegistry,
 )
+from anka_protocol.sdk import ProtocolTransaction
 from anka_protocol.sdk.opaque import OpaquePolicy
 from anka_contracts.wire import WireEnvelope
 
@@ -53,21 +54,23 @@ def framed_any(name: str, body: bytes) -> bytes:
     return varint(len(any_message)) + any_message
 
 
-def envelope(payload: bytes, *, direction: str = "server_to_client") -> WireEnvelope:
+def envelope(payload: bytes, *, direction: str = "server_to_client",
+             continuity: str = "COMPLETE", producer: int = 1,
+             connection: str = "conn-agent02-protocol", generation: int = 1) -> WireEnvelope:
     return WireEnvelope(
         "capture-agent02-protocol",
         "client-cra",
-        "conn-agent02-protocol",
+        connection,
         direction,
         0,
-        1,
+        producer,
         "2026-10-25T14:00:00+00:00",
-        1,
+        producer,
         payload,
-        "COMPLETE",
+        continuity,
         len(payload),
-        1,
-        1,
+        generation,
+        producer,
         "TEST_FIXTURE",
     )
 
@@ -75,6 +78,20 @@ def envelope(payload: bytes, *, direction: str = "server_to_client") -> WireEnve
 class DummyAdapter:
     def __init__(self, descriptor: AdapterReleaseDescriptor):
         self.descriptor = descriptor
+
+
+class RecordingAdmission:
+    def __init__(self):
+        self.seen = []
+
+    def admit_candidate_batch(self, batch):
+        self.seen.append(batch)
+        return ProtocolAdmissionDecision("COMMITTED", len(self.seen), None)
+
+
+JTK = bytes.fromhex(
+    "0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906"
+)
 
 
 class TestAgent02ProtocolEvolution(unittest.TestCase):
@@ -135,6 +152,115 @@ class TestAgent02ProtocolEvolution(unittest.TestCase):
         self.assertEqual(impact.change, "CHANGED")
         self.assertIn("cast", impact.action_scopes)
         self.assertIn("move", impact.action_scopes)
+
+    def transaction(self, *, generation=1, connection="conn-agent02-protocol"):
+        admission = RecordingAdmission()
+        adapter = Historical371010Adapter(
+            descriptor=historical_descriptor(),
+            account_id="acct-cra",
+            client_instance_id="client-cra",
+            connection_id=connection,
+            connection_generation=generation,
+        )
+        return ProtocolTransaction(adapter, admission), adapter, admission
+
+    def test_partial_prefix_gap_suffix_cannot_resume_semantic_admission(self):
+        txn, adapter, admission = self.transaction()
+        framed = framed_any("jtk", JTK)
+        cut = max(2, len(framed) // 2)
+
+        first = txn.process(envelope(framed[:cut], producer=1))
+        self.assertEqual(first.status, "COMMITTED")
+        self.assertEqual(first.batch.decode_health, "FRAMING_IN_PROGRESS")
+        before_gap = adapter.checkpoint_runtime_context()
+
+        gap = txn.process(envelope(b"", continuity="GAP_INSIDE", producer=2))
+        self.assertEqual(gap.status, "REJECTED_TRANSPORT")
+        self.assertTrue(txn.poisoned)
+
+        suffix = txn.process(envelope(framed[cut:], producer=3))
+        self.assertEqual(suffix.status, "REJECTED_POISONED")
+        self.assertEqual(len(admission.seen), 1)
+        self.assertEqual(admission.seen[0].candidates, ())
+        self.assertEqual(before_gap.digest, adapter.checkpoint_runtime_context().digest)
+
+    def test_partial_prefix_reset_later_bytes_cannot_resume(self):
+        txn, _adapter, admission = self.transaction()
+        framed = framed_any("jtk", JTK)
+        cut = max(2, len(framed) // 2)
+
+        self.assertEqual(txn.process(envelope(framed[:cut], producer=1)).status, "COMMITTED")
+        reset = txn.process(envelope(b"", continuity="RESET", producer=2))
+        self.assertEqual(reset.status, "REJECTED_TRANSPORT")
+        self.assertTrue(txn.poisoned)
+        later = txn.process(envelope(framed[cut:], producer=3))
+        self.assertEqual(later.status, "REJECTED_POISONED")
+        self.assertEqual(len(admission.seen), 1)
+
+    def test_gap_on_empty_decoder_context_still_fences_generation(self):
+        txn, _adapter, admission = self.transaction()
+        gap = txn.process(envelope(b"", continuity="GAP_BEFORE", producer=1))
+        self.assertEqual(gap.status, "REJECTED_TRANSPORT")
+        self.assertTrue(txn.poisoned)
+
+        later = txn.process(envelope(framed_any("jtk", JTK), producer=2))
+        self.assertEqual(later.status, "REJECTED_POISONED")
+        self.assertEqual(admission.seen, [])
+
+    def test_complete_after_transport_break_returns_poisoned_without_decoding(self):
+        txn, adapter, admission = self.transaction()
+        before = adapter.checkpoint_runtime_context()
+        self.assertEqual(
+            txn.process(envelope(b"", continuity="UNKNOWN", producer=1)).status,
+            "REJECTED_TRANSPORT",
+        )
+        after_break = adapter.checkpoint_runtime_context()
+        self.assertEqual(before.digest, after_break.digest)
+
+        result = txn.process(envelope(framed_any("jtk", JTK), producer=2))
+        self.assertEqual(result.status, "REJECTED_POISONED")
+        self.assertEqual(after_break.digest, adapter.checkpoint_runtime_context().digest)
+        self.assertEqual(admission.seen, [])
+
+    def test_fresh_connection_generation_operates_after_old_generation_poison(self):
+        old_txn, _old_adapter, old_admission = self.transaction()
+        self.assertEqual(
+            old_txn.process(envelope(b"", continuity="RESET", producer=1)).status,
+            "REJECTED_TRANSPORT",
+        )
+        self.assertTrue(old_txn.poisoned)
+        self.assertEqual(old_admission.seen, [])
+
+        fresh_txn, _fresh_adapter, fresh_admission = self.transaction(
+            generation=2, connection="conn-agent02-fresh"
+        )
+        result = fresh_txn.process(
+            envelope(
+                framed_any("jtk", JTK),
+                producer=1,
+                connection="conn-agent02-fresh",
+                generation=2,
+            )
+        )
+        self.assertEqual(result.status, "COMMITTED")
+        self.assertEqual(result.batch.decode_health, "SEMANTIC_CANDIDATES")
+        self.assertTrue(result.batch.candidates)
+        self.assertEqual(len(fresh_admission.seen), 1)
+
+    def test_no_admitted_semantic_batch_can_span_pre_gap_and_post_gap_bytes(self):
+        txn, _adapter, admission = self.transaction()
+        framed = framed_any("jtk", JTK)
+        cut = max(2, len(framed) // 2)
+
+        prefix = txn.process(envelope(framed[:cut], producer=1))
+        self.assertEqual(prefix.batch.decode_health, "FRAMING_IN_PROGRESS")
+        self.assertEqual(prefix.batch.candidates, ())
+        txn.process(envelope(b"", continuity="GAP_INSIDE", producer=2))
+        suffix = txn.process(envelope(framed[cut:], producer=3))
+
+        self.assertEqual(suffix.status, "REJECTED_POISONED")
+        self.assertEqual(len(admission.seen), 1)
+        self.assertTrue(all(not batch.candidates for batch in admission.seen))
 
     def test_unknown_wire_fences_entire_historical_adapter_batch(self):
         d = historical_descriptor()
