@@ -155,21 +155,103 @@ class DefinitiveExecutionLedger:
             elif a.status=='SEND_STARTED':changed.append(self.mark_uncertain(a.action_id,'RESTART_AFTER_SEND_STARTED_MAY_HAVE_SENT'))
         return tuple(changed)
     def audit(self):
+        """Verify the hash chain and every safety-relevant actions projection field."""
         with self._db() as con:
-            rows=con.execute('SELECT seq,action_id,event_type,payload,previous_hash,record_hash FROM events ORDER BY seq').fetchall()
-            actions=con.execute('SELECT action_id,status,command_json,run_generation,authority_generation,prepared_ref FROM actions').fetchall()
-        prev='GENESIS';expected=1;last={};first={}
-        for seq,aid,ev,payload,p,h in rows:
-            if seq!=expected or p!=prev or h!=_hash(seq,aid,ev,payload,p):raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_CHAIN_CORRUPTED')
+            rows=con.execute(
+                'SELECT seq,action_id,event_type,payload,previous_hash,record_hash FROM events ORDER BY seq'
+            ).fetchall()
+            actions=con.execute(
+                'SELECT action_id,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch,'
+                'status,command_json,run_generation,authority_generation,attempt_id,send_state,prepared_ref,'
+                'evidence_json,obligations_json,reason FROM actions'
+            ).fetchall()
+
+        prev='GENESIS';expected_seq=1;per_action={};first={}
+        for seq,aid,event,payload,previous_hash,record_hash in rows:
+            if (seq!=expected_seq or previous_hash!=prev or
+                    record_hash!=_hash(seq,aid,event,payload,prev)):
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_CHAIN_CORRUPTED')
             try:obj=json.loads(payload)
-            except Exception as exc:raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED') from exc
+            except Exception as exc:
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED') from exc
+            if not isinstance(obj,dict):
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED')
             first.setdefault(aid,obj)
-            if 'status_after' in obj:last[aid]=obj['status_after']
-            prev=h;expected+=1
-        for aid,status,command_json,run_generation,authority_generation,prepared_ref in actions:
-            if aid not in last or last[aid]!=status:raise DefinitiveExecutionLedgerError('EXECUTION_PROJECTION_MISMATCH')
+            per_action.setdefault(aid,[]).append((seq,event,obj))
+            prev=record_hash;expected_seq+=1
+
+        action_ids={row[0] for row in actions}
+        if action_ids!=set(per_action):
+            raise DefinitiveExecutionLedgerError('EXECUTION_ACTION_EVENT_SET_MISMATCH')
+
+        for row in actions:
+            (aid,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch,
+             status,command_json,run_generation,authority_generation,attempt_id,send_state,
+             prepared_ref,evidence_json,obligations_json,reason)=row
+            try:
+                command=command_from_dict(json.loads(command_json))
+                stored_evidence=list(json.loads(evidence_json))
+                stored_obligations=list(json.loads(obligations_json))
+            except Exception as exc:
+                raise DefinitiveExecutionLedgerError('EXECUTION_ACTION_PROJECTION_CORRUPTED') from exc
+
+            immutable=(aid,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch)
+            expected_immutable=(command.action_id,command.action_key,command.run_id,command.account_id,
+                                command.client_instance_id,command.fight_epoch,command.turn_epoch)
+            if immutable!=expected_immutable:
+                raise DefinitiveExecutionLedgerError('EXECUTION_IMMUTABLE_SCOPE_PROJECTION_CORRUPTED')
+
             meta=first.get(aid,{})
             cmd_hash=sha256(command_json.encode()).hexdigest()
-            if meta.get('command_sha256')!=cmd_hash or meta.get('run_generation')!=run_generation or meta.get('authority_generation')!=authority_generation or meta.get('prepared_ref')!=prepared_ref:
+            if (meta.get('command_sha256')!=cmd_hash or
+                    meta.get('run_generation')!=run_generation or
+                    meta.get('authority_generation')!=authority_generation or
+                    meta.get('prepared_ref')!=prepared_ref):
                 raise DefinitiveExecutionLedgerError('EXECUTION_IMMUTABLE_PROJECTION_CORRUPTED')
-        return tuple(self.get(aid) for aid,_,_,_,_,_ in actions)
+
+            events=per_action[aid]
+            first_seq,first_event,first_payload=events[0]
+            if (first_event not in ('PREPARED','REJECTED_NOT_SENT') or
+                    first_payload.get('status_after')!=first_event):
+                raise DefinitiveExecutionLedgerError('EXECUTION_INITIAL_EVENT_INVALID')
+            projected_status=first_payload['status_after']
+            projected_attempt=None
+            projected_send_state='NOT_SENT'
+            projected_evidence=[]
+            projected_obligations=list(command.expected_outcome_proofs)
+            projected_reason=first_payload.get('reason')
+
+            for seq,event,obj in events[1:]:
+                if obj.get('status_before')!=projected_status:
+                    raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_STATUS_CAUSALITY_INVALID')
+                mutating=('evidence_ids' in obj or 'obligations' in obj)
+                if mutating:
+                    if not ('evidence_ids' in obj and 'obligations' in obj and
+                            'status_after' in obj and 'send_state' in obj and
+                            'attempt_id' in obj and 'reason' in obj):
+                        raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PROJECTION_INCOMPLETE')
+                    projected_status=obj['status_after']
+                    projected_attempt=obj['attempt_id']
+                    projected_send_state=obj['send_state']
+                    projected_evidence=list(obj['evidence_ids'])
+                    event_id=f'exec-event-{seq}'
+                    if event_id not in projected_evidence:
+                        projected_evidence.append(event_id)
+                    projected_obligations=list(obj['obligations'])
+                    projected_reason=obj['reason']
+                else:
+                    # Resolved driver-return journal events are append-only evidence,
+                    # not projection mutations.  They must agree with current truth.
+                    if (obj.get('status_after')!=projected_status or
+                            obj.get('attempt_id')!=projected_attempt or
+                            obj.get('send_state')!=projected_send_state):
+                        raise DefinitiveExecutionLedgerError('EXECUTION_PASSTHROUGH_EVENT_CONTRADICTS_PROJECTION')
+
+            if status!=projected_status:
+                raise DefinitiveExecutionLedgerError('EXECUTION_PROJECTION_MISMATCH')
+            if (attempt_id!=projected_attempt or send_state!=projected_send_state or
+                    stored_evidence!=projected_evidence or
+                    stored_obligations!=projected_obligations or reason!=projected_reason):
+                raise DefinitiveExecutionLedgerError('EXECUTION_MUTABLE_PROJECTION_CORRUPTED')
+
+        return tuple(self.get(aid) for aid in sorted(action_ids))
