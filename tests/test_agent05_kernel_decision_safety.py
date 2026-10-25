@@ -491,5 +491,35 @@ class TestAgent05FrameProvenanceSafety(unittest.TestCase):
                 self.assertEqual(kernel.calls, [])
 
 
+
+class TestAgent05MapIdentitySafety(unittest.TestCase):
+    def test_combat_requires_concrete_fight_map_identity(self):
+        from dataclasses import replace
+
+        kernel = LegalKernel()
+        result = DeterministicPlanner(kernel).plan(
+            replace(combat_frame(), map_id=None)
+        )
+        self.assertEqual(result.disposition, "WAIT")
+        self.assertEqual(result.reason, "DECISION_FIGHT_MAP_UNKNOWN")
+        self.assertIn("fight_map", result.required_evidence)
+        self.assertEqual(kernel.calls, [])
+
+    def test_world_move_requires_concrete_world_map_identity(self):
+        from dataclasses import replace
+
+        frame = replace(
+            combat_frame(),
+            workflow_goal="WORLD_MOVE",
+            proof_statuses=(("world_map", "KNOWN"), ("actor_cell", "KNOWN")),
+            candidate_move_cells=(201,),
+            map_id=None,
+        )
+        result = DeterministicPlanner(LegalKernel()).plan(frame)
+        self.assertEqual(result.disposition, "WAIT")
+        self.assertEqual(result.reason, "DECISION_WORLD_MAP_UNKNOWN")
+        self.assertIn("world_map", result.required_evidence)
+
+
 if __name__ == "__main__":
     unittest.main()
