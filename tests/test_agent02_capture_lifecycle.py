@@ -117,6 +117,89 @@ class TestAgent02CaptureCallbackQuiesce(unittest.TestCase):
             self.assertEqual(poll.dropped, 0)
             self.assertTrue(poll.exhausted)
 
+    def test_late_backend_start_is_boundedly_stopped_after_start_quiesce_timeout(self):
+        start_entered = Event()
+        release_start = Event()
+        stop_called = Event()
+        holder = {}
+
+        class Recorder:
+            def __init__(self):
+                self.marked = 0
+                self.closed = 0
+
+            def mark_incomplete(self):
+                self.marked += 1
+
+            def close(self):
+                self.closed += 1
+                return {
+                    "status": "INCOMPLETE_RECORDED",
+                    "frames": 0,
+                    "known_recording_gaps": max(1, self.marked),
+                }
+
+        class BlockingStartSniffer:
+            def __init__(self, **kwargs):
+                self.prn = kwargs.get("prn")
+                holder["sniffer"] = self
+
+            def start(self):
+                start_entered.set()
+                if not release_start.wait(timeout=2):
+                    raise RuntimeError("TEST_START_RELEASE_TIMEOUT")
+
+            def stop(self):
+                stop_called.set()
+
+        recorder = Recorder()
+        source = WindowsLiveCapture(
+            interface="stub",
+            server_ports=(40400,),
+            require_windows=False,
+            sniffer_factory=BlockingStartSniffer,
+            evidence_recorder=recorder,
+            lifecycle_timeout_seconds=0.05,
+        )
+
+        start_errors = []
+        starter = Thread(
+            target=lambda: self._start(source, start_errors),
+            daemon=True,
+        )
+        starter.start()
+        self.assertTrue(start_entered.wait(timeout=1))
+
+        with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
+            source.quiesce()
+        self.assertTrue(source.queue.stats().source_closed)
+        self.assertGreaterEqual(recorder.marked, 1)
+
+        release_start.set()
+        starter.join(timeout=1)
+        self.assertFalse(starter.is_alive())
+        self.assertEqual(start_errors, ["LIVE_CAPTURE_START_QUIESCE_TIMEOUT"])
+        self.assertTrue(stop_called.wait(timeout=1))
+
+        stats = source.safe_stats()
+        self.assertEqual(stats["lifecycle_error"], "LIVE_CAPTURE_START_QUIESCE_TIMEOUT")
+        self.assertIsNone(stats["secondary_cleanup_error"])
+        self.assertEqual(stats["raw_evidence"]["status"], "INCOMPLETE_RECORDED")
+        self.assertGreaterEqual(stats["raw_evidence"]["known_recording_gaps"], 1)
+
+        accepted_before = stats["accepted_segments"]
+        source.ingest_packet(object())  # stop fence returns before packet parsing
+        self.assertEqual(source.safe_stats()["accepted_segments"], accepted_before)
+        with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
+            source.stop()
+
+    @staticmethod
+    def _start(source, errors):
+        try:
+            source.start()
+        except BaseException as exc:
+            errors.append(str(exc))
+
     @staticmethod
     def _quiesce(source, errors):
         try:
