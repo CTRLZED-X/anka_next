@@ -237,5 +237,22 @@ class TestAgent05EffectConditionSafety(unittest.TestCase):
         self.assertIn("fight_context.adjacent_actor_semantics", result.missing_inputs)
 
 
+
+class TestAgent05PolicySafety(unittest.TestCase):
+    def test_unknown_explicit_policy_profile_faults_before_kernel(self):
+        from dataclasses import replace
+
+        kernel = LegalKernel()
+        frame = replace(combat_frame(), policy_profile="missing-profile")
+        result = DeterministicPlanner(
+            kernel,
+            policies={"cra": SimpleNamespace(class_id=9)},
+        ).plan(frame)
+
+        self.assertEqual(result.disposition, "FAULT")
+        self.assertEqual(result.failure_code, "POLICY_PROFILE_UNKNOWN")
+        self.assertEqual(kernel.calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()
