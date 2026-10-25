@@ -134,7 +134,7 @@ def _turn_fact_epoch(event:CanonicalEventEnvelope,*,turn_active:bool,turn_epoch:
     return event.turn_epoch
 
 class StateProjector:
-    reducer_revision='m7-r2'
+    reducer_revision='m7-r1'
 
     def validate_snapshot(self,snapshot:LiveStateSnapshot)->None:
         """Recompute the semantic identity of a deserialized snapshot.
