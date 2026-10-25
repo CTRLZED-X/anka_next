@@ -170,7 +170,7 @@ public sealed class RuntimeObservation
     public string ObservationEpoch { get; set; }
     public string AccountId { get; set; }
     public string ClientInstanceId { get; set; }
-    public long CanonicalRevision { get; set; }
+    public long? CanonicalRevision { get; set; }
     public string SentAtUtc { get; set; }
     public List<ObservationActor> Actors { get; set; } = new();
     public List<CellFloorObservation> CellFloors { get; set; } = new();
