@@ -388,8 +388,14 @@ class LocalDiagnostics:
                 self.dropped+=1
                 if 'EXTERNAL_EVENT_ID_DUPLICATE' not in self.errors:self.errors.append('EXTERNAL_EVENT_ID_DUPLICATE')
                 return 'DROPPED'
+            previous_seq=self._seq
             self._seq=event.producer_seq
-            return self._emit_unlocked(event)
+            status=self._emit_unlocked(event)
+            retained=(any(row.get('event_id')==event.event_id for row in self.recent)
+                      or any(row.get('event_id')==event.event_id for row in self.priority)
+                      or any(row.get('event_id')==event.event_id for row in self.pinned))
+            if not retained:self._seq=previous_seq
+            return status
 
     def _emit_unlocked(self,event:DiagnosticEvent)->str:
         if not isinstance(event,DiagnosticEvent):
