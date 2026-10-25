@@ -42,6 +42,77 @@ jobs:
         continue-on-error: true
         run: |
           python -m pytest -q             tests/test_m4_wire_envelopes.py             tests/test_capture_transport.py             tests/test_capture_live.py             tests/test_p51_windows_flow_owner_stability.py             tests/test_p62_capture_loss_metadata.py             tests/test_p65_capture_abort_integrity.py             tests/test_capture_architecture.py             tests/test_protocol_architecture.py             tests/test_m5_protocol_sdk.py
+      - name: Reproduce consume_poll conflict-after-clean-envelope causal hole
+        run: |
+          python - <<'PY'
+          from anka_capture.stream import TransportEnvelopeAssembler
+          from anka_contracts.capture import CapturedTcpSegment, CapturePoll
+          from anka_contracts.protocol import ProtocolAdmissionDecision
+          from anka_protocol.adapters.dofus_3_7_10_10.adapter import Historical371010Adapter
+          from anka_protocol.adapters.dofus_3_7_10_10.manifest import descriptor
+          from anka_protocol.sdk import ProtocolTransaction
+
+          FLOW="tcp-chat08-pr26-batch"
+          def seg(seq,payload=b"",packet=1,flags=0x18):
+              return CapturedTcpSegment(FLOW,"server_to_client",seq,payload,packet,flags)
+          def varint(v):
+              out=[]
+              while v>=128:
+                  out.append((v&127)|128); v >>= 7
+              out.append(v); return bytes(out)
+          def field(n,v): return varint((n<<3)|2)+varint(len(v))+v
+          def framed_any(name,body):
+              a=field(1,b"type.ankama.com/"+name.encode("ascii"))+field(2,body)
+              return varint(len(a))+a
+          JTK=bytes.fromhex("0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906")
+          frame=framed_any("jtk",JTK)
+          conflict=bytes([frame[0]^1])+frame[1:]
+
+          a=TransportEnvelopeAssembler(
+              capture_session_id="capture-chat08-pr26-batch",
+              flow_clients={FLOW:"client-cra"},
+          )
+          poll=CapturePoll(
+              "source-gen",
+              (
+                  seg(100,packet=1,flags=0x02),
+                  seg(101,frame,packet=2),
+                  seg(101,conflict,packet=3),
+              ),
+              0,False,False,"AVAILABLE_CLEAN",
+          )
+          emitted=a.consume_poll(poll)
+          assert a.health().status=="UNCERTAIN",a.health()
+          assert len(emitted)==1,emitted
+          assert emitted[0].continuity=="COMPLETE",emitted[0].continuity
+
+          class Admission:
+              def __init__(self): self.seen=[]
+              def admit_candidate_batch(self,batch):
+                  self.seen.append(batch)
+                  return ProtocolAdmissionDecision("COMMITTED",len(self.seen),None)
+
+          admission=Admission()
+          adapter=Historical371010Adapter(
+              descriptor=descriptor(),
+              account_id="acct-cra",
+              client_instance_id="client-cra",
+              connection_id=emitted[0].connection_id,
+              connection_generation=1,
+          )
+          txn=ProtocolTransaction(adapter,admission)
+          result=txn.process(emitted[0])
+
+          assert result.status=="COMMITTED",result
+          assert result.batch is not None and result.batch.candidates
+          assert len(admission.seen)==1
+
+          print("CHAT08_CONSUME_POLL_CAUSAL_HOLE=REPRODUCED")
+          print("CAPTURE_HEALTH_AFTER_POLL=UNCERTAIN")
+          print("RETURNED_ENVELOPE_CONTINUITY=COMPLETE")
+          print("POST_CONFLICT_PROTOCOL_STATUS=COMMITTED")
+          print("POST_CONFLICT_ADMISSIONS=1")
+          PY
       - name: Independent conflict-to-protocol-poison falsification
         run: |
           python - <<'PY'
