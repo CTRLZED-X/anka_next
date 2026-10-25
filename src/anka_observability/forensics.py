@@ -547,6 +547,9 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
     # Diagnose the newest END_TURN attempt only. Older attempts cannot lend their
     # send/settlement evidence to a later request.
     req=requests[-1]
+    competing_attempts=[e for e in requests[:-1]
+                        if e.action_id!=req.action_id and e.fight_epoch==req.fight_epoch
+                        and e.turn_epoch==req.turn_epoch]
     items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
     admitted=next((e for e in items if e.event_name=='execution.admitted'),None)
     starts=[e for e in items if e.event_name=='execution.send_started']
@@ -601,10 +604,16 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
         owner_scope_candidates.append(e)
 
     next_owner=None
+    post_send_owner=None
     if sent is not None:
-        next_owner=next((e for e in owner_scope_candidates if e.producer_seq>sent.producer_seq),None)
+        post_send_owner=next((e for e in owner_scope_candidates if e.producer_seq>sent.producer_seq),None)
+    owner_attribution_ambiguous=bool(competing_attempts and post_send_owner is not None)
+    if not owner_attribution_ambiguous:
+        next_owner=post_send_owner
     noncausal_owner=[e for e in owner_scope_candidates
                      if sent is None or e.producer_seq<=sent.producer_seq]
+    if owner_attribution_ambiguous and post_send_owner is not None:
+        noncausal_owner.append(post_send_owner)
 
     refs=[]
     for e in (req,admitted,started,send_result,sent,settled,unresolved,next_owner):
@@ -628,6 +637,8 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
         status='ADMITTED_NO_SEND_EVIDENCE'
     elif sent is None:
         status='REQUEST_NOT_ADMITTED'
+    elif owner_attribution_ambiguous:
+        status='OWNER_PROOF_AMBIGUOUS_ACROSS_ATTEMPTS'
     elif admitted is None:
         status='SENT_ADMISSION_EVIDENCE_MISSING'
     elif settled is None and next_owner is None:
@@ -655,10 +666,12 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
         'next_owner_account_id':next_owner.account_id if next_owner else None,
         'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
         'noncausal_owner_event_ids':[e.event_id for e in noncausal_owner[:16]],
+        'owner_attribution_ambiguous':owner_attribution_ambiguous,
+        'competing_action_ids':[e.action_id for e in competing_attempts[-8:]],
         'hard_conflicts':hard_conflicts,
         'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
                                    key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
-        'note':'Only the first authoritative same-fight/newer-turn owner proof strictly after execution.input_sent is causal handoff evidence. Pre-send owner evidence is context only; same-owner reproof is explicit and later owners cannot be borrowed.'
+        'note':'Only the first authoritative same-fight/newer-turn owner proof strictly after execution.input_sent is causal handoff evidence. Pre-send owner evidence is context only; same-owner reproof is explicit; later owners cannot be borrowed; same-fight/same-turn competing END_TURN attempts make action attribution fail closed.'
     }
 
 READY_TRACE = OperationTraceSpec('READY', (
