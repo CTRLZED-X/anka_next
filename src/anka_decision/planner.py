@@ -143,6 +143,8 @@ class DeterministicPlanner:
     def _placement(self,frame):
         missing=self._required_known(frame,('fight_phase','actor_cell'))
         if missing:return self._wait(*missing,reason='DECISION_PLACEMENT_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_PLACEMENT_ACTOR_UNKNOWN')
         if not frame.candidate_move_cells:return PlannerResult('NO_ACTION',reason='DECISION_NO_PLACEMENT_CANDIDATE')
         unknown=[]
         for i,cell in enumerate(frame.candidate_move_cells,1):
@@ -168,6 +170,8 @@ class DeterministicPlanner:
     def _world(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell'))
         if missing:return self._wait(*missing,reason='DECISION_WORLD_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_WORLD_ACTOR_UNKNOWN')
         if not frame.candidate_move_cells:return PlannerResult('NO_ACTION',reason='DECISION_NO_ROUTE_STEP')
         # World policy expresses a semantic route step only. Execution/Client own
         # projection/input and Workflow owns whether this step is still desired.
@@ -180,6 +184,8 @@ class DeterministicPlanner:
     def _fight_entry(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell','encounter_target'))
         if missing:return self._wait(*missing,reason='DECISION_FIGHT_ENTRY_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_FIGHT_ENTRY_ACTOR_UNKNOWN')
         if frame.encounter_id is None or frame.map_id is None:
             return self._wait('encounter_target',reason='DECISION_FIGHT_ENTRY_TARGET_UNKNOWN')
         target=(('encounter_id',frame.encounter_id),('map_id',str(frame.map_id)))
@@ -188,6 +194,8 @@ class DeterministicPlanner:
     def _join_fight(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell','fight_identity','join_target'))
         if missing:return self._wait(*missing,reason='DECISION_JOIN_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_JOIN_ACTOR_UNKNOWN')
         if frame.target_fight_id is None or frame.target_fight_epoch is None:
             return self._wait('fight_identity','join_target',reason='DECISION_JOIN_TARGET_UNKNOWN')
         target=(('target_fight_id',frame.target_fight_id),('target_fight_epoch',str(frame.target_fight_epoch)))
