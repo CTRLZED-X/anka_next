@@ -173,8 +173,8 @@ class TestAgent05MapResearchIdentity(unittest.TestCase):
             missing_kernel_inputs=(),
         )
 
-        with patch.object(module, "MapDefinition", FakeMap.__class__), \
-             patch.object(module, "FightContext", FakeFight.__class__), \
+        with patch.object(module, "MapDefinition", FakeMap), \
+             patch.object(module, "FightContext", FakeFight), \
              patch.object(module, "inspect_cast_probe", return_value=gate):
             result = module.inspect_map_research(
                 snapshot,
