@@ -115,6 +115,22 @@ class TestRecoveryIdentityPhaseA(unittest.TestCase):
         self.assertEqual((result.admission.status,result.admission.reason,result.signal),
                          ('IDEMPOTENT','RECOVERY_OUTCOME_ALREADY_NONCURRENT',None))
 
+    def test_future_recovery_generation_is_rejected(self):
+        result=prepare_recovery_outcome_signal(
+            recovering(),signal_id='wfsig-future',kind='RECOVERY_SUCCEEDED',
+            monotonic_tick=101,recovery_generation=3,
+        )
+        self.assertEqual((result.admission.status,result.admission.reason),
+                         ('REJECTED','RECOVERY_OUTCOME_FUTURE_GENERATION'))
+
+    def test_wrong_recovery_producer_kind_fails_closed(self):
+        result=prepare_recovery_outcome_signal(
+            recovering(),signal_id='wfsig-wrong-kind',kind='HEARTBEAT',
+            monotonic_tick=101,recovery_generation=None,
+        )
+        self.assertEqual(result.admission.status,'REJECTED')
+        self.assertIn('WORKFLOW_RECOVERY_OUTCOME_REQUIRED',result.admission.reason)
+
     def test_missing_recovery_identity_fails_closed(self):
         result=prepare_recovery_outcome_signal(
             recovering(),signal_id='wfsig-missing-id',kind='RECOVERY_SUCCEEDED',
@@ -253,6 +269,16 @@ class TestPersistenceMigrationPhaseA(unittest.TestCase):
         loaded=load_workflow_snapshot(payload)
         self.assertEqual(loaded.classification,'INCOMPATIBLE')
         self.assertFalse(loaded.resume_authorized)
+
+    def test_invalid_schema_versions_fail_closed(self):
+        payload=dump_workflow_snapshot(snap())
+        payload['schema_version']=True
+        loaded=load_workflow_snapshot(payload)
+        self.assertEqual(loaded.classification,'INCOMPATIBLE')
+        signal_payload=dump_workflow_signal(WorkflowSignal('wfsig-current','HEARTBEAT',10))
+        signal_payload['schema_version']=0
+        signal_loaded=load_workflow_signal(signal_payload)
+        self.assertEqual(signal_loaded.classification,'INCOMPATIBLE')
 
     def test_invalid_types_are_incompatible_not_coerced(self):
         payload=dump_workflow_snapshot(snap())
