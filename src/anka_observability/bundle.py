@@ -138,6 +138,9 @@ _CAUSAL_SKELETON_EVENTS=frozenset({
     # READY and turn-handoff causal edges.
     'ready.requested','protocol.ready_observed','canonical.ready_committed',
     'coordination.ready_barrier_satisfied','coordination.turn_owner_proved','decision.frame_created',
+    # Pre-action Decision result is required to distinguish deliberate WAIT/
+    # NO_ACTION/FAULT from a later Workflow/Coordination authorization stop.
+    'decision.plan_result',
 })
 
 def _causal_skeleton_row(row:dict)->bool:
