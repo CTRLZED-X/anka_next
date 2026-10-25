@@ -56,9 +56,10 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
 
     private static long NewGenerationEpoch()
     {
-        Span<byte> bytes = stackalloc byte[8];
-        RandomNumberGenerator.Fill(bytes);
-        var raw = BitConverter.ToUInt64(bytes);
+        var bytes = new byte[8];
+        using (var rng = RandomNumberGenerator.Create())
+            rng.GetBytes(bytes);
+        var raw = BitConverter.ToUInt64(bytes, 0);
         // Keep the sign bit and one additional high bit clear, leaving an
         // enormous monotonic increment range for this bridge instance.
         return (long)(raw & 0x3fffffffffffffffUL) + 1;
