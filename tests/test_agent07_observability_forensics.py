@@ -169,6 +169,57 @@ class TestAgent07PreActionCausalIndex(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_decision_plan_result_survives_recent_ring_overwrite_for_forensics(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(
+                Path(td),
+                run_id='run-agent07-plan-retention',
+                invocation_id='inv-agent07-plan-retention',
+                max_recent=2,
+                max_priority=8,
+            )
+            try:
+                obs.record(
+                    'decision.plan_result',
+                    owner_system='anka_decision',
+                    boundary='decision.plan',
+                    account_id='acct-cra',
+                    fight_epoch=8,
+                    turn_epoch=21,
+                    payload={
+                        'frame_id':'frame-agent07-retained-wait',
+                        'disposition':'WAIT',
+                        'reason':'TARGETS_NOT_PROVEN',
+                        'required_evidence':['targets'],
+                    },
+                )
+                for i in range(12):
+                    obs.record(
+                        'workflow.heartbeat',
+                        owner_system='anka_workflow',
+                        boundary='workflow.watchdog',
+                        payload={'i':i},
+                    )
+                self.assertGreater(obs.recent_overwrites, 0)
+                self.assertNotIn(
+                    'decision.plan_result',
+                    {row.get('event_name') for row in obs.recent},
+                )
+                self.assertIn(
+                    'decision.plan_result',
+                    {row.get('event_name') for row in obs.priority},
+                )
+
+                path = obs.export_incident('PLAN_RETENTION_AUDIT', boundary='decision.plan')
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'PASS', result['errors'])
+                with ZipFile(path) as z:
+                    lifecycles = json.loads(z.read('analysis/action_lifecycles.json'))
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['state'], 'DECISION_WAIT')
+                self.assertEqual(lifecycles['pre_action_outcomes'][-1]['reason'], 'TARGETS_NOT_PROVEN')
+            finally:
+                obs.finish('BLOCKED')
+
     def test_authorization_blocker_is_correlated_before_action_id_and_surfaced_for_gpt(self):
         with tempfile.TemporaryDirectory() as td:
             obs = LocalDiagnostics(Path(td), run_id='run-agent07-auth-block', invocation_id='inv-agent07-auth-block')
