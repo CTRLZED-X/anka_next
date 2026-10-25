@@ -10,6 +10,7 @@ import json
 
 from anka_decision.policies import order_proven_spells
 from anka_contracts.decision import DecisionFrame,ActionPlan,PlannerResult
+from anka_contracts.mechanics import MechanicsResult
 
 class DecisionPlanningError(ValueError):pass
 
@@ -64,6 +65,15 @@ class DeterministicPlanner:
     def _proofs(self,frame):return dict(frame.proof_statuses)
     def _wait(self,*evidence,reason):return PlannerResult('WAIT',required_evidence=tuple(dict.fromkeys(evidence)),reason=reason)
 
+    def _kernel_verdict(self,frame,plan):
+        try:
+            verdict=self.kernel.validate_plan(frame,plan)
+        except Exception:
+            return None,PlannerResult('FAULT',reason='DECISION_KERNEL_VALIDATION_FAILED',failure_code='KERNEL_VALIDATION_FAILED')
+        if not isinstance(verdict,MechanicsResult):
+            return None,PlannerResult('FAULT',reason='DECISION_KERNEL_RESULT_INVALID',failure_code='KERNEL_RESULT_INVALID')
+        return verdict,None
+
     def plan(self,frame:DecisionFrame)->PlannerResult:
         if not isinstance(frame,DecisionFrame):raise TypeError('DECISION_FRAME_REQUIRED')
         self._record('decision.frame_created',frame,boundary='decision.frame',canonical_cursor=frame.canonical_cursor,
@@ -114,7 +124,9 @@ class DeterministicPlanner:
                 steps+=1
                 if steps>frame.budget_steps:return self._wait('planner_budget',reason='DECISION_BUDGET_EXHAUSTED')
                 plan=_plan(frame,'CAST',(('spell_id',str(spell_id)),('grade',str(grade)),('target_cell',str(cell))),('SPELL_CAST_CONFIRMED','RESOURCE_DELTA_OR_TURN_PROGRESS'))
-                verdict=self.kernel.validate_plan(frame,plan)
+                verdict,fault=self._kernel_verdict(frame,plan)
+                if fault is not None:return fault
+                assert verdict is not None
                 if verdict.status=='ILLEGAL':continue
                 if verdict.status=='INDETERMINATE':unknown.append(verdict.reason);continue
                 if plan.action_key in frame.quarantined_action_keys:saw_legal_quarantined=True;continue
@@ -136,7 +148,9 @@ class DeterministicPlanner:
             
             if frame.map_id is None:return self._wait('fight_map',reason='DECISION_PLACEMENT_MAP_UNKNOWN')
             plan=_plan(frame,'MOVE',(('map_id',str(frame.map_id)),('target_cell',str(cell))),('ACTOR_CELL_CHANGED',))
-            verdict=self.kernel.validate_plan(frame,plan)
+            verdict,fault=self._kernel_verdict(frame,plan)
+            if fault is not None:return fault
+            assert verdict is not None
             if verdict.status=='LEGAL' and plan.action_key not in frame.quarantined_action_keys:return PlannerResult('PLAN',plan=plan)
             if verdict.status=='INDETERMINATE':unknown.append(verdict.reason)
         if unknown:return self._wait(*tuple(sorted(set(unknown))),reason='DECISION_KERNEL_INDETERMINATE')
