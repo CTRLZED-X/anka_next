@@ -78,6 +78,44 @@ def recovering():
     )
 
 
+def pristine_created():
+    return replace(
+        snap(
+            phase='CREATED',
+            phase_started_tick=0,
+            watchdog_deadline_tick=None,
+            recovery_generation=None,
+            active_recovery_generation=None,
+            last_processed_tick=None,
+        ),
+        fight_epoch=0,
+        attempts=0,
+        wins=0,
+        losses=0,
+        unknowns=0,
+        aborted=0,
+        route_index=0,
+        pending_action_id=None,
+        counted_fight_epochs=(),
+        started_fight_epochs=(),
+        processed_signal_ids=(),
+        progress_generation=0,
+        resume_phase=None,
+        expected_next_evidence=('START',),
+        terminal_reason=None,
+        goal_reached_pending_reentry=False,
+        selected_encounter_id=None,
+        selected_encounter_map_id=None,
+    )
+
+
+def legacy_payload(snapshot):
+    payload=asdict(snapshot)
+    for name in ('recovery_generation','active_recovery_generation','last_processed_tick'):
+        payload.pop(name)
+    return payload
+
+
 class TestRecoveryIdentityPhaseA(unittest.TestCase):
     def test_stale_success_a_after_b_starts_is_rejected_noncurrent(self):
         result=prepare_recovery_outcome_signal(
@@ -181,20 +219,77 @@ class TestRecoveryIdentityPhaseA(unittest.TestCase):
         self.assertIsNone(loaded.snapshot.last_processed_tick)
 
     def test_pristine_legacy_created_snapshot_has_only_safe_zero_upgrade(self):
-        created=snap(
-            phase='CREATED',phase_started_tick=0,watchdog_deadline_tick=None,
-            recovery_generation=None,active_recovery_generation=None,last_processed_tick=None,
-        )
-        legacy=asdict(replace(
-            created,fight_epoch=0,started_fight_epochs=(),processed_signal_ids=(),
-            progress_generation=0,resume_phase=None,expected_next_evidence=('START',),
-        ))
-        for name in ('recovery_generation','active_recovery_generation','last_processed_tick'):
-            legacy.pop(name)
-        loaded=load_workflow_snapshot(legacy)
+        loaded=load_workflow_snapshot(legacy_payload(pristine_created()))
         self.assertEqual(loaded.classification,'SAFE')
         self.assertTrue(loaded.resume_authorized)
         self.assertEqual((loaded.snapshot.recovery_generation,loaded.snapshot.last_processed_tick),(0,0))
+
+    def _assert_created_history_is_non_authoritative(self, snapshot):
+        loaded=load_workflow_snapshot(legacy_payload(snapshot))
+        self.assertEqual(loaded.classification,'AMBIGUOUS')
+        self.assertFalse(loaded.resume_authorized)
+        self.assertIn('LEGACY_CREATED_HISTORY_NOT_PRISTINE',loaded.reasons)
+        self.assertIsNone(loaded.snapshot.recovery_generation)
+        self.assertIsNone(loaded.snapshot.last_processed_tick)
+
+    def test_created_with_fight_epoch_history_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),fight_epoch=1)
+        )
+
+    def test_created_with_reconciled_outcome_counters_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),attempts=1,wins=1)
+        )
+
+    def test_created_with_started_or_counted_fight_epoch_is_not_authoritative(self):
+        for changed in (
+            replace(pristine_created(),started_fight_epochs=(1,)),
+            replace(pristine_created(),counted_fight_epochs=(1,)),
+        ):
+            with self.subTest(changed=changed):
+                self._assert_created_history_is_non_authoritative(changed)
+
+    def test_created_with_progress_generation_history_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),progress_generation=1)
+        )
+
+    def test_created_with_route_progress_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),route_index=1)
+        )
+
+    def test_created_with_resume_phase_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),resume_phase='READY')
+        )
+
+    def test_created_with_selected_encounter_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(
+                pristine_created(),
+                selected_encounter_id='encounter-history',
+                selected_encounter_map_id=190580738,
+            )
+        )
+
+    def test_created_with_goal_reached_pending_reentry_is_not_authoritative(self):
+        self._assert_created_history_is_non_authoritative(
+            replace(pristine_created(),goal_reached_pending_reentry=True)
+        )
+
+    def test_created_with_other_noninitial_phase_state_is_not_authoritative(self):
+        cases=(
+            replace(pristine_created(),pending_action_id='action-history'),
+            replace(pristine_created(),terminal_reason='HISTORY_PRESENT'),
+            replace(pristine_created(),watchdog_deadline_tick=1),
+            replace(pristine_created(),expected_next_evidence=('PREFLIGHT_OK',)),
+            replace(pristine_created(),phase_started_tick=1),
+        )
+        for changed in cases:
+            with self.subTest(changed=changed):
+                self._assert_created_history_is_non_authoritative(changed)
 
 
 class TestTemporalWatermarkPhaseA(unittest.TestCase):
