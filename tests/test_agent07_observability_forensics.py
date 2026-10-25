@@ -7,6 +7,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from anka_observability.api import LocalDiagnostics
 from anka_observability.bundle import verify_incident
+from anka_observability.recovery import recover_unclean_run
 from anka_observability.forensics import READY_TRACE, action_lifecycle_report
 from anka_observability.redaction import has_unredacted_sensitive_data
 
@@ -380,6 +381,92 @@ class TestAgent07ContradictoryExecutionEvidence(unittest.TestCase):
                 self.assertEqual(report['contradictory_action_count'], 1)
             finally:
                 obs.finish('BLOCKED')
+
+
+class TestAgent07DiagnosticIdentityIntegrity(unittest.TestCase):
+    @staticmethod
+    def _rewrite_timeline_aliases(path: Path, mutate) -> None:
+        with ZipFile(path) as z:
+            files = {name: z.read(name) for name in z.namelist()}
+        rows = [json.loads(line) for line in files['timeline.jsonl'].decode('utf8').splitlines() if line]
+        mutate(rows)
+        blob = b''.join(
+            (json.dumps(row, sort_keys=True, ensure_ascii=True, separators=(',', ':')) + '\n').encode('utf8')
+            for row in rows
+        )
+        files['timeline.jsonl'] = blob
+        files['logs/relevant_timeline.jsonl'] = blob
+        manifest = json.loads(files['manifest.json'])
+        for name in ('timeline.jsonl', 'logs/relevant_timeline.jsonl'):
+            manifest['files'][name] = {'sha256': sha256(blob).hexdigest(), 'bytes': len(blob)}
+        files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\n').encode('utf8')
+        with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+    def test_rehashed_bundle_rejects_event_id_outside_live_namespace(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-id-bundle', invocation_id='inv-agent07-id-bundle')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('IDENTITY_NAMESPACE_TEST', boundary='workflow.watchdog')
+                self.assertEqual(verify_incident(path)['status'], 'PASS')
+                invalid_event_id = 'evt-' + ('a' * 113)
+                self._rewrite_timeline_aliases(
+                    path,
+                    lambda rows: rows[0].__setitem__('event_id', invalid_event_id),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('TIMELINE_EVENT_ID_INVALID', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_bundle_rejects_invalid_parent_event_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-parent-id', invocation_id='inv-agent07-parent-id')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('PARENT_ID_NAMESPACE_TEST', boundary='workflow.watchdog')
+                self._rewrite_timeline_aliases(
+                    path,
+                    lambda rows: rows[0].__setitem__('parent_event_id', 'bad-parent-id'),
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('TIMELINE_PARENT_EVENT_ID_INVALID', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_crash_recovery_skips_journal_event_live_recorder_would_reject(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            obs = LocalDiagnostics(root, run_id='run-agent07-recovery-id', invocation_id='inv-agent07-recovery-id')
+            obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+            self.assertTrue(obs.flush_journals())
+            event_path = obs.folder / 'events.jsonl'
+            rows = [json.loads(line) for line in event_path.read_text(encoding='utf8').splitlines() if line]
+            self.assertTrue(rows)
+            rows[0]['event_id'] = 'evt-' + ('x' * 113)
+            event_path.write_text(
+                ''.join(json.dumps(row, sort_keys=True, separators=(',', ':')) + '\n' for row in rows),
+                encoding='utf8',
+            )
+            path = recover_unclean_run(obs.folder)
+            self.assertIsNotNone(path)
+            result = verify_incident(path)
+            self.assertEqual(result['status'], 'PASS', result['errors'])
+            with ZipFile(path) as z:
+                recovered_rows = [
+                    json.loads(line)
+                    for line in z.read('timeline.jsonl').decode('utf8').splitlines()
+                    if line
+                ]
+                run_manifest = json.loads(z.read('run_manifest.json'))
+            self.assertNotIn('evt-' + ('x' * 113), {row.get('event_id') for row in recovered_rows})
+            self.assertIn('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED', run_manifest['observer_errors'])
+
+
 
 
 class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
