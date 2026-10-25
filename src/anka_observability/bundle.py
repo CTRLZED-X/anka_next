@@ -633,6 +633,7 @@ def verify_incident(path:Path)->dict:
             try:m=json.loads(z.read('manifest.json'))
             except (json.JSONDecodeError,UnicodeDecodeError,ValueError):add('MANIFEST_JSON_INVALID');return {'status':'FAIL','errors':errors}
             if not isinstance(m,dict):add('MANIFEST_SHAPE_INVALID');return {'status':'FAIL','errors':errors}
+            if has_unredacted_sensitive_data(m):add('UNREDACTED_SENSITIVE_DATA:manifest.json')
             if m.get('schema_version') not in (1,2):add('SCHEMA_MISMATCH')
             if m.get('schema_version')==2:
                 missing_required=sorted(REQUIRED_SCHEMA2_FILES-set(names))
