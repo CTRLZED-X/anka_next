@@ -196,6 +196,83 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
         self.assertFalse(denied.allowed)
         self.assertEqual(denied.reason, "TURN_OWNER_NOT_REQUIRED_MEMBER")
 
+    def test_optional_preturn_permit_requires_own_same_fight_proof(self):
+        roster = ROSTER + (
+            PartyRosterMember(
+                "acct-feca",
+                "client-feca",
+                43,
+                "follower",
+                required=False,
+            ),
+        )
+        coordinator = PartyCoordinatorService("party-agent06-optional-join", roster)
+        coordinator.observe(
+            observation(16, "acct-cra", turn_epoch=0, owner=None)
+        )
+        coordinator.observe(
+            observation(17, "acct-enu", turn_epoch=0, owner=None)
+        )
+        coordinator.observe(
+            MemberPartyObservation(
+                "coordobs-agent06-opt-other-fight",
+                "acct-feca",
+                "client-feca",
+                43,
+                18,
+                18,
+                1,
+                0,
+                "fight-agent06-other",
+                190580739,
+                "PLACEMENT",
+                None,
+                False,
+                False,
+                False,
+                "HEALTHY",
+                ("evidence-agent06-opt-other-fight",),
+                False,
+            )
+        )
+
+        denied = coordinator.action_permit(
+            "party-agent06-optional-join",
+            "acct-feca",
+            "JOIN",
+        )
+        self.assertFalse(denied.allowed)
+        self.assertEqual(denied.reason, "MEMBER_FIGHT_MISMATCH")
+
+        coordinator.observe(
+            MemberPartyObservation(
+                "coordobs-agent06-opt-same-fight",
+                "acct-feca",
+                "client-feca",
+                43,
+                19,
+                19,
+                1,
+                0,
+                "fight-agent06",
+                190580738,
+                "PLACEMENT",
+                None,
+                False,
+                False,
+                False,
+                "HEALTHY",
+                ("evidence-agent06-opt-same-fight",),
+                False,
+            )
+        )
+        allowed = coordinator.action_permit(
+            "party-agent06-optional-join",
+            "acct-feca",
+            "JOIN",
+        )
+        self.assertTrue(allowed.allowed)
+
     def test_stale_turn_epoch_cannot_regress_authority(self):
         coordinator = PartyCoordinatorService("party-agent06-stale", ROSTER)
         coordinator.observe(observation(20, "acct-cra", turn_epoch=2, owner=42))
