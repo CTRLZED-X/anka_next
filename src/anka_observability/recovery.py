@@ -92,7 +92,10 @@ def recover_unclean_run(folder:Path)->Path|None:
     state=_safe_state(folder)
     if state.get('state') in _TERMINAL:return None
     marker=folder/'unclean_recovery.json'
-    if marker.exists():return None
+    # `Path.exists()` is false for a broken symlink. Reject links explicitly so
+    # the recovery marker can never be written through an attacker-controlled
+    # path outside the run folder.
+    if marker.is_symlink() or marker.exists():return None
     state_run=state.get('run_id') if isinstance(state.get('run_id'),str) else None
     if state_run is not None and state_run!=folder.name:return None
     run_id=state_run or folder.name
