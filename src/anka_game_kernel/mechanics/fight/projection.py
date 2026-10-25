@@ -130,6 +130,7 @@ class CastActionProjectionService:
                 availability=availability,
                 range_bonus=resolved_range_bonus,
                 occupied_cells=context.occupied_cells,
+                proven_occupied_cells=context.proven_occupied_cells,
             ),
         )
         if evaluation.legal is not True:
