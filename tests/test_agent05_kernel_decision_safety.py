@@ -359,5 +359,20 @@ class TestAgent05KernelPortFailureSafety(unittest.TestCase):
         self.assertIsNone(result.plan)
 
 
+
+class TestAgent05PolicyClassProofSafety(unittest.TestCase):
+    def test_explicit_policy_requires_proven_class_identity(self):
+        from dataclasses import replace
+
+        kernel = LegalKernel()
+        policy = SimpleNamespace(class_id=9)
+        frame = replace(combat_frame(), policy_profile="cra", class_id=None)
+        result = DeterministicPlanner(kernel, policies={"cra": policy}).plan(frame)
+
+        self.assertEqual(result.disposition, "FAULT")
+        self.assertEqual(result.failure_code, "POLICY_CLASS_UNKNOWN")
+        self.assertEqual(kernel.calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()
