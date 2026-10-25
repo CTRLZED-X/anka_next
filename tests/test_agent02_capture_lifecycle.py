@@ -193,6 +193,63 @@ class TestAgent02CaptureCallbackQuiesce(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
             source.stop()
 
+    def test_late_start_cleanup_failure_does_not_replace_authoritative_timeout(self):
+        start_entered = Event()
+        release_start = Event()
+
+        class Recorder:
+            def __init__(self):
+                self.marked = 0
+                self.closed = 0
+
+            def mark_incomplete(self):
+                self.marked += 1
+
+            def close(self):
+                self.closed += 1
+                return {"status": "INCOMPLETE_RECORDED", "known_recording_gaps": 1}
+
+        class StopFailureSniffer:
+            def __init__(self, **_):
+                pass
+
+            def start(self):
+                start_entered.set()
+                if not release_start.wait(timeout=2):
+                    raise RuntimeError("TEST_START_RELEASE_TIMEOUT")
+
+            def stop(self):
+                raise OSError("private backend detail")
+
+        recorder = Recorder()
+        source = WindowsLiveCapture(
+            interface="stub",
+            server_ports=(40400,),
+            require_windows=False,
+            sniffer_factory=StopFailureSniffer,
+            evidence_recorder=recorder,
+            lifecycle_timeout_seconds=0.05,
+        )
+
+        start_errors = []
+        starter = Thread(target=lambda: self._start(source, start_errors), daemon=True)
+        starter.start()
+        self.assertTrue(start_entered.wait(timeout=1))
+        with self.assertRaisesRegex(RuntimeError, "LIVE_CAPTURE_START_QUIESCE_TIMEOUT"):
+            source.quiesce()
+
+        release_start.set()
+        starter.join(timeout=1)
+        self.assertFalse(starter.is_alive())
+        self.assertEqual(start_errors, ["LIVE_CAPTURE_START_QUIESCE_TIMEOUT"])
+
+        stats = source.safe_stats()
+        self.assertEqual(stats["lifecycle_error"], "LIVE_CAPTURE_START_QUIESCE_TIMEOUT")
+        self.assertEqual(stats["secondary_cleanup_error"], "LIVE_CAPTURE_LATE_START_STOP_FAILED")
+        self.assertIsNone(stats["raw_evidence"])
+        self.assertGreaterEqual(recorder.marked, 1)
+        self.assertEqual(recorder.closed, 0)
+
     @staticmethod
     def _start(source, errors):
         try:
