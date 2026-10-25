@@ -146,8 +146,9 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
             (window(),), port_start=PORT, port_count=1,
             reader_factory=lambda: FakeReader(payload),
         )
-        self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
+        self.assertEqual(report['status'], 'NOT_DETECTED')
         self.assertEqual(report['projection_ready_matches'], 0)
+        self.assertEqual(report['bridge_identity_rejections'], 1)
 
         identity = ReadOnlyBridgeInspector(FakeReader(payload)).inspect_identity(window(), PORT)
         self.assertEqual((identity.status, identity.reason),
