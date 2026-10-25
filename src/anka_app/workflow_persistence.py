@@ -127,6 +127,38 @@ def _normalize_tuples(data: dict, names: set[str]) -> tuple[dict | None, tuple[s
     return out,()
 
 
+def _legacy_created_is_pristine(snapshot: WorkflowSnapshot) -> bool:
+    """Prove the exact history-free shape created by MissionWorkflow.__init__.
+
+    recovery_budget_remaining is intentionally not fixed here because its
+    pristine value is plan-dependent.  Every other history/phase field below
+    has an exact initial value in the current engine constructor.
+    """
+    return (
+        snapshot.phase=='CREATED'
+        and snapshot.fight_epoch==0
+        and snapshot.attempts==0
+        and snapshot.wins==0
+        and snapshot.losses==0
+        and snapshot.unknowns==0
+        and snapshot.aborted==0
+        and snapshot.route_index==0
+        and snapshot.pending_action_id is None
+        and not snapshot.counted_fight_epochs
+        and not snapshot.started_fight_epochs
+        and not snapshot.processed_signal_ids
+        and snapshot.progress_generation==0
+        and snapshot.phase_started_tick==0
+        and snapshot.watchdog_deadline_tick is None
+        and snapshot.resume_phase is None
+        and snapshot.expected_next_evidence==('START',)
+        and snapshot.terminal_reason is None
+        and snapshot.goal_reached_pending_reentry is False
+        and snapshot.selected_encounter_id is None
+        and snapshot.selected_encounter_map_id is None
+    )
+
+
 def dump_workflow_snapshot(snapshot: WorkflowSnapshot) -> dict:
     if not isinstance(snapshot,WorkflowSnapshot):
         raise ValueError('WORKFLOW_SNAPSHOT_REQUIRED')
@@ -195,20 +227,21 @@ def load_workflow_snapshot(payload: object) -> WorkflowSnapshotMigration:
             unwrap_reasons+('LEGACY_ACTIVE_RECOVERY_IDENTITY_UNPROVEN',),version
         )
 
-    # A pristine CREATED snapshot proves that no signal or recovery attempt has
-    # happened yet.  Initializing generation/watermark zero does not rewrite
-    # history and is the sole authoritative legacy upgrade.
-    if (
-        snapshot.phase=='CREATED'
-        and snapshot.phase_started_tick==0
-        and not snapshot.processed_signal_ids
-        and snapshot.pending_action_id is None
-    ):
-        upgraded=replace(
-            snapshot,recovery_generation=0,active_recovery_generation=None,last_processed_tick=0
-        )
+    # Only the exact history-free CREATED shape may receive the sole safe
+    # legacy zero-baseline upgrade.  A snapshot that merely *claims* CREATED
+    # while carrying fight/route/progress/resume/encounter history remains
+    # non-authoritative; migration must never erase that contradiction.
+    if snapshot.phase=='CREATED':
+        if _legacy_created_is_pristine(snapshot):
+            upgraded=replace(
+                snapshot,recovery_generation=0,active_recovery_generation=None,last_processed_tick=0
+            )
+            return WorkflowSnapshotMigration(
+                'SAFE',upgraded,True,unwrap_reasons+('LEGACY_PRISTINE_BOOTSTRAP_SAFE',),version
+            )
         return WorkflowSnapshotMigration(
-            'SAFE',upgraded,True,unwrap_reasons+('LEGACY_PRISTINE_BOOTSTRAP_SAFE',),version
+            'AMBIGUOUS',snapshot,False,
+            unwrap_reasons+('LEGACY_CREATED_HISTORY_NOT_PRISTINE',),version
         )
 
     # Terminal legacy snapshots are safe to retain as read-only history.  Their
