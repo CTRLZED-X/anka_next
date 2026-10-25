@@ -72,6 +72,11 @@ def _read_rows(path:Path,*,run_id:str,invocation_id:str|None,errors:list[str])->
             obj=json.loads(line);event=DiagnosticEvent.from_dict(obj)
         except (json.JSONDecodeError,UnicodeDecodeError,TypeError,ValueError):
             errors.append('RECOVERY_INVALID_EVENT_SKIPPED');continue
+        if (DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None
+                or (event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None)
+                or DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None
+                or event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None):
+            errors.append('RECOVERY_EVENT_CONTRACT_INVALID_SKIPPED');continue
         if event.run_id!=run_id:
             errors.append('RECOVERY_FOREIGN_RUN_EVENT_SKIPPED');continue
         if invocation_id is not None and event.invocation_id!=invocation_id:
