@@ -19,6 +19,7 @@ from anka_contracts.workflow import (
     WorkflowSignal,
     WorkflowSnapshot,
     correlate_recovery_outcome,
+    next_workflow_recovery_generation,
 )
 
 
@@ -121,6 +122,11 @@ class TestRecoveryIdentityPhaseA(unittest.TestCase):
         )
         self.assertEqual((result.admission.status,result.admission.reason,result.signal),
                          ('REJECTED','RECOVERY_IDENTITY_MISSING',None))
+
+    def test_next_recovery_generation_is_monotonic_and_unproven_fails_closed(self):
+        self.assertEqual(next_workflow_recovery_generation(recovering()),3)
+        with self.assertRaisesRegex(ValueError,'RECOVERY_GENERATION_UNPROVEN'):
+            next_workflow_recovery_generation(replace(snap(),recovery_generation=None))
 
     def test_recovery_signal_contract_rejects_invalid_or_extraneous_generation(self):
         with self.assertRaisesRegex(ValueError,'INVALID_WORKFLOW_RECOVERY_GENERATION'):
