@@ -117,7 +117,9 @@ class DeterministicPlanner:
         policy=self.policies.get(frame.policy_profile)
         if frame.policy_profile and policy is None:
             return PlannerResult('FAULT',reason='DECISION_POLICY_PROFILE_UNKNOWN',failure_code='POLICY_PROFILE_UNKNOWN')
-        if policy is not None and frame.class_id is not None and policy.class_id!=frame.class_id:
+        if policy is not None and frame.class_id is None:
+            return PlannerResult('FAULT',reason='DECISION_POLICY_CLASS_UNKNOWN',failure_code='POLICY_CLASS_UNKNOWN')
+        if policy is not None and policy.class_id!=frame.class_id:
             return PlannerResult('FAULT',reason='DECISION_POLICY_CLASS_MISMATCH',failure_code='POLICY_CLASS_MISMATCH')
         for spell_id,grade in order_proven_spells(frame.available_spells,policy):
             for cell in frame.target_cells:
