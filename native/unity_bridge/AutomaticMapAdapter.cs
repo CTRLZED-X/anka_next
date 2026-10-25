@@ -413,7 +413,8 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             || string.IsNullOrWhiteSpace(observation.ClientInstanceId)
             || !observation.ClientInstanceId.StartsWith("client-", StringComparison.Ordinal)
             || string.IsNullOrWhiteSpace(observation.ObservationSignature)
-            || observation.CanonicalRevision < 0)
+            || !observation.CanonicalRevision.HasValue
+            || observation.CanonicalRevision.Value < 0)
             return RejectObservation(
                 "INVALID_OBSERVATION_PROVENANCE",
                 "account_id, client_instance_id, observation_signature and a non-negative canonical_revision are required.");
@@ -437,11 +438,11 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 return RejectObservation(
                     "OBSERVATION_SCOPE_MISMATCH",
                     "Observation account/client scope does not match the bridge's latched canonical scope.");
-            if (observation.CanonicalRevision < _lastObservation.CanonicalRevision)
+            if (observation.CanonicalRevision.Value < _lastObservation.CanonicalRevision.Value)
                 return RejectObservation(
                     "STALE_OBSERVATION_REVISION",
                     "Canonical observation revision moved backwards.");
-            if (observation.CanonicalRevision == _lastObservation.CanonicalRevision)
+            if (observation.CanonicalRevision.Value == _lastObservation.CanonicalRevision.Value)
             {
                 if (!string.Equals(
                         observation.ObservationSignature,
