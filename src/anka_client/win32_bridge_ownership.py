@@ -19,6 +19,34 @@ _MIB_TCPROW_OWNER_PID_DWORDS = 6
 _MIB_TCP_STATE_LISTEN = 2
 
 
+def _loopback_listener_owners(raw: bytes, port: int) -> set[int]:
+    """Parse a MIB_TCPTABLE_OWNER_PID blob without trusting ctypes layout."""
+    if type(port) is not int or not (1 <= port <= 65535):
+        raise ValueError('INVALID_BRIDGE_PORT')
+    if type(raw) is not bytes or len(raw) < 4 or len(raw) > _MAX_TCP_TABLE_BYTES:
+        raise OSError('TCP_LISTENER_TABLE_SIZE_INVALID')
+    count = struct.unpack_from('<I', raw, 0)[0]
+    row_size = _MIB_TCPROW_OWNER_PID_DWORDS * 4
+    if count > (_MAX_TCP_TABLE_BYTES - 4) // row_size or 4 + count * row_size > len(raw):
+        raise OSError('TCP_LISTENER_TABLE_TRUNCATED')
+
+    owners = set()
+    for index in range(count):
+        state, local_addr, local_port, _remote_addr, _remote_port, pid = struct.unpack_from(
+            '<6I', raw, 4 + index * row_size
+        )
+        if state != _MIB_TCP_STATE_LISTEN:
+            continue
+        if socket.ntohs(local_port & 0xFFFF) != port:
+            continue
+        if socket.inet_ntoa(struct.pack('<I', local_addr)) != '127.0.0.1':
+            continue
+        if pid <= 0:
+            raise OSError('TCP_LISTENER_OWNER_INVALID')
+        owners.add(pid)
+    return owners
+
+
 def loopback_listener_owner_pid(port: int) -> int | None:
     """Return the unique PID owning an IPv4 loopback LISTEN socket on port.
 
@@ -64,29 +92,7 @@ def loopback_listener_owner_pid(port: int) -> int | None:
     if second != 0:
         raise OSError('TCP_LISTENER_TABLE_READ_FAILED')
 
-    raw = memoryview(buffer)[:size.value]
-    count = struct.unpack_from('<I', raw, 0)[0]
-    row_size = _MIB_TCPROW_OWNER_PID_DWORDS * 4
-    if count > (_MAX_TCP_TABLE_BYTES - 4) // row_size or 4 + count * row_size > len(raw):
-        raise OSError('TCP_LISTENER_TABLE_TRUNCATED')
-
-    owners = set()
-    for index in range(count):
-        state, local_addr, local_port, _remote_addr, _remote_port, pid = struct.unpack_from(
-            '<6I', raw, 4 + index * row_size
-        )
-        if state != _MIB_TCP_STATE_LISTEN:
-            continue
-        observed_port = socket.ntohs(local_port & 0xFFFF)
-        if observed_port != port:
-            continue
-        address = socket.inet_ntoa(struct.pack('<I', local_addr))
-        if address != '127.0.0.1':
-            continue
-        if pid <= 0:
-            raise OSError('TCP_LISTENER_OWNER_INVALID')
-        owners.add(pid)
-
+    owners = _loopback_listener_owners(buffer.raw[:size.value], port)
     if len(owners) > 1:
         raise OSError('TCP_LISTENER_OWNER_AMBIGUOUS')
     return next(iter(owners)) if owners else None
