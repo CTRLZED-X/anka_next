@@ -92,6 +92,28 @@ class TestAgent07EvidenceLossCertainty(unittest.TestCase):
                 self.assertEqual(diagnosis['confidence'], 'MEDIUM')
                 self.assertFalse(gpt['absence_is_conclusive'])
                 self.assertEqual(gpt['first_divergence_scope'], 'INCLUDED_EVIDENCE_ONLY')
+                self.assertEqual(gpt['cause_scope'], 'INCLUDED_EVIDENCE_ONLY')
+                self.assertTrue(gpt['candidate_causes_may_be_incomplete'])
+            finally:
+                obs.finish('BLOCKED')
+
+    def test_rehashed_bundle_cannot_claim_complete_cause_scope_after_loss(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs, path = self._partial_ready_incident(Path(td))
+            try:
+                self._rewrite_json_artifacts(
+                    path,
+                    {
+                        'analysis/gpt_summary.json': lambda payload: payload.update({
+                            'cause_scope':'COMPLETE_RECORDER_EVIDENCE',
+                            'candidate_causes_may_be_incomplete':False,
+                        }),
+                    },
+                )
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('GPT_SUMMARY_CAUSE_SCOPE_MISMATCH', result['errors'])
+                self.assertIn('GPT_SUMMARY_CAUSE_COMPLETENESS_MISMATCH', result['errors'])
             finally:
                 obs.finish('BLOCKED')
 
