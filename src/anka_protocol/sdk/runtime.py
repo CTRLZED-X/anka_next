@@ -182,8 +182,14 @@ class ProtocolTransaction:
             return TransactionResult('RUNTIME_INVALID',None,None,False,'PROTOCOL_ADAPTER_RUNTIME_DESCRIPTOR_INVALID')
         if envelope.connection_id!=self.adapter.connection_id or envelope.connection_generation!=self.adapter.connection_generation:
             return TransactionResult('REJECTED_SCOPE',None,None,False,'PROTOCOL_CONNECTION_SCOPE_MISMATCH')
-        if envelope.client_instance_id=='' or envelope.continuity in ('GAP_BEFORE','GAP_INSIDE','RESET','UNKNOWN'):
-            # Never ask a version decoder to infer across untrusted transport continuity.
+        if envelope.client_instance_id=='':
+            return TransactionResult('REJECTED_TRANSPORT',None,None,False,'PROTOCOL_TRANSPORT_CONTINUITY_UNTRUSTED')
+        if envelope.continuity in ('GAP_BEFORE','GAP_INSIDE','RESET','UNKNOWN'):
+            # Never ask a version decoder to infer across untrusted transport
+            # continuity. More importantly, decoder state accumulated before
+            # this discontinuity can no longer be trusted for this connection
+            # generation, even if a later envelope is labelled COMPLETE.
+            self._poisoned=True
             return TransactionResult('REJECTED_TRANSPORT',None,None,False,'PROTOCOL_TRANSPORT_CONTINUITY_UNTRUSTED')
         try:
             before=self.adapter.checkpoint_runtime_context()
