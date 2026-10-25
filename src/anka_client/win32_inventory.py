@@ -81,7 +81,8 @@ class NativeWindowsInventory:
     def _inspect(self,hwnd:int,title:str)->WindowObservation:
         c=self.c;wt=self.wt
         pid=wt.DWORD(0)
-        if not self.user.GetWindowThreadProcessId(hwnd,c.byref(pid)) or not pid.value:
+        thread_id=int(self.user.GetWindowThreadProcessId(hwnd,c.byref(pid)) or 0)
+        if thread_id<=0 or not pid.value:
             raise OSError('PROCESS_ID_UNAVAILABLE')
         h=self.kernel.OpenProcess(0x1000,False,pid.value)
         if not h:raise OSError('PROCESS_OPEN_FAILED')
@@ -107,7 +108,9 @@ class NativeWindowsInventory:
             # handle open also prevents the old process object from disappearing
             # and its PID being recycled during this snapshot.
             final_pid=wt.DWORD(0)
-            if not self.user.GetWindowThreadProcessId(hwnd,c.byref(final_pid)) or final_pid.value!=pid.value:
+            final_thread_id=int(self.user.GetWindowThreadProcessId(hwnd,c.byref(final_pid)) or 0)
+            if (final_thread_id<=0 or final_pid.value!=pid.value
+                    or final_thread_id!=thread_id):
                 raise OSError('WINDOW_PROCESS_CHANGED_DURING_INSPECTION')
             width=int(rect.right-rect.left);height=int(rect.bottom-rect.top)
         finally:
