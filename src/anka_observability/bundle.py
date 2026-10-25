@@ -327,7 +327,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     confidence=_loss_adjusted_confidence(retained_confidence,bool(loss))
     if finding is None:
         diagnosis=_legacy_diagnosis(code,boundary,detail,observer,events)
-        diagnosis.update({'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope})
+        diagnosis.update({'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope,
+                          'cause_scope':finding_scope,'candidate_causes_may_be_incomplete':bool(loss)})
         first_boundary='NOT_ESTABLISHED';confidence='UNDETERMINED';missing=[]
         next_test='Collect the earliest missing authoritative boundary evidence.'
     else:
@@ -335,7 +336,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
                       'SINGLE_SUPPORTED' if len(finding.candidate_causes)==1 else 'UNDETERMINED')
         diagnosis={'schema_version':2,**finding.to_dict(),'confidence':confidence,
                    'retained_evidence_confidence':retained_confidence,
-                   'cause_status':cause_status,'explanation':sanitize(detail),
+                   'cause_status':cause_status,'cause_scope':finding_scope,
+                   'candidate_causes_may_be_incomplete':bool(loss),'explanation':sanitize(detail),
                    'observer_dropped_events':observer.dropped,'observer_errors':list(observer.errors[-10:]),
                    'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope}
         first_boundary=finding.first_divergent_boundary
@@ -384,7 +386,8 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'observed_export_boundary':sanitize(boundary),
         'suspected_owner':sanitize(suspected_owner),'confidence':confidence,
         'retained_evidence_confidence':retained_confidence,
-        'cause_status':cause_status,'candidate_causes':candidate_causes,
+        'cause_status':cause_status,'cause_scope':finding_scope,
+        'candidate_causes_may_be_incomplete':bool(loss),'candidate_causes':candidate_causes,
         'supporting_evidence_ids':support_refs,'control_state':sanitize(control_state),
         'physical_input_state':physical_input_state,'expected_missing_evidence':missing,
         'next_targeted_verification':sanitize(next_test),'diagnostic_coverage_gaps':gap_summary,
@@ -412,7 +415,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         + f'**Observed/export boundary:** {sanitize(boundary)}\n\n'
         f'**Suspected owner:** {sanitize(suspected_owner)}\n\n'
         f'**Confidence:** {confidence}\n\n'
-        f'**Cause status:** {cause_status}; candidates={sanitize(candidate_causes) if candidate_causes else "none established"}.\n\n'
+        f'**Cause status:** {cause_status}; scope={finding_scope}; candidates_may_be_incomplete={bool(loss)}; candidates={sanitize(candidate_causes) if candidate_causes else "none established"}.\n\n'
         f'**Supporting evidence IDs:** {sanitize(support_refs) if support_refs else "none uniquely identified"}\n\n'
         f'**Control state:** {sanitize(control_state)}\n\n'
         f'**Physical input state:** {physical_input_state} (from included diagnostic evidence; UNKNOWN if absent).\n\n'
@@ -532,7 +535,8 @@ def _emergency_artifacts(observer,code:str,boundary:str,detail:str,control_state
         'analysis/gpt_summary.json':_serialized({'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(code),
             'finding_status':'ADVANCED_ANALYSIS_UNAVAILABLE','first_divergence':'NOT_ESTABLISHED',
             'observed_export_boundary':sanitize(boundary),'suspected_owner':'anka_observability','confidence':'UNDETERMINED',
-            'cause_status':'UNDETERMINED','candidate_causes':[],
+            'cause_status':'UNDETERMINED','cause_scope':'INCLUDED_EVIDENCE_ONLY',
+            'candidate_causes_may_be_incomplete':True,'candidate_causes':[],
             'supporting_evidence_ids':list(diagnosis.get('supporting_evidence_ids',())),'control_state':sanitize(control_state),
             'physical_input_state':physical_input_state,'expected_missing_evidence':['ADVANCED_FORENSIC_ANALYSIS'],
             'next_targeted_verification':'Rerun forensic analysis offline.','diagnostic_coverage_gaps':['observability=EXPORT_FAILED'],
@@ -1031,6 +1035,11 @@ def verify_incident(path:Path)->dict:
                                 expected_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
                                 if gpt.get('first_divergence_scope')!=expected_scope:
                                     add('GPT_SUMMARY_DIVERGENCE_SCOPE_MISMATCH')
+                                expected_cause_scope='INCLUDED_EVIDENCE_ONLY' if recorder_loss else 'COMPLETE_RECORDER_EVIDENCE'
+                                if gpt.get('cause_scope')!=expected_cause_scope:
+                                    add('GPT_SUMMARY_CAUSE_SCOPE_MISMATCH')
+                                if gpt.get('candidate_causes_may_be_incomplete') is not bool(recorder_loss):
+                                    add('GPT_SUMMARY_CAUSE_COMPLETENESS_MISMATCH')
                                 if status=='DIVERGENCE_CANDIDATE' and recorder_loss:
                                     expected_confidence=_loss_adjusted_confidence(retained_gpt_confidence,True)
                                     if gpt_confidence!=expected_confidence:
@@ -1060,6 +1069,8 @@ def verify_incident(path:Path)->dict:
                         diag_causes=diag.get('candidate_causes',[]) or []
                         if gpt.get('candidate_causes')!=list(diag_causes) or gpt.get('cause_status')!=diag.get('cause_status'):
                             add('GPT_SUMMARY_CAUSE_MISMATCH')
+                        if gpt.get('cause_scope')!=diag.get('cause_scope') or gpt.get('candidate_causes_may_be_incomplete')!=diag.get('candidate_causes_may_be_incomplete'):
+                            add('GPT_SUMMARY_CAUSE_SCOPE_DIAGNOSIS_MISMATCH')
             if 'analysis/historical_matches.json' in names:
                 try:history=json.loads(z.read('analysis/historical_matches.json'))
                 except (json.JSONDecodeError,UnicodeDecodeError):history={};add('HISTORICAL_MATCHES_JSON_INVALID')
