@@ -1,0 +1,343 @@
+"""Chat 03 regressions for Canonical/Live-State authority invariants.
+
+These tests are intentionally adversarial: stale epochs, invalid boundaries and
+damaged provenance receipts must fail closed without mutating durable truth.
+"""
+from __future__ import annotations
+
+from dataclasses import replace
+from hashlib import sha256
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import sqlite3
+import unittest
+
+from anka_canonical.writer import CanonicalWriter, ExactReleaseAdmissionPolicy, CanonicalIntegrityError
+from anka_contracts.canonical import CanonicalCandidate
+from anka_contracts.evidence import EvidencePointer
+from anka_contracts.protocol import CandidateCanonicalBatch, DecoderCheckpointRef, WireEnvelopeRef
+from anka_live_state.projector import StateProjector, LiveStateProjectionError
+
+
+ADAPTER='adapter-agent03-r1'
+BUILD='Dofus TEST-AGENT03'
+CONN='conn-agent03'
+ACCOUNT='acct-cra'
+CLIENT='client-cra'
+
+
+def evidence(tag:str)->EvidencePointer:
+    digest=sha256(tag.encode()).hexdigest()
+    return EvidencePointer(
+        'evidence-'+digest[:32],
+        'OBSERVED_EXTERNAL',
+        'anka_protocol',
+        'agent03:'+digest,
+        digest,
+        'AGENT03_TEST',
+    )
+
+
+def candidate(tag:str,kind:str,payload:dict[str,object],*,account=ACCOUNT,client=CLIENT,
+              world_epoch=None,fight_epoch=None,turn_epoch=None)->CanonicalCandidate:
+    digest=sha256(tag.encode()).hexdigest()[:32]
+    encoded=tuple(
+        (key,str(value).lower() if isinstance(value,bool) else str(value))
+        for key,value in payload.items()
+    )
+    return CanonicalCandidate(
+        'candidate-'+digest,
+        kind,
+        account,
+        client,
+        (evidence(tag),),
+        encoded,
+        world_epoch,
+        fight_epoch,
+        turn_epoch,
+    )
+
+
+def batch(n:int,*candidates,health='SEMANTIC_CANDIDATES')->CandidateCanonicalBatch:
+    source=WireEnvelopeRef(
+        'capture-agent03',
+        CONN,
+        1,
+        n,
+        'server_to_client',
+        'COMPLETE',
+        sha256(f'payload-{n}'.encode()).hexdigest(),
+    )
+    checkpoint=DecoderCheckpointRef(
+        ADAPTER,
+        BUILD,
+        CONN,
+        1,
+        n,
+        sha256(f'checkpoint-{n}'.encode()).hexdigest(),
+    )
+    return CandidateCanonicalBatch(
+        f'batch-agent03-{n}',
+        ADAPTER,
+        BUILD,
+        CONN,
+        1,
+        (source,),
+        tuple(candidates),
+        health,
+        checkpoint,
+    )
+
+
+def fight_bootstrap(n=1):
+    return batch(
+        n,
+        candidate(f'{n}-fight','FIGHT_STARTED',{'fight_id':'fight-1','map_id':200},fight_epoch=1),
+        candidate(f'{n}-actor','ACTOR_SEEN',{'actor_id':41},fight_epoch=1),
+        candidate(f'{n}-ap','ACTOR_RESOURCE_ABSOLUTE',{'actor_id':41,'resource':'AP','value':11},fight_epoch=1),
+        candidate(f'{n}-mp','ACTOR_RESOURCE_ABSOLUTE',{'actor_id':41,'resource':'MP','value':6},fight_epoch=1),
+    )
+
+
+class Agent03AuthorityTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=TemporaryDirectory()
+        self.path=Path(self.tmp.name)/'canonical.sqlite3'
+        self.projector=StateProjector()
+        self.policy=ExactReleaseAdmissionPolicy(((ADAPTER,BUILD),))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def writer(self):
+        return CanonicalWriter(self.path,projector=self.projector,admission_policy=self.policy)
+
+    def test_world_actor_presence_and_position_are_valid_without_active_fight(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(batch(
+                1,
+                candidate('world-map','WORLD_MAP_OBSERVED',{'map_id':100},world_epoch=1),
+                candidate('world-actor','ACTOR_SEEN',{'actor_id':41},world_epoch=1),
+                candidate('world-cell','ACTOR_CELL_OBSERVED',{'actor_id':41,'cell_id':215},world_epoch=1),
+            ))
+            snapshot=writer.snapshot(ACCOUNT)
+            self.assertEqual(snapshot.world_map.value,100)
+            self.assertEqual(snapshot.fight_phase.status,'UNKNOWN')
+            self.assertEqual(snapshot.actors[0].cell.status,'KNOWN')
+            self.assertEqual(snapshot.actors[0].cell.value,215)
+
+    def test_actor_world_observation_is_blocked_after_fight_end_until_reentry(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2, candidate('fight-end-world-gap','FIGHT_ENDED',{},fight_epoch=1),
+            ))
+            before=writer.snapshot(ACCOUNT).to_dict()
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_FIGHT_NOT_ACTIVE'):
+                writer.commit_candidate_batch(batch(
+                    3, candidate('ambiguous-world-cell','ACTOR_CELL_OBSERVED',
+                                 {'actor_id':41,'cell_id':216}),
+                ))
+            self.assertEqual(writer.snapshot(ACCOUNT).to_dict(),before)
+            writer.commit_candidate_batch(batch(
+                4, candidate('world-reentry','WORLD_REENTRY',{'map_id':101},world_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                5,
+                candidate('world-actor-after-reentry','ACTOR_SEEN',{'actor_id':41},world_epoch=1),
+                candidate('world-cell-after-reentry','ACTOR_CELL_OBSERVED',{'actor_id':41,'cell_id':216},world_epoch=1),
+            ))
+            snapshot=writer.snapshot(ACCOUNT)
+            self.assertEqual(snapshot.fight_phase.status,'UNKNOWN')
+            self.assertEqual(snapshot.actors[0].cell.value,216)
+
+    def test_wrong_fight_epoch_rolls_back_without_mutating_current_state(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            before=writer.snapshot(ACCOUNT).to_dict()
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_FIGHT_EPOCH_MISMATCH'):
+                writer.commit_candidate_batch(batch(
+                    2,
+                    candidate('wrong-fight-hp','ACTOR_HP_ABSOLUTE',
+                              {'actor_id':41,'value':90,'maximum':100},fight_epoch=2),
+                ))
+            self.assertEqual(writer.current_cursor(),4)
+            self.assertEqual(writer.snapshot(ACCOUNT).to_dict(),before)
+
+    def test_second_fight_start_cannot_overwrite_an_active_fight(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_FIGHT_ALREADY_ACTIVE'):
+                writer.commit_candidate_batch(batch(
+                    2,
+                    candidate('overlap-fight','FIGHT_STARTED',
+                              {'fight_id':'fight-2','map_id':201},fight_epoch=2),
+                ))
+            snapshot=writer.snapshot(ACCOUNT)
+            self.assertEqual(snapshot.fight_id.value,'fight-1')
+            self.assertEqual(snapshot.fight_phase.value,'ACTIVE')
+            self.assertEqual(writer.current_cursor(),4)
+
+    def test_turn_epoch_jump_is_rejected(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_TURN_EPOCH_MISMATCH'):
+                writer.commit_candidate_batch(batch(
+                    2,
+                    candidate('jump-turn','TURN_STARTED',{'actor_id':41},
+                              fight_epoch=1,turn_epoch=3),
+                ))
+            self.assertEqual(writer.snapshot(ACCOUNT).turn_epoch,0)
+
+    def test_first_turn_bootstrap_values_remain_unbound_until_owner_turn(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            before=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((before.ap.status,before.ap.turn_epoch),('KNOWN',None))
+            self.assertEqual((before.mp.status,before.mp.turn_epoch),('KNOWN',None))
+            writer.commit_candidate_batch(batch(
+                2,
+                candidate('turn-1','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            after=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((after.ap.status,after.ap.turn_epoch),('KNOWN',None))
+            self.assertEqual((after.mp.status,after.mp.turn_epoch),('KNOWN',None))
+
+    def test_old_turn_absolute_value_cannot_remain_known_in_new_turn(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2,
+                candidate('turn-1','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                3,
+                candidate('turn-end-1','TURN_ENDED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                4,
+                candidate('ap-next','ACTOR_RESOURCE_ABSOLUTE',
+                          {'actor_id':41,'resource':'AP','value':12},
+                          fight_epoch=1,turn_epoch=2),
+            ))
+            writer.commit_candidate_batch(batch(
+                5,
+                candidate('turn-2','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=2),
+            ))
+            actor=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((actor.ap.status,actor.ap.value,actor.ap.turn_epoch),('KNOWN',12,2))
+            self.assertEqual(actor.mp.status,'STALE')
+
+    def test_untagged_between_turn_absolute_is_not_borrowed_into_next_turn(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2,
+                candidate('turn-1','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                3,
+                candidate('turn-end-1','TURN_ENDED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                4,
+                candidate('late-untagged-ap','ACTOR_RESOURCE_ABSOLUTE',
+                          {'actor_id':41,'resource':'AP','value':13},
+                          fight_epoch=1),
+            ))
+            between=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((between.ap.status,between.ap.value,between.ap.turn_epoch),('KNOWN',13,1))
+            writer.commit_candidate_batch(batch(
+                5,
+                candidate('turn-2','TURN_STARTED',{'actor_id':41},
+                          fight_epoch=1,turn_epoch=2),
+            ))
+            after=writer.snapshot(ACCOUNT).actors[0]
+            self.assertEqual((after.ap.status,after.ap.value,after.ap.turn_epoch),('STALE',13,2))
+            self.assertEqual(after.ap.invalidation_reason,'TURN_STARTED_WITHOUT_CURRENT_ABSOLUTE_EVIDENCE')
+
+    def test_new_fight_resets_complete_looking_actor_state(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            writer.commit_candidate_batch(batch(
+                2,
+                candidate('hp','ACTOR_HP_ABSOLUTE',{'actor_id':41,'value':100,'maximum':100},fight_epoch=1),
+                candidate('cell','ACTOR_CELL_OBSERVED',{'actor_id':41,'cell_id':315},fight_epoch=1),
+                candidate('cooldowns','ACTOR_COOLDOWN_SNAPSHOT',{'actor_id':41,'cooldowns':'[[1001,2]]'},fight_epoch=1),
+                candidate('ready','READY_OBSERVED',{'actor_id':41,'ready':True},fight_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                3,
+                candidate('fight-end','FIGHT_ENDED',{},fight_epoch=1),
+            ))
+            writer.commit_candidate_batch(batch(
+                4,
+                candidate('fight-2','FIGHT_STARTED',{'fight_id':'fight-2','map_id':201},fight_epoch=2),
+                candidate('fight-2-actor','ACTOR_SEEN',{'actor_id':41},fight_epoch=2),
+            ))
+            actor=writer.snapshot(ACCOUNT).actors[0]
+            self.assertTrue(all(
+                getattr(actor,name).status=='UNKNOWN'
+                for name in ('cell','hp','max_hp','ap','mp','range','cooldowns','ready')
+            ))
+
+    def test_cross_client_state_cannot_contaminate_existing_account_snapshot(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+            with self.assertRaisesRegex(LiveStateProjectionError,'STATE_ACCOUNT_CLIENT_SCOPE_MISMATCH'):
+                writer.commit_candidate_batch(batch(
+                    2,
+                    candidate('other-client','ACTOR_SEEN',{'actor_id':99},
+                              client='client-cra-restarted',fight_epoch=1),
+                ))
+            self.assertEqual(writer.current_cursor(),4)
+            self.assertEqual(writer.snapshot(ACCOUNT).client_instance_id,CLIENT)
+
+    def test_nonobservational_candidate_evidence_cannot_be_laundered_into_authority(self):
+        base=candidate('heuristic','FIGHT_STARTED',{'fight_id':'fight-1'},fight_epoch=1)
+        for classification,source_system in (
+            ('HEURISTIC','anka_protocol'),
+            ('STALE','anka_protocol'),
+            ('CONFLICTING','anka_protocol'),
+            ('MISSING','anka_protocol'),
+            ('AUTHORITY_COMMITTED','anka_protocol'),
+            ('OBSERVED_EXTERNAL','anka_observability'),
+        ):
+            with self.subTest(classification=classification,source_system=source_system):
+                pointer=replace(base.evidence[0],classification=classification,source_system=source_system)
+                untrusted=replace(base,evidence=(pointer,))
+                with self.writer() as writer:
+                    with self.assertRaisesRegex(Exception,'CANONICAL_CANDIDATE_EVIDENCE_UNTRUSTED'):
+                        writer.commit_candidate_batch(batch(1,untrusted))
+                    self.assertEqual(writer.current_cursor(),0)
+                    self.assertIsNone(writer.snapshot(ACCOUNT))
+
+    def test_deleted_batch_receipt_is_detected_on_reopen(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+        db=sqlite3.connect(self.path)
+        db.execute('DELETE FROM canonical_batches')
+        db.commit()
+        db.close()
+        with self.assertRaisesRegex(CanonicalIntegrityError,'CANONICAL_BATCH_COVERAGE_INVALID'):
+            self.writer()
+
+    def test_batch_release_metadata_tamper_is_detected_on_reopen(self):
+        with self.writer() as writer:
+            writer.commit_candidate_batch(fight_bootstrap())
+        db=sqlite3.connect(self.path)
+        db.execute("UPDATE canonical_batches SET adapter_release_id='adapter-tampered'")
+        db.commit()
+        db.close()
+        with self.assertRaisesRegex(CanonicalIntegrityError,'CANONICAL_BATCH_EVENT_PROVENANCE_MISMATCH'):
+            self.writer()
+
+
+if __name__=='__main__':
+    unittest.main()
