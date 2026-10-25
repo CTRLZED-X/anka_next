@@ -544,14 +544,19 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
         if e.producer_seq<=req.producer_seq or e.event_name!='coordination.turn_owner_proved':continue
         if req.fight_epoch is not None and e.fight_epoch!=req.fight_epoch:continue
         if req.turn_epoch is not None and (e.turn_epoch is None or e.turn_epoch<=req.turn_epoch):continue
-        if req.account_id is not None and e.account_id==req.account_id:continue
+        # The first authoritative newer party-owner proof is the handoff result.
+        # Do not skip a same-account reappearance and borrow a later different
+        # owner, which would hide a missing/incorrect immediate party handoff.
         next_owner=e;break
     refs=[e.event_id for e in (req,admitted,sent,settled,unresolved,next_owner) if e is not None]
+    same_owner_reproved=(next_owner is not None and req.account_id is not None and next_owner.account_id==req.account_id)
     if unresolved is not None:status='OUTCOME_UNRESOLVED'
     elif admitted is None:status='REQUEST_NOT_ADMITTED'
     elif sent is None:status='ADMITTED_NO_SEND_EVIDENCE'
     elif sent.event_name=='execution.input_not_sent':status='NOT_SENT'
     elif settled is None and next_owner is None:status='SENT_AWAITING_SETTLEMENT_AND_NEXT_OWNER'
+    elif same_owner_reproved and settled is None:status='SAME_OWNER_REPROVED_AWAITING_SETTLEMENT'
+    elif same_owner_reproved:status='SETTLED_SAME_OWNER_REPROVED'
     elif settled is None:status='NEXT_OWNER_PROVED_AWAITING_SETTLEMENT'
     elif next_owner is None:status='SETTLED_NEXT_OWNER_MISSING'
     else:status='COMPLETE'
@@ -563,7 +568,7 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
             'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
             'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
                                        key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
-            'note':'Next-owner proof is correlated to the same fight and a strictly newer turn epoch; this is diagnostic evidence only.'}
+            'note':'The first authoritative newer party-owner proof in the same fight is used; same-account reappearance is explicit and later owners cannot be borrowed. This is diagnostic evidence only.'}
 
 READY_TRACE = OperationTraceSpec('READY', (
     # Requested intent alone is not proof that any input was sent.
