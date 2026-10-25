@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 
 namespace DofusCoordinateBridge;
@@ -43,6 +45,16 @@ public sealed class ProjectedPoint
 public static class CoordinateProjection
 {
     private static IntPtr _cachedWindow;
+
+    public static string ClientInstanceId(DofusWindowMetrics window, int processId, long processStartTime)
+    {
+        if (window == null || window.Handle == IntPtr.Zero || processId <= 0 || processStartTime <= 0)
+            throw new ArgumentException("A valid Dofus window/process generation is required.");
+        var raw = $"{window.Handle.ToInt64()}:{processId}:{processStartTime}";
+        using var sha256 = SHA256.Create();
+        var digest = Convert.ToHexString(sha256.ComputeHash(Encoding.ASCII.GetBytes(raw))).ToLowerInvariant();
+        return "client-" + digest[..16];
+    }
 
     public static bool TryGetDofusWindow(out DofusWindowMetrics metrics, out string error)
     {
@@ -301,6 +313,7 @@ public static class CoordinateProjection
             return string.Join("|", new[]
             {
                 SafeInstanceId(camera).ToString(),
+                window.Handle.ToInt64().ToString(),
                 Round(transform.position.x), Round(transform.position.y), Round(transform.position.z),
                 Round(transform.rotation.x), Round(transform.rotation.y),
                 Round(transform.rotation.z), Round(transform.rotation.w),

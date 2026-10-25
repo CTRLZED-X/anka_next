@@ -9,11 +9,14 @@ import http.client
 import json
 from typing import Any
 from anka_contracts.client import WindowObservation
+from anka_client.discovery import client_instance_id
 from anka_contracts.bridge import (BridgeEvidenceReader, BridgeIdentityReport,
                                    BridgeMapReport, CellProjection)
 
 MAX_REPLY_BYTES = 2_000_000
 MAX_MAP_CELLS = 560
+EXPECTED_BRIDGE_VERSION = '2.2.77'
+EXPECTED_BRIDGE_ADAPTER = 'dofus_authoritative_cell_map'
 _ALLOWED_ROUTES = frozenset({'/health', '/coordinates'})
 
 
@@ -60,7 +63,10 @@ class LocalLoopbackBridgeReader:
             if type(obj) is not dict:
                 raise BridgeTransportRejected('BRIDGE_NON_OBJECT_JSON')
             return obj
-        except (OSError, TimeoutError, UnicodeError, json.JSONDecodeError, http.client.HTTPException) as exc:
+        except BridgeTransportRejected:
+            raise
+        except (OSError, TimeoutError, UnicodeError, ValueError, RecursionError,
+                json.JSONDecodeError, http.client.HTTPException) as exc:
             raise BridgeTransportRejected('BRIDGE_COMMUNICATION_FAILED:'+type(exc).__name__) from exc
         finally:
             conn.close()
@@ -80,6 +86,25 @@ def _bool(obj: dict, key: str) -> bool:
     return v
 
 
+def _window_fingerprint(obj: dict, window: WindowObservation) -> str:
+    """Bind bridge projection evidence to the exact HWND, not only its process."""
+    value = obj.get('windowFingerprint')
+    if type(value) is not str or not value:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_MISSING')
+    parts = value.split(':')
+    if len(parts) != 5:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_INVALID')
+    try:
+        hwnd, _left, _top, width, height = (int(item, 10) for item in parts)
+    except (TypeError, ValueError) as exc:
+        raise ValueError('BRIDGE_WINDOW_FINGERPRINT_INVALID') from exc
+    if hwnd != window.hwnd:
+        raise ValueError('BRIDGE_WINDOW_HANDLE_MISMATCH')
+    if (width, height) != (window.client_width, window.client_height):
+        raise ValueError('BRIDGE_WINDOW_SIZE_MISMATCH')
+    return value
+
+
 class ReadOnlyBridgeInspector:
     def __init__(self, reader: BridgeEvidenceReader):
         self.reader = reader
@@ -96,6 +121,12 @@ class ReadOnlyBridgeInspector:
                 raise ValueError('WINDOW_NOT_USABLE')
             if health.get('source') != 'unity_bridge' or not _bool(health, 'available'):
                 raise ValueError('BRIDGE_HEALTH_UNTRUSTED')
+            if health.get('bridgeVersion') != EXPECTED_BRIDGE_VERSION:
+                raise ValueError('BRIDGE_VERSION_UNEXPECTED')
+            if health.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
+                raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
+            if health.get('clientInstanceId') != client_instance_id(window):
+                raise ValueError('BRIDGE_CLIENT_INSTANCE_MISMATCH')
             m = health.get('loadedMapId')
             mg = health.get('mapGeneration')
             cg = health.get('coordinateGeneration')
@@ -153,7 +184,7 @@ class ReadOnlyBridgeInspector:
                     _int(snapshot, 'projectableCellCount') != MAX_MAP_CELLS or
                     _int(snapshot, 'generatedCoordinateCount') != len(cells)):
                 raise ValueError('COORDINATE_COUNT_MISMATCH')
-            parsed=[];seen=set()
+            parsed=[];seen=set();actual_projectable=0;actual_verified=0;actual_inside=0
             for c in cells:
                 if type(c) is not dict:
                     raise ValueError('INVALID_COORDINATE_ENTRY')
@@ -164,6 +195,9 @@ class ReadOnlyBridgeInspector:
                 is_inside=_bool(c,'insideCameraViewport')
                 projected=_bool(c,'projectable')
                 verified=_bool(c,'sourceVerified')
+                actual_projectable+=int(projected)
+                actual_verified+=int(verified)
+                actual_inside+=int(is_inside)
                 cx=c.get('clientX'); cy=c.get('clientY')
                 if projected and is_inside and verified:
                     if type(cx) is not int or type(cy) is not int or not (0 <= cx < w and 0 <= cy < h):
@@ -171,6 +205,12 @@ class ReadOnlyBridgeInspector:
                 elif type(cx) is not int or type(cy) is not int:
                     cx=-1;cy=-1
                 parsed.append(CellProjection(i,cx,cy,is_inside,verified,projected))
+            if actual_projectable != _int(snapshot,'projectableCellCount'):
+                raise ValueError('COORDINATE_PROJECTABLE_COUNT_MISMATCH')
+            if actual_verified != len(cells):
+                raise ValueError('COORDINATE_CELL_SOURCE_UNVERIFIED')
+            if 'insideViewportCount' in snapshot and actual_inside != _int(snapshot,'insideViewportCount'):
+                raise ValueError('COORDINATE_VIEWPORT_COUNT_MISMATCH')
             return BridgeMapReport('RESEARCH_PROJECTION_ONLY','WINDOW_AND_COORDINATE_SCOPE_MATCH',
                 map_id,obs[4],obs[5],(w,h),tuple(sorted(parsed,key=lambda c:c.cell_id)),True)
         except (BridgeTransportRejected, ValueError, TypeError, KeyError, AttributeError) as exc:
@@ -192,16 +232,26 @@ class ReadOnlyBridgeInspector:
         if (h.get('status') != 'MAP_COORDINATES_READY' or h.get('source') != 'unity_bridge'
                 or not _bool(h,'available') or not _bool(h,'sourceVerified')):
             raise ValueError('BRIDGE_SOURCE_UNVERIFIED')
+        if h.get('bridgeVersion') != EXPECTED_BRIDGE_VERSION:
+            raise ValueError('BRIDGE_VERSION_UNEXPECTED')
+        if h.get('adapter') != EXPECTED_BRIDGE_ADAPTER:
+            raise ValueError('BRIDGE_ADAPTER_UNEXPECTED')
+        if h.get('clientInstanceId') != client_instance_id(w):
+            raise ValueError('BRIDGE_CLIENT_INSTANCE_MISMATCH')
         # The Unity bridge may have different client/window metrics after a UI
         # resize. Never map old coordinates onto a new window.
         if _int(h,'sourceClientWidth',minimum=1)!=w.client_width or _int(h,'sourceClientHeight',minimum=1)!=w.client_height:
             raise ValueError('BRIDGE_WINDOW_SIZE_MISMATCH')
         # The bridge can refresh a camera projection without changing the map.
         # Its signatures are part of the coherence fence across three reads.
+        # WindowFingerprint is also independently checked against the target HWND;
+        # process identity alone is insufficient when one process has >1 window.
         signatures = []
-        for name in ('projectionSignature','windowFingerprint','cameraFingerprint','cellGeometryFingerprint'):
+        for name in ('projectionSignature','cameraFingerprint','cellGeometryFingerprint'):
             value = h.get(name)
             if type(value) is not str or not value:
                 raise ValueError('BRIDGE_PROJECTION_SIGNATURE_MISSING')
             signatures.append(value)
-        return (pid,creation,bridge_port,map_id,map_gen,coord_gen,*signatures)
+        window_fingerprint = _window_fingerprint(h, w)
+        return (pid,creation,bridge_port,map_id,map_gen,coord_gen,
+                signatures[0],window_fingerprint,signatures[1],signatures[2])

@@ -17,5 +17,12 @@ live game authorization. Physical input additionally requires later viewport,
 DPI, calibration, spell-slot, protocol and action-authority gates. Inventory
 errors conservatively prevent identity binding. `clients.bat` is diagnostic only.
 
+Unity bridge discovery is also read-only and fail-closed. On Windows, localhost
+bridge health is accepted only when the Windows TCP owner table proves that the
+loopback listener belongs to the claimed Dofus PID. Projection readiness then
+requires the bridge's `windowFingerprint` HWND and client size to match the
+exact `WindowObservation`; PID/process-generation equality alone is not enough.
+Same-process multi-window ambiguity is blocked rather than guessed.
+
 Windows client inspection is not tested on Windows in this build; ctypes
 implementation remains subject to real host smoke tests.

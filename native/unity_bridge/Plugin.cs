@@ -8,7 +8,7 @@ public sealed class Plugin : BasePlugin
 {
     public const string PluginGuid = "local.dofus.coordinatebridge";
     public const string PluginName = "Dofus Coordinate Bridge";
-    public const string PluginVersion = "2.2.76";
+    public const string PluginVersion = "2.2.77";
 
     public override void Load()
     {

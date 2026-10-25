@@ -7,7 +7,7 @@ from __future__ import annotations
 from anka_contracts.bridge import BridgeMapReport
 from anka_contracts.client import (AccountBinding, CalibrationProfileEvidence,
     ClientContextProof, ClientGenerationVector, LoadoutEvidence, WindowObservation)
-from anka_client.discovery import generation_id
+from anka_client.discovery import client_instance_id, generation_id
 
 BREED_CLASS_IDS={'CRA':9,'ENUTROF':3}
 MAX_LOADOUT_AGE_NS=3_000_000_000
@@ -20,6 +20,10 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     reasons=[]
     gid=generation_id(window)
     if binding.state!='IDENTITY_MATCHED': reasons.append('IDENTITY_NOT_PROVEN')
+    if binding.name.strip().casefold()!=character_name.strip().casefold():
+        reasons.append('BINDING_CHARACTER_MISMATCH')
+    if binding.evidence_source not in ('LIVE_PROTOCOL','UNITY_BRIDGE'):
+        reasons.append('BINDING_EVIDENCE_SOURCE_UNTRUSTED')
     if binding.generation_id!=gid or binding.hwnd!=window.hwnd or binding.pid!=window.pid:
         reasons.append('WINDOW_GENERATION_MISMATCH')
     breed=(binding.breed or '').upper() or None
@@ -29,20 +33,37 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     if window.foreground is not True: reasons.append('WINDOW_FOREGROUND_UNKNOWN' if window.foreground is None else 'WINDOW_NOT_FOREGROUND')
     if window.occluded is not False: reasons.append('WINDOW_OCCLUSION_UNKNOWN' if window.occluded is None else 'WINDOW_OCCLUDED')
     if (window.client_width,window.client_height)!=(calibration.width,calibration.height): reasons.append('CALIBRATION_WINDOW_SIZE_MISMATCH')
-    if calibration.expected_dpi is not None and window.dpi!=calibration.expected_dpi: reasons.append('CALIBRATION_DPI_MISMATCH')
-    if window.dpi is None: reasons.append('WINDOW_DPI_UNKNOWN')
-    if not calibration.current_client_certified: reasons.append('CALIBRATION_NOT_CURRENT_CERTIFIED')
+    calibration_dpi=calibration.expected_dpi
+    if calibration.current_client_certified is True:
+        if type(calibration_dpi) is not int or calibration_dpi<=0:
+            reasons.append('CALIBRATION_DPI_UNPROVEN')
+        elif window.dpi!=calibration_dpi:
+            reasons.append('CALIBRATION_DPI_MISMATCH')
+    elif calibration_dpi is not None:
+        if type(calibration_dpi) is not int or calibration_dpi<=0:
+            reasons.append('CALIBRATION_DPI_UNPROVEN')
+        elif window.dpi!=calibration_dpi:
+            reasons.append('CALIBRATION_DPI_MISMATCH')
+    if type(window.dpi) is not int or window.dpi<=0: reasons.append('WINDOW_DPI_UNKNOWN')
+    if calibration.current_client_certified is not True: reasons.append('CALIBRATION_NOT_CURRENT_CERTIFIED')
     map_id=map_gen=coord_gen=None
     if bridge is None:
         reasons.append('BRIDGE_PROJECTION_MISSING')
-    elif bridge.status!='RESEARCH_PROJECTION_ONLY' or not bridge.source_verified:
+    elif bridge.status!='RESEARCH_PROJECTION_ONLY' or bridge.source_verified is not True:
         reasons.append('BRIDGE_PROJECTION_UNPROVEN')
     else:
-        if not bridge.live_certified: reasons.append('BRIDGE_NOT_CURRENT_CERTIFIED')
-        map_id=bridge.map_id;map_gen=bridge.map_generation;coord_gen=bridge.coordinate_generation
-        if bridge.client_size!=(window.client_width,window.client_height): reasons.append('BRIDGE_WINDOW_SIZE_MISMATCH')
+        if bridge.live_certified is not True: reasons.append('BRIDGE_NOT_CURRENT_CERTIFIED')
+        raw_generation=(bridge.map_id,bridge.map_generation,bridge.coordinate_generation)
+        if all(type(v) is int and v>0 for v in raw_generation):
+            map_id,map_gen,coord_gen=raw_generation
+        else:
+            reasons.append('BRIDGE_GENERATION_MISSING')
+        size=bridge.client_size
+        if (type(size) is not tuple or len(size)!=2
+                or any(type(v) is not int or v<=0 for v in size)
+                or size!=(window.client_width,window.client_height)):
+            reasons.append('BRIDGE_WINDOW_SIZE_MISMATCH')
         if expected_map_id is not None and map_id!=expected_map_id: reasons.append('BRIDGE_MAP_MISMATCH')
-        if not all(type(v) is int and v>0 for v in (map_id,map_gen,coord_gen)): reasons.append('BRIDGE_GENERATION_MISSING')
     loadout_gen=None
     if loadout is None:
         reasons.append('LOADOUT_EVIDENCE_MISSING')
@@ -59,7 +80,9 @@ def build_client_context(*, character_name: str, binding: AccountBinding,
     vector=ClientGenerationVector(gid,window.client_width,window.client_height,window.dpi,
         window.foreground,window.occluded,map_id,map_gen,coord_gen,calibration.generation,loadout_gen)
     status='PROVEN' if not reasons else ('BLOCKED' if any(x.endswith('MISMATCH') or x in {
-        'IDENTITY_NOT_PROVEN','CLASS_NOT_PROVEN','WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND','WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
+        'IDENTITY_NOT_PROVEN','BINDING_EVIDENCE_SOURCE_UNTRUSTED','CLASS_NOT_PROVEN',
+        'CALIBRATION_DPI_UNPROVEN','WINDOW_MINIMIZED','WINDOW_NOT_FOREGROUND',
+        'WINDOW_OCCLUDED','LOADOUT_NOT_PROVEN'} for x in reasons) else 'INCOMPLETE')
     return ClientContextProof(character_name,breed,class_id,vector,status,reasons,False)
 
 
@@ -84,12 +107,14 @@ def identity_from_binding(*, account_id: str, binding: AccountBinding, window: W
                           bridge_generation: int | None=None):
     """Build the stable ClientIdentity DTO from independently matched evidence."""
     from anka_contracts.client import ClientIdentity
-    if binding.state!='IDENTITY_MATCHED' or binding.generation_id!=generation_id(window):
+    if (binding.state!='IDENTITY_MATCHED' or binding.generation_id!=generation_id(window)
+            or binding.hwnd!=window.hwnd or binding.pid!=window.pid
+            or binding.evidence_source not in ('LIVE_PROTOCOL','UNITY_BRIDGE')):
         raise ValueError('CLIENT_IDENTITY_NOT_PROVEN')
     breed=(binding.breed or '').upper(); class_id=BREED_CLASS_IDS.get(breed)
     if class_id is None: raise ValueError('CLIENT_CLASS_NOT_PROVEN')
     account_token=account_id if account_id.startswith('acct-') else 'acct-'+account_id
     gid=binding.generation_id
-    return ClientIdentity('client-'+gid[4:20],account_token,window.pid,window.process_created_100ns,window.hwnd,
+    return ClientIdentity(client_instance_id(window),account_token,window.pid,window.process_created_100ns,window.hwnd,
         int(gid[4:20],16),'PROVEN',class_id,'PROVEN',bridge_generation,
         window.client_width,window.client_height,window.dpi)

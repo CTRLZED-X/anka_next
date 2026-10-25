@@ -36,6 +36,12 @@ def generation_id(window: WindowObservation) -> str:
     return 'win-' + hashlib.sha256(value).hexdigest()[:32]
 
 
+def client_instance_id(window: WindowObservation) -> str:
+    """Stable physical-client ID derived from the exact Windows generation."""
+    gid=generation_id(window)
+    return 'client-'+gid[4:20]
+
+
 def _matches_generation(window: WindowObservation, identity: CharacterEvidence) -> bool:
     return (window.hwnd == identity.hwnd and window.pid == identity.pid
             and window.process_created_100ns == identity.process_created_100ns)
@@ -92,27 +98,33 @@ def bind_accounts(names: tuple[str, ...], scan: WindowScan,
         if w.minimized:
             results.append(AccountBinding(name,'BLOCKED','WINDOW_MINIMIZED',**common))
             continue
-        matched=[e for e in evidence if e.character_name.strip().casefold()==name.strip().casefold() and
-                 e.hwnd == w.hwnd and e.pid == w.pid]
-        if not matched:
+        scoped=[e for e in evidence if e.character_name.strip().casefold()==name.strip().casefold() and
+                e.hwnd == w.hwnd and e.pid == w.pid]
+        if not scoped:
             results.append(AccountBinding(name,'PENDING','NO_AUTHORITATIVE_CHARACTER_EVIDENCE',**common))
             continue
-        if len(matched) != 1:
-            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
-            continue
-        e=matched[0]
-        if not _matches_generation(w,e):
+        exact=[e for e in scoped if _matches_generation(w,e)]
+        if not exact:
             results.append(AccountBinding(name,'BLOCKED','PROCESS_GENERATION_CHANGED',**common))
             continue
-        if e.source not in SUPPORTED_EVIDENCE_SOURCES:
+        trusted=[e for e in exact if e.source in SUPPORTED_EVIDENCE_SOURCES]
+        if not trusted:
             results.append(AccountBinding(name,'BLOCKED','UNTRUSTED_EVIDENCE_SOURCE',**common))
             continue
-        if not _evidence_current(e,scan):
+        current=[e for e in trusted if _evidence_current(e,scan)]
+        if not current:
             results.append(AccountBinding(name,'BLOCKED','STALE_OR_FUTURE_IDENTITY_EVIDENCE',**common))
             continue
-        if e.breed.strip().upper() not in SUPPORTED_BREEDS:
+        supported=[e for e in current if e.breed.strip().upper() in SUPPORTED_BREEDS]
+        if not supported:
             results.append(AccountBinding(name,'BLOCKED','UNSUPPORTED_BREED',**common))
             continue
+        # Exact duplicate observations do not create a second authority claim.
+        supported=list(dict.fromkeys(supported))
+        if len(supported) != 1:
+            results.append(AccountBinding(name,'BLOCKED','AMBIGUOUS_CHARACTER_EVIDENCE',**common))
+            continue
+        e=supported[0]
         results.append(AccountBinding(name,'IDENTITY_MATCHED','INDEPENDENT_IDENTITY_MATCH',
                    breed=e.breed.strip().upper(),evidence_source=e.source,**common))
     # Even apparently distinct names must never control the same physical client.

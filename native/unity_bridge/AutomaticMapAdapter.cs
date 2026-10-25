@@ -46,10 +46,38 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
     public AutomaticMapAdapter(ManualLogSource log)
     {
         _log = log;
+        var generationEpoch = NewGenerationEpoch();
+        _mapGeneration = generationEpoch;
+        _coordinateGeneration = generationEpoch;
         _rootDirectory = Path.Combine(Paths.ConfigPath, "DofusCoordinateBridge");
         _evidenceDirectory = Path.Combine(_rootDirectory, "evidence");
         Directory.CreateDirectory(_evidenceDirectory);
     }
+
+    private static long NewGenerationEpoch()
+    {
+        var bytes = new byte[8];
+        using (var rng = RandomNumberGenerator.Create())
+            rng.GetBytes(bytes);
+        var raw = BitConverter.ToUInt64(bytes, 0);
+        // Keep the sign bit and one additional high bit clear, leaving an
+        // enormous monotonic increment range for this bridge instance.
+        return (long)(raw & 0x3fffffffffffffffUL) + 1;
+    }
+
+    private static string LocalClientInstanceId(DofusWindowMetrics window)
+    {
+        using var process = System.Diagnostics.Process.GetCurrentProcess();
+        return CoordinateProjection.ClientInstanceId(
+            window, process.Id, process.StartTime.ToFileTimeUtc());
+    }
+
+    private bool ObservationMatchesWindow(DofusWindowMetrics window) =>
+        _lastObservation != null
+        && string.Equals(
+            _lastObservation.ClientInstanceId,
+            LocalClientInstanceId(window),
+            StringComparison.Ordinal);
 
     public string Name => "dofus_authoritative_cell_map";
     private string CurrentSourceMember => _source?.SelectedMember ?? AuthoritativeCellPositionSource.SourceMember;
@@ -70,6 +98,15 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             _lastError = windowError;
             _coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
             _coordinateByCell.Clear();
+            _lastProjectionSignature = null;
+            return;
+        }
+        if (!ObservationMatchesWindow(window))
+        {
+            _lastError = "The current Dofus window no longer matches the accepted canonical client instance.";
+            _coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
+            _coordinateByCell.Clear();
+            _lastProjectionSignature = null;
             return;
         }
         var signature = ProjectionSignature(window);
@@ -95,6 +132,11 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "The follower-local live map projection is not verified.");
         if (!CoordinateProjection.TryGetDofusWindow(out var window, out var windowError))
             return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", windowError ?? "Dofus window is unavailable.");
+        if (!ObservationMatchesWindow(window))
+            return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "Canonical observation does not belong to the current follower window.");
+        if (!CoordinateTableIsReady()
+            || !string.Equals(ProjectionSignature(window), _lastProjectionSignature, StringComparison.Ordinal))
+            return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "Projection generation is not current for the follower window.");
 
         var target = _scanner.FindFightEntryTarget(request, _camera, _source.SnapshotPositions(), out var diagnostics);
         if (target == null)
@@ -110,6 +152,9 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 "FIGHT_ENTRY_NOT_PROVEN",
                 "The proven fight-entry object is not safely projectable in the current follower viewport.",
                 diagnostics);
+
+        if (!string.Equals(ProjectionSignature(window), _lastProjectionSignature, StringComparison.Ordinal))
+            return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "Projection changed during fight-entry resolution.");
 
         return new FightEntryResponse
         {
@@ -175,6 +220,10 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
 
         if (!CoordinateProjection.TryGetDofusWindow(out var responseWindow, out var responseWindowError))
             return Failure(request, "COORDINATE_NOT_READY", responseWindowError ?? "Dofus window is unavailable for coordinate-space validation.");
+        if (!ObservationMatchesWindow(responseWindow))
+            return Failure(request, "COORDINATE_NOT_READY", "Canonical observation does not belong to the current Dofus window.");
+        if (!string.Equals(ProjectionSignature(responseWindow), _lastProjectionSignature, StringComparison.Ordinal))
+            return Failure(request, "COORDINATE_NOT_READY", "Projection changed after the cached coordinate table was validated.");
 
         ActorRuntimeMatch targetEntity = null;
         ProjectedPoint targetProjection = null;
@@ -262,6 +311,9 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 || !targetProjection.InsideCameraViewport)
                 return Failure(request, "TARGET_ENTITY_OUTSIDE_VIEWPORT", "The exact target Unity entity is not safely projectable in the current viewport.");
         }
+
+        if (!string.Equals(ProjectionSignature(responseWindow), _lastProjectionSignature, StringComparison.Ordinal))
+            return Failure(request, "COORDINATE_NOT_READY", "Projection changed during coordinate resolution.");
 
         return new CoordinateResponse
         {
@@ -355,12 +407,66 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
     public ObservationResponse Observe(RuntimeObservation observation)
     {
         if (observation == null || !observation.MapId.HasValue || observation.MapId.Value < 0)
-            return new ObservationResponse
+            return RejectObservation("INVALID_OBSERVATION", "map_id is required.");
+        if (string.IsNullOrWhiteSpace(observation.AccountId)
+            || !observation.AccountId.StartsWith("acct-", StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(observation.ClientInstanceId)
+            || !observation.ClientInstanceId.StartsWith("client-", StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(observation.ObservationSignature)
+            || string.IsNullOrWhiteSpace(observation.ObservationEpoch)
+            || !observation.CanonicalRevision.HasValue
+            || observation.CanonicalRevision.Value < 0)
+            return RejectObservation(
+                "INVALID_OBSERVATION_PROVENANCE",
+                "account_id, client_instance_id, observation_signature, observation_epoch and a non-negative canonical_revision are required.");
+
+        if (!CoordinateProjection.TryGetDofusWindow(out var identityWindow, out var identityWindowError))
+            return RejectObservation(
+                "OBSERVATION_CLIENT_WINDOW_UNAVAILABLE",
+                identityWindowError ?? "The local Dofus window is unavailable for observation identity validation.");
+        if (!string.Equals(
+                observation.ClientInstanceId,
+                LocalClientInstanceId(identityWindow),
+                StringComparison.Ordinal))
+            return RejectObservation(
+                "OBSERVATION_CLIENT_INSTANCE_MISMATCH",
+                "Canonical observation client_instance_id does not identify this Dofus window/process generation.");
+
+        var observationEpochChanged = false;
+        if (_lastObservation != null)
+        {
+            if (!string.Equals(observation.AccountId, _lastObservation.AccountId, StringComparison.Ordinal)
+                || !string.Equals(observation.ClientInstanceId, _lastObservation.ClientInstanceId, StringComparison.Ordinal))
+                return RejectObservation(
+                    "OBSERVATION_SCOPE_MISMATCH",
+                    "Observation account/client scope does not match the bridge's latched canonical scope.");
+
+            observationEpochChanged = !string.Equals(
+                observation.ObservationEpoch,
+                _lastObservation.ObservationEpoch,
+                StringComparison.Ordinal);
+
+            if (!observationEpochChanged)
             {
-                Status = "INVALID_OBSERVATION",
-                Accepted = false,
-                Error = "map_id is required."
-            };
+                if (observation.CanonicalRevision.Value < _lastObservation.CanonicalRevision.Value)
+                    return RejectObservation(
+                        "STALE_OBSERVATION_REVISION",
+                        "Canonical observation revision moved backwards.");
+                if (observation.CanonicalRevision.Value == _lastObservation.CanonicalRevision.Value)
+                {
+                    if (!string.Equals(
+                            observation.ObservationSignature,
+                            _lastObservationSignature,
+                            StringComparison.Ordinal))
+                        return RejectObservation(
+                            "OBSERVATION_REVISION_CONFLICT",
+                            "The same canonical revision was received with a different observation signature.");
+                    // Exact duplicate delivery is idempotent. Do not repeat discovery,
+                    // rewrite evidence, increment counters, or mutate projection state.
+                    return Observation(false, 0, null);
+                }
+            }
+        }
         var stableWorld = !observation.ActiveFight
                           && string.Equals(observation.MapContext, "WORLD", StringComparison.OrdinalIgnoreCase);
         if (!observation.ActiveFight && !stableWorld)
@@ -377,7 +483,8 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             observation.ObservationSignature,
             StringComparison.Ordinal);
         var mapContext = observation.ActiveFight ? "FIGHT" : "WORLD";
-        var generationChanged = _loadedMapId != mapId
+        var generationChanged = observationEpochChanged
+                                || _loadedMapId != mapId
                                 || !string.Equals(_lastMapContext, mapContext, StringComparison.Ordinal)
                                 || (observation.ActiveFight && _lastCombatId != observation.CombatId);
         if (generationChanged)
@@ -458,7 +565,11 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
         string windowError = null;
         DofusWindowMetrics window = null;
         if (_source.ProjectionVerified && _camera != null
-            && CoordinateProjection.TryGetDofusWindow(out window, out windowError))
+            && CoordinateProjection.TryGetDofusWindow(out window, out windowError)
+            && string.Equals(
+                observation.ClientInstanceId,
+                LocalClientInstanceId(window),
+                StringComparison.Ordinal))
         {
             var signature = ProjectionSignature(window);
             var cachedWalkableIds = _coordinateByCell.Values
@@ -482,16 +593,27 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
         }
         else
         {
-            _lastError = _source.ProjectionVerified
-                ? _camera == null
-                    ? "The gameplay camera could not be proven from authoritative cell projections."
-                    : "The Dofus window could not be read."
-                : _source.LastError;
+            var wrongClientWindow = _source.ProjectionVerified
+                && _camera != null
+                && window != null
+                && !string.Equals(
+                    observation.ClientInstanceId,
+                    LocalClientInstanceId(window),
+                    StringComparison.Ordinal);
+            _lastError = wrongClientWindow
+                ? "The current Dofus window does not match the canonical observation client instance."
+                : _source.ProjectionVerified
+                    ? _camera == null
+                        ? "The gameplay camera could not be proven from authoritative cell projections."
+                        : "The Dofus window could not be read."
+                    : _source.LastError;
             if (!string.IsNullOrWhiteSpace(windowError)) _lastError = windowError;
             _coordinates = NotReadyCoordinates(
                 _source.ProjectionVerified ? "COORDINATE_NOT_READY" : "CELL_POSITION_SOURCE_UNVERIFIED",
                 _lastError);
             _coordinateByCell.Clear();
+            if (_source.ProjectionVerified && _camera != null)
+                _lastProjectionSignature = null;
         }
         if (changed || !string.Equals(_coordinates.Status, "MAP_COORDINATES_READY", StringComparison.Ordinal))
             evidenceFile = WriteEvidence(matches);
@@ -676,6 +798,7 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 _lastError = $"Dofus did not return a projectable authoritative position for cell {cellId}.";
                 _coordinates = NotReadyCoordinates("COORDINATE_NOT_READY", _lastError);
                 _coordinateByCell.Clear();
+                _lastProjectionSignature = null;
                 return;
             }
             var inside = point.InsideCameraViewport;
@@ -758,6 +881,17 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
         using var sha256 = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(builder.ToString());
         return Convert.ToHexString(sha256.ComputeHash(bytes)).ToLowerInvariant();
+    }
+
+    private static ObservationResponse RejectObservation(string status, string error)
+    {
+        return new ObservationResponse
+        {
+            Status = status,
+            Accepted = false,
+            Changed = false,
+            Error = error
+        };
     }
 
     private ObservationResponse Observation(bool changed, int actorsMatched, string evidenceFile)
