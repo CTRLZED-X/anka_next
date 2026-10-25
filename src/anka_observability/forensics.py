@@ -528,64 +528,138 @@ def workflow_lifecycle_report(events:Iterable[DiagnosticEvent|dict])->dict:
 
 
 def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
-    """Reconstruct the newest END_TURN attempt and next-owner proof."""
+    """Reconstruct the newest END_TURN attempt and its post-send owner proof.
+
+    A Coordination owner observation is causal handoff evidence only when it is
+    strictly later than authoritative ``execution.input_sent`` for the selected
+    END_TURN action. Owner observations before that boundary remain diagnostic
+    context but can never make the handoff successful.
+    """
     ordered=sorted((_as_event(e) for e in events),key=lambda e:(e.producer_seq,e.monotonic_ns,e.event_id))
     requests=[e for e in ordered if e.event_name=='workflow.action_requested' and e.payload.get('kind')=='END_TURN'
               and isinstance(e.action_id,str)]
     if not requests:
         return {'schema_version':1,'status':'NOT_APPLICABLE','action_id':None,'event_ids':[],
                 'next_owner_event_id':None,'next_owner_account_id':None,
+                'noncausal_owner_event_ids':[],
                 'note':'No END_TURN action request was included in the bounded incident timeline.'}
-    req=requests[-1];items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
+
+    # Diagnose the newest END_TURN attempt only. Older attempts cannot lend their
+    # send/settlement evidence to a later request.
+    req=requests[-1]
+    items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
     admitted=next((e for e in items if e.event_name=='execution.admitted'),None)
     starts=[e for e in items if e.event_name=='execution.send_started']
-    send_results=[e for e in items if e.event_name in ('execution.input_sent','execution.input_may_have_sent','execution.input_not_sent','execution.exception_after_send_started')]
+    started=starts[0] if starts else None
+    send_results=[e for e in items if e.event_name in (
+        'execution.input_sent','execution.input_may_have_sent','execution.input_not_sent',
+        'execution.exception_after_send_started')]
+    authoritative_sends=[e for e in send_results if e.event_name=='execution.input_sent']
+    uncertain_sends=[e for e in send_results if e.event_name in (
+        'execution.input_may_have_sent','execution.exception_after_send_started')]
+    not_sent_results=[e for e in send_results if e.event_name=='execution.input_not_sent']
+    sent=authoritative_sends[0] if authoritative_sends else None
+    send_result=send_results[0] if send_results else None
     settlements=[e for e in items if e.event_name=='execution.outcome_settled']
-    unresolveds=[e for e in items if e.event_name in ('execution.outcome_terminal_unresolved','execution.outcome_missing')]
+    unresolveds=[e for e in items if e.event_name in (
+        'execution.outcome_terminal_unresolved','execution.outcome_missing')]
     pre_send_terminals=[e for e in items if e.event_name in (
         'execution.rejected','execution.ledger_prepare_rejected','execution.input_lease_rejected',
         'execution.final_guard_rejected','execution.exception_before_send')]
-    sent=send_results[0] if send_results else None
     settled=settlements[-1] if settlements else None
     unresolved=unresolveds[-1] if unresolveds else None
+
     hard_conflicts=[]
     if len({e.event_name for e in send_results})>1:hard_conflicts.append('CONFLICTING_SEND_RESULTS')
+    if len(authoritative_sends)>1:hard_conflicts.append('MULTIPLE_INPUT_SENT')
     if settlements and unresolveds:hard_conflicts.append('CONFLICTING_TERMINAL_OUTCOMES')
     attempts={e.attempt_id for e in starts+send_results+settlements+unresolveds if e.attempt_id is not None}
     if len(attempts)>1:hard_conflicts.append('ATTEMPT_ID_CONFLICT')
     if pre_send_terminals and (starts or send_results):hard_conflicts.append('PRE_SEND_TERMINAL_WITH_SEND')
+    # Missing bounded edges are not automatically contradictory. Impossible
+    # ordering among edges that are actually included is.
+    if admitted is not None and started is not None and started.producer_seq<=admitted.producer_seq:
+        hard_conflicts.append('SEND_STARTED_BEFORE_ADMISSION')
+    if admitted is not None and sent is not None and sent.producer_seq<=admitted.producer_seq:
+        hard_conflicts.append('INPUT_SENT_BEFORE_ADMISSION')
+    if started is not None and sent is not None and sent.producer_seq<=started.producer_seq:
+        hard_conflicts.append('INPUT_SENT_BEFORE_SEND_STARTED')
+    if sent is not None and settled is not None and settled.producer_seq<=sent.producer_seq:
+        hard_conflicts.append('SETTLEMENT_BEFORE_INPUT_SENT')
     hard_conflicts=sorted(dict.fromkeys(hard_conflicts))
-    next_owner=None
+
+    # Owner proof is intentionally anchored to authoritative physical send, never
+    # to request/admission/send-start. Wrong-fight and non-newer-turn rows are not
+    # eligible. The first eligible post-send owner proof wins even when it proves
+    # the same owner again; later different-owner rows cannot be borrowed.
+    owner_scope_candidates=[]
     for e in ordered:
         if e.producer_seq<=req.producer_seq or e.event_name!='coordination.turn_owner_proved':continue
+        if e.evidence_class!='AUTHORITY_COMMITTED':continue
         if req.fight_epoch is not None and e.fight_epoch!=req.fight_epoch:continue
         if req.turn_epoch is not None and (e.turn_epoch is None or e.turn_epoch<=req.turn_epoch):continue
-        # The first authoritative newer party-owner proof is the handoff result.
-        # Do not skip a same-account reappearance and borrow a later different
-        # owner, which would hide a missing/incorrect immediate party handoff.
-        next_owner=e;break
-    refs=[e.event_id for e in (req,admitted,sent,settled,unresolved,next_owner) if e is not None]
-    same_owner_reproved=(next_owner is not None and req.account_id is not None and next_owner.account_id==req.account_id)
-    if hard_conflicts:status='CONTRADICTORY_ACTION_EVIDENCE'
-    elif unresolved is not None:status='OUTCOME_UNRESOLVED'
-    elif admitted is None:status='REQUEST_NOT_ADMITTED'
-    elif sent is None:status='ADMITTED_NO_SEND_EVIDENCE'
-    elif sent.event_name=='execution.input_not_sent':status='NOT_SENT'
-    elif settled is None and next_owner is None:status='SENT_AWAITING_SETTLEMENT_AND_NEXT_OWNER'
-    elif same_owner_reproved and settled is None:status='SAME_OWNER_REPROVED_AWAITING_SETTLEMENT'
-    elif same_owner_reproved:status='SETTLED_SAME_OWNER_REPROVED'
-    elif settled is None:status='NEXT_OWNER_PROVED_AWAITING_SETTLEMENT'
-    elif next_owner is None:status='SETTLED_NEXT_OWNER_MISSING'
-    else:status='COMPLETE'
-    return {'schema_version':1,'status':status,'action_id':req.action_id,'account_id':req.account_id,
-            'fight_epoch':req.fight_epoch,'turn_epoch':req.turn_epoch,'event_ids':refs,
-            'send_event_id':sent.event_id if sent else None,'settlement_event_id':settled.event_id if settled else None,
-            'next_owner_event_id':next_owner.event_id if next_owner else None,
-            'next_owner_account_id':next_owner.account_id if next_owner else None,
-            'next_turn_epoch':next_owner.turn_epoch if next_owner else None,'hard_conflicts':hard_conflicts,
-            'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
-                                       key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
-            'note':'The first authoritative newer party-owner proof in the same fight is used; same-account reappearance is explicit and later owners cannot be borrowed. This is diagnostic evidence only.'}
+        owner_scope_candidates.append(e)
+
+    next_owner=None
+    if sent is not None:
+        next_owner=next((e for e in owner_scope_candidates if e.producer_seq>sent.producer_seq),None)
+    noncausal_owner=[e for e in owner_scope_candidates
+                     if sent is None or e.producer_seq<=sent.producer_seq]
+
+    refs=[]
+    for e in (req,admitted,started,send_result,sent,settled,unresolved,next_owner):
+        if e is not None and e.event_id not in refs:refs.append(e.event_id)
+    for e in noncausal_owner[:16]:
+        if e.event_id not in refs:refs.append(e.event_id)
+
+    same_owner_reproved=(next_owner is not None and req.account_id is not None
+                         and next_owner.account_id==req.account_id)
+    if hard_conflicts:
+        status='CONTRADICTORY_ACTION_EVIDENCE'
+    elif unresolved is not None:
+        status='OUTCOME_UNRESOLVED'
+    elif sent is None and not_sent_results:
+        status='NOT_SENT'
+    elif sent is None and uncertain_sends:
+        status='MAY_HAVE_SENT_UNRESOLVED'
+    elif sent is None and started is not None:
+        status='SEND_STARTED_NO_AUTHORITATIVE_SEND'
+    elif sent is None and admitted is not None:
+        status='ADMITTED_NO_SEND_EVIDENCE'
+    elif sent is None:
+        status='REQUEST_NOT_ADMITTED'
+    elif admitted is None:
+        status='SENT_ADMISSION_EVIDENCE_MISSING'
+    elif settled is None and next_owner is None:
+        status='SENT_AWAITING_SETTLEMENT_AND_NEXT_OWNER'
+    elif same_owner_reproved and settled is None:
+        status='SAME_OWNER_REPROVED_AWAITING_SETTLEMENT'
+    elif same_owner_reproved:
+        status='SETTLED_SAME_OWNER_REPROVED'
+    elif settled is None:
+        status='NEXT_OWNER_PROVED_AWAITING_SETTLEMENT'
+    elif next_owner is None:
+        status='SETTLED_NEXT_OWNER_MISSING'
+    else:
+        status='COMPLETE'
+
+    return {
+        'schema_version':1,'status':status,'action_id':req.action_id,'account_id':req.account_id,
+        'fight_epoch':req.fight_epoch,'turn_epoch':req.turn_epoch,'event_ids':refs,
+        'admission_event_id':admitted.event_id if admitted else None,
+        'send_started_event_id':started.event_id if started else None,
+        'send_result_event_id':send_result.event_id if send_result else None,
+        'send_event_id':sent.event_id if sent else None,
+        'settlement_event_id':settled.event_id if settled else None,
+        'next_owner_event_id':next_owner.event_id if next_owner else None,
+        'next_owner_account_id':next_owner.account_id if next_owner else None,
+        'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
+        'noncausal_owner_event_ids':[e.event_id for e in noncausal_owner[:16]],
+        'hard_conflicts':hard_conflicts,
+        'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
+                                   key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
+        'note':'Only the first authoritative same-fight/newer-turn owner proof strictly after execution.input_sent is causal handoff evidence. Pre-send owner evidence is context only; same-owner reproof is explicit and later owners cannot be borrowed.'
+    }
 
 READY_TRACE = OperationTraceSpec('READY', (
     # Requested intent alone is not proof that any input was sent.
