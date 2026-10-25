@@ -52,6 +52,16 @@ class FakeReader:
         raise AssertionError('coordinates should not be read after a health/window mismatch')
 
 
+class SequenceReader:
+    def __init__(self, *payloads: dict):
+        self.payloads = list(payloads)
+
+    def get_json(self, port: int, route: str) -> dict:
+        if not self.payloads:
+            raise AssertionError('unexpected extra bridge read')
+        return dict(self.payloads.pop(0))
+
+
 class Agent04ClientUnityCoherenceTests(unittest.TestCase):
     def test_projection_ready_requires_exact_hwnd_not_only_pid_generation(self):
         target = window(33)
@@ -78,6 +88,36 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         )
         self.assertEqual((result.status, result.reason),
                          ('BLOCKED', 'BRIDGE_WINDOW_HANDLE_MISMATCH'))
+
+    def test_map_generation_change_between_health_reads_blocks(self):
+        first = health()
+        second = health()
+        second['mapGeneration'] += 1
+        result = ReadOnlyBridgeInspector(SequenceReader(first, {}, second)).inspect_coordinates(
+            window(), PORT, map_id=42042
+        )
+        self.assertEqual((result.status, result.reason),
+                         ('BLOCKED', 'BRIDGE_GENERATION_CHANGED_DURING_READ'))
+
+    def test_camera_change_between_health_reads_blocks(self):
+        first = health()
+        second = health()
+        second['cameraFingerprint'] = 'camera-2'
+        result = ReadOnlyBridgeInspector(SequenceReader(first, {}, second)).inspect_coordinates(
+            window(), PORT, map_id=42042
+        )
+        self.assertEqual((result.status, result.reason),
+                         ('BLOCKED', 'BRIDGE_GENERATION_CHANGED_DURING_READ'))
+
+    def test_zero_projection_generation_never_counts_ready(self):
+        stale = health()
+        stale['coordinateGeneration'] = 0
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: FakeReader(stale),
+        )
+        self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
+        self.assertEqual(report['projection_ready_matches'], 0)
 
     def test_native_projection_signature_tracks_hwnd_replacement(self):
         source = (ROOT / 'native/unity_bridge/CoordinateProjection.cs').read_text(encoding='utf8')
