@@ -538,9 +538,23 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
                 'note':'No END_TURN action request was included in the bounded incident timeline.'}
     req=requests[-1];items=[e for e in ordered if e.action_id==req.action_id and e.producer_seq>=req.producer_seq]
     admitted=next((e for e in items if e.event_name=='execution.admitted'),None)
-    sent=next((e for e in items if e.event_name in ('execution.input_sent','execution.input_may_have_sent','execution.input_not_sent')),None)
-    settled=next((e for e in items if e.event_name=='execution.outcome_settled'),None)
-    unresolved=next((e for e in items if e.event_name in ('execution.outcome_terminal_unresolved','execution.outcome_missing')),None)
+    starts=[e for e in items if e.event_name=='execution.send_started']
+    send_results=[e for e in items if e.event_name in ('execution.input_sent','execution.input_may_have_sent','execution.input_not_sent','execution.exception_after_send_started')]
+    settlements=[e for e in items if e.event_name=='execution.outcome_settled']
+    unresolveds=[e for e in items if e.event_name in ('execution.outcome_terminal_unresolved','execution.outcome_missing')]
+    pre_send_terminals=[e for e in items if e.event_name in (
+        'execution.rejected','execution.ledger_prepare_rejected','execution.input_lease_rejected',
+        'execution.final_guard_rejected','execution.exception_before_send')]
+    sent=send_results[0] if send_results else None
+    settled=settlements[-1] if settlements else None
+    unresolved=unresolveds[-1] if unresolveds else None
+    hard_conflicts=[]
+    if len({e.event_name for e in send_results})>1:hard_conflicts.append('CONFLICTING_SEND_RESULTS')
+    if settlements and unresolveds:hard_conflicts.append('CONFLICTING_TERMINAL_OUTCOMES')
+    attempts={e.attempt_id for e in starts+send_results+settlements+unresolveds if e.attempt_id is not None}
+    if len(attempts)>1:hard_conflicts.append('ATTEMPT_ID_CONFLICT')
+    if pre_send_terminals and (starts or send_results):hard_conflicts.append('PRE_SEND_TERMINAL_WITH_SEND')
+    hard_conflicts=sorted(dict.fromkeys(hard_conflicts))
     next_owner=None
     for e in ordered:
         if e.producer_seq<=req.producer_seq or e.event_name!='coordination.turn_owner_proved':continue
@@ -552,7 +566,8 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
         next_owner=e;break
     refs=[e.event_id for e in (req,admitted,sent,settled,unresolved,next_owner) if e is not None]
     same_owner_reproved=(next_owner is not None and req.account_id is not None and next_owner.account_id==req.account_id)
-    if unresolved is not None:status='OUTCOME_UNRESOLVED'
+    if hard_conflicts:status='CONTRADICTORY_ACTION_EVIDENCE'
+    elif unresolved is not None:status='OUTCOME_UNRESOLVED'
     elif admitted is None:status='REQUEST_NOT_ADMITTED'
     elif sent is None:status='ADMITTED_NO_SEND_EVIDENCE'
     elif sent.event_name=='execution.input_not_sent':status='NOT_SENT'
@@ -567,7 +582,7 @@ def turn_handoff_report(events:Iterable[DiagnosticEvent|dict])->dict:
             'send_event_id':sent.event_id if sent else None,'settlement_event_id':settled.event_id if settled else None,
             'next_owner_event_id':next_owner.event_id if next_owner else None,
             'next_owner_account_id':next_owner.account_id if next_owner else None,
-            'next_turn_epoch':next_owner.turn_epoch if next_owner else None,
+            'next_turn_epoch':next_owner.turn_epoch if next_owner else None,'hard_conflicts':hard_conflicts,
             'physical_input_state':max((e.physical_input_state for e in items if e.physical_input_state),default='UNKNOWN',
                                        key=lambda s:{'NOT_SENT':0,'UNKNOWN':1,'SEND_STARTED':2,'SENT':3,'MAY_HAVE_SENT':4}.get(s,-1)),
             'note':'The first authoritative newer party-owner proof in the same fight is used; same-account reappearance is explicit and later owners cannot be borrowed. This is diagnostic evidence only.'}
