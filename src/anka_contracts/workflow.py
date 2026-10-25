@@ -212,7 +212,10 @@ class WorkflowSnapshot:
             if self.phase!='RECOVERING' or self.recovery_generation!=self.active_recovery_generation:
                 raise ValueError('WORKFLOW_ACTIVE_RECOVERY_GENERATION_MISMATCH')
         if self.last_processed_tick is not None:
-            if type(self.last_processed_tick) is not int or self.last_processed_tick<self.phase_started_tick:
+            # Durable accepted-time authority is independent from the semantic
+            # phase/watchdog origin.  A safe resume may start a new phase clock
+            # above the persisted watermark before another signal is accepted.
+            if type(self.last_processed_tick) is not int or self.last_processed_tick<0:
                 raise ValueError('INVALID_WORKFLOW_LAST_PROCESSED_TICK')
 
 
