@@ -8,7 +8,6 @@ from __future__ import annotations
 from pathlib import Path
 from datetime import datetime
 import json
-import re
 
 from anka_contracts.diagnostics import DiagnosticEvent, now_utc
 from anka_observability.api import (
