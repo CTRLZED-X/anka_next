@@ -226,18 +226,25 @@ class PartyCoordinatorService:
             local_conflicts.append('TURN_OWNER_SKEW')
         elif len(owner_values)==1:
             owner_actor=next(iter(owner_values))
-            if owner_actor not in self._by_actor:
+            owner_binding=self._by_actor.get(owner_actor)
+            if owner_binding is None:
                 local_conflicts.append('TURN_OWNER_NOT_PARTY_MEMBER')
+            elif not owner_binding.required:
+                # Required-member observations cannot authorize input for a
+                # non-required roster member whose own state is outside the
+                # authoritative quorum.  Fail closed instead of constructing a
+                # snapshot whose owner is absent from its authoritative members.
+                local_conflicts.append('TURN_OWNER_NOT_REQUIRED_MEMBER')
             elif (len(obs)==len(required)
                   and all(o is not None and o.turn_owner_actor_id==owner_actor for o in obs)
                   and all_turn_epochs_proven):
-                turn_owner=self._by_actor[owner_actor].account_id
+                turn_owner=owner_binding.account_id
             else:
                 missing=tuple(sorted(set(missing)|{'TURN_OWNER_NOT_COHERENT'}))
         else:
             missing=tuple(sorted(set(missing)|{'TURN_OWNER_UNPROVEN'}))
         if not obs or any(o is None for o in obs):phase='WAIT_MEMBERS'
-        elif local_conflicts and any(x in local_conflicts for x in ('FIGHT_ID_CONFLICT','FIGHT_EPOCH_CONFLICT','FIGHT_MAP_CONFLICT','TURN_OWNER_NOT_PARTY_MEMBER')):phase='BLOCKED'
+        elif local_conflicts and any(x in local_conflicts for x in ('FIGHT_ID_CONFLICT','FIGHT_EPOCH_CONFLICT','FIGHT_MAP_CONFLICT','TURN_OWNER_NOT_PARTY_MEMBER','TURN_OWNER_NOT_REQUIRED_MEMBER')):phase='BLOCKED'
         elif not same:phase='WAIT_SAME_FIGHT'
         elif not join.satisfied:phase='WAIT_JOIN'
         elif not placement.satisfied:phase='WAIT_PLACEMENT'
@@ -245,9 +252,21 @@ class PartyCoordinatorService:
         elif turn_owner is None:phase='WAIT_TURN_OWNER'
         else:phase='TURN_ACTIVE'
         member_tuple=tuple(o for o in obs if o is not None)
+        # Required members own party barriers, but optional roster members may
+        # still receive pre-turn permits. Their permission-relevant semantics
+        # therefore must participate in the opaque generation token; otherwise
+        # an optional member's authority can change while permit_generation does
+        # not, defeating stale-permit fencing.
+        optional_tuple=tuple(
+            self._observations[x.account_id]
+            for x in self._roster
+            if not x.required and x.account_id in self._observations
+        )
         semantic_obj={
             'party':self.party_id,'party_generation':self._party_generation,'fight_epoch':fight_epoch,'fight_id':fight_id,'phase':phase,
-            'members':[o.semantic_tuple() for o in member_tuple], 'same':same,'owner':turn_owner,
+            'members':[o.semantic_tuple() for o in member_tuple],
+            'optional_members':[o.semantic_tuple() for o in optional_tuple],
+            'same':same,'owner':turn_owner,
             'join':join.satisfied,'placement':placement.satisfied,'ready':ready.satisfied,
             'missing':sorted(missing),'conflicts':sorted(set(local_conflicts)),
         }
@@ -300,6 +319,14 @@ class PartyCoordinatorService:
                 raise CoordinationRejected('ACCOUNT_NOT_IN_ROSTER')
             snap=self._build_snapshot(); member=self._observations.get(account_id)
             turn_epoch=member.turn_epoch if member is not None else 0
+            authoritative_map_id=(snap.members[0].map_id if snap.same_fight_proven and snap.members else None)
+            member_matches_fight=(
+                member is not None
+                and snap.same_fight_proven
+                and member.fight_id==snap.fight_id
+                and member.fight_epoch==snap.fight_epoch
+                and member.map_id==authoritative_map_id
+            )
 
             if scope=='TURN':
                 allowed=True;reason='PERMIT_GRANTED'
@@ -315,14 +342,19 @@ class PartyCoordinatorService:
                 if not snap.same_fight_proven:allowed=False;reason='SAME_FIGHT_UNPROVEN'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.joined is True:allowed=False;reason='ALREADY_JOINED'
-                evidence=tuple(dict.fromkeys(tuple(e for o in snap.members for e in o.evidence_ids))) if allowed else ()
+                evidence=tuple(dict.fromkeys(
+                    tuple(e for o in snap.members for e in o.evidence_ids)
+                    + (member.evidence_ids if member is not None else ())
+                )) if allowed else ()
             elif scope=='PLACEMENT':
                 allowed=True;reason='PERMIT_GRANTED'
                 if not snap.same_fight_proven:allowed=False;reason='SAME_FIGHT_UNPROVEN'
                 elif not snap.join_barrier.satisfied:allowed=False;reason='JOIN_BARRIER_UNSATISFIED'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.placed is True:allowed=False;reason='ALREADY_PLACED'
                 evidence=tuple(dict.fromkeys(snap.join_barrier.evidence_ids + (member.evidence_ids if member is not None else ()))) if allowed else ()
             elif scope=='READY':
@@ -331,6 +363,7 @@ class PartyCoordinatorService:
                 elif not snap.placement_barrier.satisfied:allowed=False;reason='PLACEMENT_BARRIER_UNSATISFIED'
                 elif snap.conflicting_evidence:allowed=False;reason=snap.conflicting_evidence[0]
                 elif member is None or member.health!='HEALTHY' or member.capture_gap:allowed=False;reason='MEMBER_STALE'
+                elif not member_matches_fight:allowed=False;reason='MEMBER_FIGHT_MISMATCH'
                 elif member.ready is True:allowed=False;reason='ALREADY_READY'
                 evidence=tuple(dict.fromkeys(snap.placement_barrier.evidence_ids + (member.evidence_ids if member is not None else ()))) if allowed else ()
             else:
