@@ -232,6 +232,17 @@ class TargetingService:
 
         if spec.need_taken_cell:
             if (
+                context.occupied_cells is not None
+                and context.proven_occupied_cells is not None
+                and not context.proven_occupied_cells.issubset(context.occupied_cells)
+            ):
+                return TargetCellResult.incomplete(
+                    missing_input="occupancy_proof_conflict",
+                    explanation=(
+                        "Positive occupancy proof contradicts the complete conservative blocker snapshot."
+                    ),
+                )
+            if (
                 context.proven_occupied_cells is not None
                 and target_cell in context.proven_occupied_cells
             ):
