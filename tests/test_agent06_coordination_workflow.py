@@ -192,6 +192,95 @@ class Agent06CoordinationLifecycleTests(unittest.TestCase):
         self.assertFalse(denied.allowed)
         self.assertEqual(denied.reason, "TURN_OWNER_NOT_REQUIRED_MEMBER")
 
+    def test_stale_turn_epoch_cannot_regress_authority(self):
+        coordinator = PartyCoordinatorService("party-agent06-stale", ROSTER)
+        coordinator.observe(observation(20, "acct-cra", turn_epoch=2, owner=42))
+        coordinator.observe(observation(21, "acct-enu", turn_epoch=2, owner=42))
+        before = coordinator.snapshot()
+        self.assertEqual(before.turn_owner_account_id, "acct-enu")
+
+        stale = MemberPartyObservation(
+            "coordobs-agent06-stale",
+            "acct-cra",
+            "client-cra",
+            41,
+            22,
+            22,
+            1,
+            1,
+            "fight-agent06",
+            190580738,
+            "FIGHT_ACTIVE",
+            41,
+            True,
+            True,
+            True,
+            "HEALTHY",
+            ("evidence-agent06-stale",),
+            False,
+        )
+        rejected = coordinator.observe(stale)
+        self.assertEqual(rejected.status, "REJECTED")
+        self.assertEqual(rejected.reason, "MEMBER_EPOCH_REGRESSION")
+        after = coordinator.snapshot()
+        self.assertEqual(after.turn_owner_account_id, "acct-enu")
+        self.assertEqual(after.semantic_progress_token, before.semantic_progress_token)
+
+    def test_permit_invalidation_changes_generation_without_changing_truth(self):
+        coordinator = PartyCoordinatorService("party-agent06-generation", ROSTER)
+        coordinator.observe(observation(30, "acct-cra", turn_epoch=1, owner=41))
+        coordinator.observe(observation(31, "acct-enu", turn_epoch=1, owner=41))
+        old = coordinator.turn_permit("party-agent06-generation", "acct-cra")
+        truth_before = coordinator.snapshot()
+        self.assertTrue(old.allowed)
+
+        coordinator.invalidate_ephemeral_permits()
+
+        truth_after = coordinator.snapshot()
+        fresh = coordinator.turn_permit("party-agent06-generation", "acct-cra")
+        self.assertTrue(fresh.allowed)
+        self.assertGreater(fresh.party_generation, old.party_generation)
+        self.assertGreater(fresh.permit_generation, old.permit_generation)
+        self.assertEqual(truth_after.fight_epoch, truth_before.fight_epoch)
+        self.assertEqual(
+            truth_after.turn_owner_account_id,
+            truth_before.turn_owner_account_id,
+        )
+        self.assertTrue(truth_after.ready_barrier.satisfied)
+
+    def test_same_revision_conflict_is_rejected_without_mutating_snapshot(self):
+        coordinator = PartyCoordinatorService("party-agent06-revision", ROSTER)
+        first = observation(40, "acct-cra", turn_epoch=1, owner=41)
+        coordinator.observe(first)
+        before = coordinator.snapshot()
+
+        conflicting = MemberPartyObservation(
+            "coordobs-agent06-revision-conflict",
+            "acct-cra",
+            "client-cra",
+            41,
+            first.canonical_cursor,
+            first.snapshot_revision,
+            first.fight_epoch,
+            first.turn_epoch,
+            first.fight_id,
+            first.map_id,
+            first.fight_phase,
+            42,
+            first.joined,
+            first.placed,
+            first.ready,
+            first.health,
+            ("evidence-agent06-revision-conflict",),
+            first.capture_gap,
+        )
+        rejected = coordinator.observe(conflicting)
+        self.assertEqual(rejected.status, "REJECTED")
+        self.assertEqual(rejected.reason, "SAME_REVISION_CONFLICT")
+        after = coordinator.snapshot()
+        self.assertEqual(after.semantic_progress_token, before.semantic_progress_token)
+        self.assertEqual(after.members, before.members)
+
     def test_ready_first_turn_and_next_owner_require_cross_account_convergence(self):
         coordinator = PartyCoordinatorService("party-agent06", ROSTER)
         coordinator.observe(observation(10, "acct-cra", turn_epoch=0, owner=None))
