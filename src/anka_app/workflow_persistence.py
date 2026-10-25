@@ -261,7 +261,13 @@ def load_workflow_signal(payload: object) -> WorkflowSignalMigration:
         )
     if version==WORKFLOW_PERSISTENCE_SCHEMA_VERSION:
         return WorkflowSignalMigration('SAFE',signal,True,('CURRENT_SIGNAL_SCHEMA',),version)
-    return WorkflowSignalMigration('SAFE',signal,True,unwrap_reasons+('LEGACY_NONRECOVERY_SIGNAL_SAFE',),version)
+    # Legacy signals remain parseable for replay/diagnostics, but old storage
+    # did not carry the Phase-A authority envelope.  Do not silently promote
+    # any historic fixture to current authoritative input.
+    return WorkflowSignalMigration(
+        'AMBIGUOUS',signal,False,
+        unwrap_reasons+('LEGACY_SIGNAL_AUTHORITY_UNPROVEN',),version
+    )
 
 
 def admit_workflow_resume(snapshot: WorkflowSnapshot, resume_tick: int) -> WorkflowAdmission:
