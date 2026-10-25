@@ -13,13 +13,44 @@ from anka_contracts.client import WindowObservation
 from anka_client.unity_bridge import LocalLoopbackBridgeReader
 
 
+def _projection_ready_for_window(health: dict, window: WindowObservation) -> bool:
+    """Require an exact HWND-bound, generation-bearing projection health record."""
+    if health.get('status') != 'MAP_COORDINATES_READY' or health.get('sourceVerified') is not True:
+        return False
+    for key in ('loadedMapId','mapGeneration','coordinateGeneration'):
+        value=health.get(key)
+        if type(value) is not int or value <= 0:
+            return False
+    if (health.get('sourceClientWidth'),health.get('sourceClientHeight')) != (
+            window.client_width,window.client_height):
+        return False
+    for key in ('projectionSignature','cameraFingerprint','cellGeometryFingerprint'):
+        value=health.get(key)
+        if type(value) is not str or not value:
+            return False
+    fingerprint=health.get('windowFingerprint')
+    if type(fingerprint) is not str:
+        return False
+    parts=fingerprint.split(':')
+    if len(parts)!=5:
+        return False
+    try:
+        hwnd,_left,_top,width,height=(int(item,10) for item in parts)
+    except (TypeError,ValueError):
+        return False
+    return hwnd==window.hwnd and (width,height)==(window.client_width,window.client_height)
+
+
 def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
                        port_start: int = 8765, port_count: int = 32,
                        reader_factory: Callable[[], object] | None = None) -> dict:
     if not (1 <= port_start <= 65535) or not (1 <= port_count <= 64) or port_start + port_count - 1 > 65535:
         raise ValueError('INVALID_BRIDGE_PORT_RANGE')
-    generations={(w.pid,w.process_created_100ns) for w in windows
-                 if w.pid > 0 and w.process_created_100ns > 0}
+    windows_by_process={}
+    for w in windows:
+        if w.pid > 0 and w.process_created_100ns > 0 and w.hwnd > 0:
+            windows_by_process.setdefault((w.pid,w.process_created_100ns),[]).append(w)
+    generations=set(windows_by_process)
     factory=reader_factory or (lambda: LocalLoopbackBridgeReader(timeout_seconds=.20))
 
     def one(port: int):
@@ -32,15 +63,21 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
                 return ('MALFORMED',None,False)
             generation=(pid,created)
             matched=generation if generation in generations else None
-            projection=(matched is not None and health.get('status') == 'MAP_COORDINATES_READY'
-                        and health.get('sourceVerified') is True
-                        and type(health.get('loadedMapId')) is int)
+            if matched is None:
+                return ('VALID',None,False)
+            candidates=windows_by_process[matched]
+            # One bridge instance is process-scoped. If the same process owns
+            # multiple candidate game windows, process identity alone cannot say
+            # which HWND the native projection selected.
+            if len(candidates)!=1:
+                return ('AMBIGUOUS_WINDOW',matched,False)
+            projection=_projection_ready_for_window(health,candidates[0])
             return ('VALID',matched,projection)
         except Exception:
             return None
 
     valid=ready_count=unmatched=0
-    matched=[];ready=[]
+    matched=[];ready=[];ambiguous_window_generations=set()
     workers=min(12,port_count)
     with ThreadPoolExecutor(max_workers=workers,thread_name_prefix='anka-bridge-probe') as pool:
         futures=[pool.submit(one,p) for p in range(port_start,port_start+port_count)]
@@ -48,6 +85,10 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             result=future.result()
             if result is None:continue
             status,generation,is_ready=result
+            if status=='AMBIGUOUS_WINDOW':
+                valid+=1
+                ambiguous_window_generations.add(generation)
+                continue
             if status!='VALID':continue
             valid+=1
             if generation is None:
@@ -61,7 +102,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
     matched_unique=len(match_counts)
     ready_unique=len(set(ready))
     expected=len(generations)
-    if duplicates:
+    if duplicates or ambiguous_window_generations:
         status='AMBIGUOUS_PROCESS_MATCH'
     elif expected and matched_unique==expected:
         status='COMPLETE_PROCESS_MATCH'
@@ -78,6 +119,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
         # Backward-compatible aggregate name, now explicitly unique.
         'process_generation_matches':matched_unique,
         'duplicate_process_generation_matches':duplicates,
+        'ambiguous_window_process_generations':len(ambiguous_window_generations),
         'unmatched_healthy_bridges':unmatched,
         'projection_ready_matches':ready_unique,
         'projection_ready_duplicate_responses':max(0,ready_count-ready_unique),
