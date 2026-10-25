@@ -126,6 +126,7 @@ class DeterministicPlanner:
         if frame.actor_id is None or frame.turn_owner_id is None:return self._wait('actor_identity','turn_owner',reason='DECISION_ACTOR_OR_TURN_UNKNOWN')
         if frame.actor_id!=frame.turn_owner_id:return self._wait('turn_owner',reason='DECISION_NOT_ACTOR_TURN')
         if frame.ap is None or frame.mp is None or frame.actor_cell is None:return self._wait('actor_resources','actor_cell',reason='DECISION_REQUIRED_VALUE_MISSING')
+        if frame.map_id is None:return self._wait('fight_map',reason='DECISION_FIGHT_MAP_UNKNOWN')
         if not frame.available_spells:return self._wait('loadout',reason='DECISION_NO_PROVEN_AVAILABLE_SPELLS')
         if not frame.target_cells:return self._wait('targets',reason='DECISION_NO_PROVEN_TARGETS')
         steps=0;unknown=[];saw_legal_quarantined=False
@@ -189,6 +190,7 @@ class DeterministicPlanner:
         if missing:return self._wait(*missing,reason='DECISION_WORLD_EVIDENCE_MISSING')
         if frame.actor_id is None or frame.actor_cell is None:
             return self._wait('actor_identity','actor_cell',reason='DECISION_WORLD_ACTOR_UNKNOWN')
+        if frame.map_id is None:return self._wait('world_map',reason='DECISION_WORLD_MAP_UNKNOWN')
         if not frame.candidate_move_cells:return PlannerResult('NO_ACTION',reason='DECISION_NO_ROUTE_STEP')
         # World policy expresses a semantic route step only. Execution/Client own
         # projection/input and Workflow owns whether this step is still desired.
