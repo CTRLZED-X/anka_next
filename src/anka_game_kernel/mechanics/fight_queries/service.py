@@ -343,6 +343,7 @@ class FightQueryService:
             availability=availability,
             range_bonus=resolved_range_bonus,
             occupied_cells=context.occupied_cells,
+            proven_occupied_cells=context.proven_occupied_cells,
         )
 
     def evaluate_grade_cast_after_move(
@@ -373,6 +374,9 @@ class FightQueryService:
         occupied = (
             context.occupied_cells - frozenset({actor.cell_id})
         ) | frozenset({launch_cell})
+        proven_occupied = context.proven_occupied_cells - frozenset({actor.cell_id})
+        if actor.alive is True:
+            proven_occupied = proven_occupied | frozenset({launch_cell})
         return self._evaluate_grade_cast(
             map_definition,
             grade,
@@ -381,6 +385,7 @@ class FightQueryService:
             availability=availability,
             range_bonus=resolved_range_bonus,
             occupied_cells=occupied,
+            proven_occupied_cells=proven_occupied,
         )
 
     def _resolve_range_bonus(
@@ -401,6 +406,7 @@ class FightQueryService:
         availability: CastAvailabilityContext,
         range_bonus: int,
         occupied_cells: frozenset[CellId] | None,
+        proven_occupied_cells: frozenset[CellId] | None,
     ) -> CastEvaluationResult:
         return self.fight.evaluate_grade_cast(
             grade,
@@ -411,6 +417,7 @@ class FightQueryService:
                 availability=availability,
                 range_bonus=range_bonus,
                 occupied_cells=occupied_cells,
+                proven_occupied_cells=proven_occupied_cells,
             ),
         )
 
