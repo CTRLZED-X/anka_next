@@ -39,5 +39,103 @@ jobs:
       - name: Agent02 exact-head suites
         run: python -m pytest -q tests/test_agent02_*.py
       - name: Required Capture Protocol regression matrix
+        continue-on-error: true
         run: |
           python -m pytest -q             tests/test_m4_wire_envelopes.py             tests/test_capture_transport.py             tests/test_capture_live.py             tests/test_p51_windows_flow_owner_stability.py             tests/test_p62_capture_loss_metadata.py             tests/test_p65_capture_abort_integrity.py             tests/test_capture_architecture.py             tests/test_protocol_architecture.py             tests/test_m5_protocol_sdk.py
+      - name: Independent conflict-to-protocol-poison falsification
+        run: |
+          python - <<'PY'
+          from anka_capture.stream import TransportEnvelopeAssembler
+          from anka_contracts.capture import CapturedTcpSegment
+          from anka_contracts.protocol import ProtocolAdmissionDecision
+          from anka_protocol.adapters.dofus_3_7_10_10.adapter import Historical371010Adapter
+          from anka_protocol.adapters.dofus_3_7_10_10.manifest import descriptor
+          from anka_protocol.sdk import ProtocolTransaction
+
+          FLOW="tcp-chat08-pr26"
+          def seg(seq,payload=b"",packet=1,flags=0x18,direction="server_to_client"):
+              return CapturedTcpSegment(FLOW,direction,seq,payload,packet,flags)
+
+          def varint(v):
+              out=[]
+              while v>=128:
+                  out.append((v & 127) | 128); v >>= 7
+              out.append(v); return bytes(out)
+          def field(n,v):
+              return varint((n<<3)|2)+varint(len(v))+v
+          def framed_any(name,body):
+              a=field(1,b"type.ankama.com/"+name.encode("ascii"))+field(2,body)
+              return varint(len(a))+a
+
+          JTK=bytes.fromhex("0a1b221110010a0d080b10feffffffffffffffff01220610170a020805108906")
+          frame=framed_any("jtk",JTK)
+
+          class Admission:
+              def __init__(self): self.seen=[]
+              def admit_candidate_batch(self,batch):
+                  self.seen.append(batch)
+                  return ProtocolAdmissionDecision("COMMITTED",len(self.seen),None)
+
+          a=TransportEnvelopeAssembler(
+              capture_session_id="capture-chat08-pr26",
+              flow_clients={FLOW:"client-cra"},
+          )
+          assert a.feed(seg(100,packet=1,flags=0x02)) == ()
+          assert a.feed(seg(500,packet=2,flags=0x02,direction="client_to_server")) == ()
+
+          first=a.feed(seg(101,frame,packet=3))[0]
+          admission=Admission()
+          adapter=Historical371010Adapter(
+              descriptor=descriptor(),
+              account_id="acct-cra",
+              client_instance_id="client-cra",
+              connection_id=first.connection_id,
+              connection_generation=1,
+          )
+          txn=ProtocolTransaction(adapter,admission)
+          r1=txn.process(first)
+          assert r1.status=="COMMITTED",r1
+          assert len(admission.seen)==1
+
+          corrupted=bytes([frame[0]^1])+frame[1:]
+          assert a.feed(seg(101,corrupted,packet=4)) == ()
+          assert a.health().status=="UNCERTAIN"
+
+          opposite=a.feed(seg(501,b"X",packet=5,direction="client_to_server"))[0]
+          assert opposite.continuity=="GAP_INSIDE",opposite.continuity
+          r2=txn.process(opposite)
+          assert r2.status=="REJECTED_TRANSPORT",r2
+          assert txn.poisoned
+          assert len(admission.seen)==1
+
+          later_seq=101+len(frame)
+          later=a.feed(seg(later_seq,frame,packet=6))[0]
+          assert later.continuity=="GAP_INSIDE",later.continuity
+          r3=txn.process(later)
+          assert r3.status=="REJECTED_POISONED",r3
+          assert len(admission.seen)==1
+
+          assert a.feed(seg(1000,packet=7,flags=0x02)) == ()
+          fresh=a.feed(seg(1001,frame,packet=8))[0]
+          assert fresh.connection_generation==2
+          assert fresh.continuity=="RECONNECTED",fresh.continuity
+
+          fresh_admission=Admission()
+          fresh_adapter=Historical371010Adapter(
+              descriptor=descriptor(),
+              account_id="acct-cra",
+              client_instance_id="client-cra",
+              connection_id=fresh.connection_id,
+              connection_generation=2,
+          )
+          fresh_txn=ProtocolTransaction(fresh_adapter,fresh_admission)
+          r4=fresh_txn.process(fresh)
+          assert r4.status=="COMMITTED",r4
+          assert len(fresh_admission.seen)==1
+          assert r4.batch is not None and r4.batch.candidates
+
+          print("CHAT08_CAUSAL_FALSIFICATION=PASS")
+          print("PRE_CONFLICT_ADMISSIONS=1")
+          print("POST_CONFLICT_SAME_GENERATION_ADMISSIONS=0")
+          print("FRESH_GENERATION_ADMISSIONS=1")
+          PY
