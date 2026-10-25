@@ -1,6 +1,7 @@
 """Definitive M11 sole action admission / external-boundary authority."""
 from __future__ import annotations
 from hashlib import sha256
+from threading import Lock
 import json,time
 from anka_contracts.action import ActionCommand,ActionOutcome
 from anka_contracts.execution import ExecutionAdmission,ExecutionClientAttestation,ExecutionOutcomeEvidence
@@ -28,6 +29,7 @@ class DefinitiveExecutionService:
         if not run_id.startswith('run-') or type(run_generation) is not int or run_generation<=0:raise ExecutionServiceRejected('INVALID_EXECUTION_RUN')
         self.run_id=run_id;self.run_generation=run_generation;self.ledger=ledger;self.arbiter=arbiter;self.state_reader=state_reader;self.client=client;self.mechanics=mechanics;self.coordination=coordination;self.driver=driver;self.clock_ns=clock_ns or time.monotonic_ns;self._observer=observer
         self._armed=False;self._authority_generation=0;self.physical_input_count=0;self._last_safety_fault=None
+        self._settlement_lock=Lock()
         # Never recover or arm from an unchecked projection.  The durable event
         # chain is the authority; a coherently-looking actions row may have been
         # corrupted or partially rewritten after a crash/disk fault.
@@ -242,28 +244,33 @@ class DefinitiveExecutionService:
                              attempt_id=attempt,severity='CRITICAL',failure_code=self._last_safety_fault,
                              physical_input_state=self._physical_state('MAY_HAVE_SENT') if attempt is not None else 'NOT_SENT')
     def reconcile(self,action_id:str,evidence:ExecutionOutcomeEvidence)->ActionOutcome:
-        command=self.ledger.get_command(action_id);current=self.ledger.get(action_id)
-        if current.status in self.ledger.TERMINAL:
-            return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids,False,current.unresolved_obligations,'TERMINAL_ACTION_ALREADY_RESOLVED')
-        verdict=correlate(command,evidence,current_status=current.status,unresolved_obligations=current.unresolved_obligations)
-        if verdict.status=='IGNORE':
-            # Ignored evidence must never make the outward status look less certain
-            # than the durable action ledger.  Preserve why it was ignored so a
-            # postmortem can distinguish stale/wrong-scope evidence from absence.
-            self._record('execution.outcome_ignored',command,boundary='execution.outcome_correlation',
-                         attempt_id=current.attempt_id,severity='WARNING',failure_code=verdict.reason,
-                         payload={'evidence_id':evidence.evidence_id,'current_status':current.status,
-                                  'evidence_result':evidence.result,'evidence_cursor':evidence.canonical_cursor,
-                                  'evidence_authoritative':evidence.authoritative,
-                                  'evidence_proofs':list(evidence.proofs),
-                                  'evidence_correlated_action_id':evidence.correlated_action_id})
-            return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,current.unresolved_obligations,verdict.reason)
-        a=self.ledger.apply_outcome(action_id,verdict.status,evidence,verdict.reason,verdict.unresolved)
-        self._record('execution.outcome_settled',command,boundary='execution.outcome_settlement',attempt_id=a.attempt_id,severity='SETTLEMENT',payload={'status':a.status,'reason':a.reason,'evidence_id':evidence.evidence_id})
-        return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,a.reason)
+        # Outcome obligations are cumulative.  Serialize read -> correlate -> apply
+        # so two independent proofs cannot both decide from the same stale remainder
+        # and overwrite each other's progress.
+        with self._settlement_lock:
+            command=self.ledger.get_command(action_id);current=self.ledger.get(action_id)
+            if current.status in self.ledger.TERMINAL:
+                return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids,False,current.unresolved_obligations,'TERMINAL_ACTION_ALREADY_RESOLVED')
+            verdict=correlate(command,evidence,current_status=current.status,unresolved_obligations=current.unresolved_obligations)
+            if verdict.status=='IGNORE':
+                # Ignored evidence must never make the outward status look less certain
+                # than the durable action ledger.  Preserve why it was ignored so a
+                # postmortem can distinguish stale/wrong-scope evidence from absence.
+                self._record('execution.outcome_ignored',command,boundary='execution.outcome_correlation',
+                             attempt_id=current.attempt_id,severity='WARNING',failure_code=verdict.reason,
+                             payload={'evidence_id':evidence.evidence_id,'current_status':current.status,
+                                      'evidence_result':evidence.result,'evidence_cursor':evidence.canonical_cursor,
+                                      'evidence_authoritative':evidence.authoritative,
+                                      'evidence_proofs':list(evidence.proofs),
+                                      'evidence_correlated_action_id':evidence.correlated_action_id})
+                return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,current.unresolved_obligations,verdict.reason)
+            a=self.ledger.apply_outcome(action_id,verdict.status,evidence,verdict.reason,verdict.unresolved)
+            self._record('execution.outcome_settled',command,boundary='execution.outcome_settlement',attempt_id=a.attempt_id,severity='SETTLEMENT',payload={'status':a.status,'reason':a.reason,'evidence_id':evidence.evidence_id})
+            return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,a.reason)
     def terminalize_unresolved(self,action_id:str,reason='OUTCOME_COULD_NOT_BE_RESOLVED_SAFELY')->ActionOutcome:
-        command=self.ledger.get_command(action_id)
-        a=self.ledger.mark_terminal_unresolved(action_id,reason)
-        self._record('execution.outcome_terminal_unresolved',command,boundary='execution.outcome_settlement',
-                     attempt_id=a.attempt_id,severity='SAFETY',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
-        return self._durable_outcome(a,a.attempt_id)
+        with self._settlement_lock:
+            command=self.ledger.get_command(action_id)
+            a=self.ledger.mark_terminal_unresolved(action_id,reason)
+            self._record('execution.outcome_terminal_unresolved',command,boundary='execution.outcome_settlement',
+                         attempt_id=a.attempt_id,severity='SAFETY',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
+            return self._durable_outcome(a,a.attempt_id)
