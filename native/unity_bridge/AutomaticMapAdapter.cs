@@ -381,12 +381,42 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
     public ObservationResponse Observe(RuntimeObservation observation)
     {
         if (observation == null || !observation.MapId.HasValue || observation.MapId.Value < 0)
-            return new ObservationResponse
+            return RejectObservation("INVALID_OBSERVATION", "map_id is required.");
+        if (string.IsNullOrWhiteSpace(observation.AccountId)
+            || !observation.AccountId.StartsWith("acct-", StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(observation.ClientInstanceId)
+            || !observation.ClientInstanceId.StartsWith("client-", StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(observation.ObservationSignature)
+            || observation.CanonicalRevision < 0)
+            return RejectObservation(
+                "INVALID_OBSERVATION_PROVENANCE",
+                "account_id, client_instance_id, observation_signature and a non-negative canonical_revision are required.");
+
+        if (_lastObservation != null)
+        {
+            if (!string.Equals(observation.AccountId, _lastObservation.AccountId, StringComparison.Ordinal)
+                || !string.Equals(observation.ClientInstanceId, _lastObservation.ClientInstanceId, StringComparison.Ordinal))
+                return RejectObservation(
+                    "OBSERVATION_SCOPE_MISMATCH",
+                    "Observation account/client scope does not match the bridge's latched canonical scope.");
+            if (observation.CanonicalRevision < _lastObservation.CanonicalRevision)
+                return RejectObservation(
+                    "STALE_OBSERVATION_REVISION",
+                    "Canonical observation revision moved backwards.");
+            if (observation.CanonicalRevision == _lastObservation.CanonicalRevision)
             {
-                Status = "INVALID_OBSERVATION",
-                Accepted = false,
-                Error = "map_id is required."
-            };
+                if (!string.Equals(
+                        observation.ObservationSignature,
+                        _lastObservationSignature,
+                        StringComparison.Ordinal))
+                    return RejectObservation(
+                        "OBSERVATION_REVISION_CONFLICT",
+                        "The same canonical revision was received with a different observation signature.");
+                // Exact duplicate delivery is idempotent. Do not repeat discovery,
+                // rewrite evidence, increment counters, or mutate projection state.
+                return Observation(false, 0, null);
+            }
+        }
         var stableWorld = !observation.ActiveFight
                           && string.Equals(observation.MapContext, "WORLD", StringComparison.OrdinalIgnoreCase);
         if (!observation.ActiveFight && !stableWorld)
@@ -787,6 +817,17 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
         using var sha256 = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(builder.ToString());
         return Convert.ToHexString(sha256.ComputeHash(bytes)).ToLowerInvariant();
+    }
+
+    private static ObservationResponse RejectObservation(string status, string error)
+    {
+        return new ObservationResponse
+        {
+            Status = status,
+            Accepted = false,
+            Changed = false,
+            Error = error
+        };
     }
 
     private ObservationResponse Observation(bool changed, int actorsMatched, string evidenceFile)
