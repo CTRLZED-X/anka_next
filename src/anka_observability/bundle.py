@@ -84,6 +84,17 @@ def _loss_adjusted_confidence(confidence:str, evidence_loss:bool)->str:
     return {'HIGH':'MEDIUM','MEDIUM':'LOW','LOW':'LOW','UNDETERMINED':'UNDETERMINED'}.get(confidence,'UNDETERMINED')
 
 
+def _canonical_display(value:object)->object:
+    """Return sanitized presentation data with deterministic mapping order."""
+    clean=sanitize(value)
+    def ordered(obj):
+        if isinstance(obj,dict):return {key:ordered(obj[key]) for key in sorted(obj)}
+        if isinstance(obj,list):return [ordered(item) for item in obj]
+        if isinstance(obj,tuple):return [ordered(item) for item in obj]
+        return obj
+    return ordered(clean)
+
+
 def _render_read_first(gpt:dict,diagnosis:dict,proven_facts:dict,workflow_lifecycle:dict,
                        turn_handoff:dict,run_manifest:dict,summary_sha256:str,*,primary_export_failed:bool=False)->bytes:
     """Canonical human/GPT entrypoint derived only from machine-checked artifacts."""
@@ -102,37 +113,37 @@ def _render_read_first(gpt:dict,diagnosis:dict,proven_facts:dict,workflow_lifecy
     latest_action=gpt.get('latest_included_action_lifecycle')
     return (
         '# ANKA diagnostic incident\n\n'
-        f'**Code:** {sanitize(gpt.get("incident_code"))}\n\n'
-        f'**Attempted operation:** {sanitize(gpt.get("attempted_operation"))}\n\n'
-        f'**First divergence:** {sanitize(gpt.get("first_divergence"))}\n\n'
+        f'**Code:** {_canonical_display(gpt.get("incident_code"))}\n\n'
+        f'**Attempted operation:** {_canonical_display(gpt.get("attempted_operation"))}\n\n'
+        f'**First divergence:** {_canonical_display(gpt.get("first_divergence"))}\n\n'
         f'**Finding status:** {gpt.get("finding_status")}; scope={gpt.get("first_divergence_scope")}; absence_conclusive={gpt.get("absence_is_conclusive")}.\n\n'
         + ('**Crash-tail warning:** source tail is uncertain; missing post-crash events cannot prove that an action failed or never happened.\n\n' if source_tail else '')
-        + f'**Observed/export boundary:** {sanitize(gpt.get("observed_export_boundary"))}\n\n'
-        f'**Suspected owner:** {sanitize(gpt.get("suspected_owner"))}\n\n'
+        + f'**Observed/export boundary:** {_canonical_display(gpt.get("observed_export_boundary"))}\n\n'
+        f'**Suspected owner:** {_canonical_display(gpt.get("suspected_owner"))}\n\n'
         f'**Confidence:** {gpt.get("confidence")}\n\n'
-        f'**Cause status:** {gpt.get("cause_status")}; scope={gpt.get("cause_scope")}; candidates_may_be_incomplete={gpt.get("candidate_causes_may_be_incomplete")}; candidates={sanitize(candidate_causes) if candidate_causes else "none established"}.\n\n'
-        f'**Supporting evidence IDs:** {sanitize(support_refs) if support_refs else "none uniquely identified"}\n\n'
-        f'**Control state:** {sanitize(gpt.get("control_state"))}\n\n'
+        f'**Cause status:** {gpt.get("cause_status")}; scope={gpt.get("cause_scope")}; candidates_may_be_incomplete={gpt.get("candidate_causes_may_be_incomplete")}; candidates={_canonical_display(candidate_causes) if candidate_causes else "none established"}.\n\n'
+        f'**Supporting evidence IDs:** {_canonical_display(support_refs) if support_refs else "none uniquely identified"}\n\n'
+        f'**Control state:** {_canonical_display(gpt.get("control_state"))}\n\n'
         f'**Physical input state:** {gpt.get("physical_input_state")} (from included diagnostic evidence; UNKNOWN if absent).\n\n'
-        f'**Detail:** {sanitize(diagnosis.get("explanation",""))}\n\n'
-        f'**Expected-but-missing evidence:** {sanitize(missing) if missing else "not uniquely established"}\n\n'
-        f'**Next targeted verification:** {sanitize(gpt.get("next_targeted_verification"))}\n\n'
+        f'**Detail:** {_canonical_display(diagnosis.get("explanation",""))}\n\n'
+        f'**Expected-but-missing evidence:** {_canonical_display(missing) if missing else "not uniquely established"}\n\n'
+        f'**Next targeted verification:** {_canonical_display(gpt.get("next_targeted_verification"))}\n\n'
         f'**Proven diagnostic facts:** {len(proven_facts.get("facts",[]) if isinstance(proven_facts,dict) else [])} observed trace edges; '
-        f'{gpt.get("settled_action_count",0)} settled actions; unresolved={sanitize(unresolved)}.\n\n'
+        f'{gpt.get("settled_action_count",0)} settled actions; unresolved={_canonical_display(unresolved)}.\n\n'
         f'**Recorded recovery/watchdog attempts:** {gpt.get("recovery_attempt_count",0)}.\n\n'
-        f'**Workflow lifecycle index:** {gpt.get("workflow_lifecycle_status")} at phase {gpt.get("workflow_current_phase")}; next={sanitize(workflow_lifecycle.get("next_expected_transition") if isinstance(workflow_lifecycle,dict) else None)}.\n\n'
-        f'**End Turn handoff index:** {gpt.get("turn_handoff_status")}; next_owner={sanitize(turn_handoff.get("next_owner_account_id") if isinstance(turn_handoff,dict) else None)}.\n\n'
-        f'**Latest included pre-action causal outcome:** {sanitize(latest_pre) if latest_pre else "none included"}; omitted={gpt.get("pre_action_outcomes_omitted",0)}.\n\n'
-        f'**Latest included action lifecycle:** {sanitize(latest_action) if latest_action else "none included"}; omitted={gpt.get("action_lifecycles_omitted",0)}.\n\n'
-        f'**Historical similarity hints (not root-cause proof):** {sanitize(historical_ids) if historical_ids else "none"}.\n\n'
+        f'**Workflow lifecycle index:** {gpt.get("workflow_lifecycle_status")} at phase {gpt.get("workflow_current_phase")}; next={_canonical_display(workflow_lifecycle.get("next_expected_transition") if isinstance(workflow_lifecycle,dict) else None)}.\n\n'
+        f'**End Turn handoff index:** {gpt.get("turn_handoff_status")}; next_owner={_canonical_display(turn_handoff.get("next_owner_account_id") if isinstance(turn_handoff,dict) else None)}.\n\n'
+        f'**Latest included pre-action causal outcome:** {_canonical_display(latest_pre) if latest_pre else "none included"}; omitted={gpt.get("pre_action_outcomes_omitted",0)}.\n\n'
+        f'**Latest included action lifecycle:** {_canonical_display(latest_action) if latest_action else "none included"}; omitted={gpt.get("action_lifecycles_omitted",0)}.\n\n'
+        f'**Historical similarity hints (not root-cause proof):** {_canonical_display(historical_ids) if historical_ids else "none"}.\n\n'
         f'**Evidence completeness:** {gpt.get("evidence_completeness")}; flight recorder overwrites={flight.get("recent_overwrites",0)}; '
         f'observer dropped events={run_manifest.get("observer_dropped_events",0) if isinstance(run_manifest,dict) else 0}; size omissions={flight.get("timeline_events_omitted_for_size",0)}.\n\n'
-        f'**Diagnostic coverage gaps:** {sanitize(gap_summary) if gap_summary else "none declared"}.\n\n'
-        f'**Available shipped bounded snapshots:** {sanitize(snapshot_names) if snapshot_names else "none"}.\n\n'
-        f'**Snapshot omissions:** {sanitize(snapshot_omissions) if snapshot_omissions else "none"}.\n\n'
+        f'**Diagnostic coverage gaps:** {_canonical_display(gap_summary) if gap_summary else "none declared"}.\n\n'
+        f'**Available shipped bounded snapshots:** {_canonical_display(snapshot_names) if snapshot_names else "none"}.\n\n'
+        f'**Snapshot omissions:** {_canonical_display(snapshot_omissions) if snapshot_omissions else "none"}.\n\n'
         '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
         f'**Machine summary SHA-256:** {summary_sha256}\n\n'
-        f'**Observer health:** storage_available={flight.get("persistent_storage_available",False)}; errors={sanitize(observer_errors)}.\n\n'
+        f'**Observer health:** storage_available={flight.get("persistent_storage_available",False)}; errors={_canonical_display(observer_errors)}.\n\n'
         + ('**INCIDENT_PRIMARY_EXPORT_FAILED:** primary run-folder ZIP write failed; this is the bounded fallback artifact.\n\n' if primary_export_failed else '')
         + 'Raw packet captures, credentials and environment dumps are excluded by default. '
         'The evidence matrix explicitly declares missing/partial sections; observer output never grants gameplay authority.\n'
@@ -142,13 +153,13 @@ def _render_read_first(gpt:dict,diagnosis:dict,proven_facts:dict,workflow_lifecy
 def _render_emergency_read_first(gpt:dict,diagnosis:dict,summary_sha256:str)->bytes:
     return (
         '# ANKA emergency diagnostic incident\n\n'
-        f'**Code:** {sanitize(gpt.get("incident_code"))}\n\n'
-        f'**Observed boundary:** {sanitize(gpt.get("observed_export_boundary"))}\n\n'
+        f'**Code:** {_canonical_display(gpt.get("incident_code"))}\n\n'
+        f'**Observed boundary:** {_canonical_display(gpt.get("observed_export_boundary"))}\n\n'
         '**Forensic status:** ADVANCED_ANALYSIS_FAILED. The original application failure is preserved; '
         'no root cause is asserted by this fallback.\n\n'
-        f'**Control state:** {sanitize(gpt.get("control_state"))}\n\n'
+        f'**Control state:** {_canonical_display(gpt.get("control_state"))}\n\n'
         f'**Physical input state:** {gpt.get("physical_input_state")} (most conservative state present in included evidence).\n\n'
-        f'**Detail:** {sanitize(diagnosis.get("explanation",""))}\n\n'
+        f'**Detail:** {_canonical_display(diagnosis.get("explanation",""))}\n\n'
         'Use the included bounded timeline as primary evidence. Raw packet payloads and secrets are excluded.\n\n'
         '**Machine-readable forensic index:** `analysis/gpt_summary.json`.\n\n'
         f'**Machine summary SHA-256:** {summary_sha256}\n'
@@ -456,7 +467,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     candidate_causes=(list(finding.candidate_causes) if finding is not None else [])
     errors=[e for e in events if e.get('severity') in ('ERROR','CRITICAL','SAFETY')]
     error_lines=b''.join(_json_line(e) for e in errors)
-    gaps=[{'section':key,'status':value} for key,value in sections.items() if value not in ('PRESENT','NOT_APPLICABLE')]
+    gaps=[{'section':key,'status':value} for key,value in sorted(sections.items()) if value not in ('PRESENT','NOT_APPLICABLE')]
     evidence_payload={'schema_version':2,'sections':sections,
         'note':'Statuses describe diagnostic evidence availability only; they never promote observer data to gameplay authority.'}
     evidence_completeness='PARTIAL' if any(v not in ('PRESENT','NOT_APPLICABLE') for v in sections.values()) else 'PRESENT'
@@ -1289,7 +1300,7 @@ def verify_incident(path:Path)->dict:
                                     if gpt_confidence=='HIGH':
                                         add('GPT_SUMMARY_LOSS_CONFIDENCE_NOT_DOWNGRADED')
                     if status!='ADVANCED_ANALYSIS_UNAVAILABLE' and isinstance(matrix,dict) and isinstance(matrix.get('sections'),dict):
-                        expected_gap_summary=[f'{key}={value}' for key,value in matrix['sections'].items()
+                        expected_gap_summary=[f'{key}={value}' for key,value in sorted(matrix['sections'].items())
                                               if value not in ('PRESENT','NOT_APPLICABLE')]
                         if gpt.get('diagnostic_coverage_gaps')!=expected_gap_summary:
                             add('GPT_SUMMARY_COVERAGE_GAPS_MISMATCH')
