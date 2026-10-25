@@ -13,7 +13,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import re
 
-from anka_contracts.diagnostics import DiagnosticEvent, OperationTraceSpec, now_utc
+from anka_contracts.diagnostics import BoundaryExpectation, DiagnosticEvent, OperationTraceSpec, now_utc
 from anka_observability.forensics import (
     FirstDivergenceAnalyzer, PartyReadyAnalyzer, action_lifecycle_report, evidence_matrix,
     historical_similarity_report, recovery_history_report, proven_fact_report,
@@ -376,10 +376,11 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
 
     physical_input_state=_aggregate_physical_input_state(events)
 
-    finding=None;boundary_graph=[]
+    finding=None;boundary_graph=[];finding_source='NONE';boundary_graph_mode='NONE'
     if trace_spec is not None:
         analysis=FirstDivergenceAnalyzer().analyze(trace_spec,events,fallback_failure_code=code,control_state=control_state)
-        finding=analysis.finding;boundary_graph=list(analysis.boundary_graph)
+        finding=analysis.finding;boundary_graph=list(analysis.boundary_graph);boundary_graph_mode='GENERIC_TRACE'
+        if finding is not None:finding_source='GENERIC_TRACE'
 
     # READY is a party operation: prove each account's request→send→server→
     # Canonical chain independently before accepting the shared barrier.  Keep
@@ -394,9 +395,10 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
             'shared_graph':list(party_ready.shared_graph),'matched_event_ids':list(party_ready.matched_event_ids),
             'finding':party_ready.finding.to_dict() if party_ready.finding else None}
         if (trace_spec is not None and trace_spec.operation.upper().startswith('READY')) or 'READY' in code or 'ready' in boundary.lower():
-            if party_ready.finding is not None:finding=party_ready.finding
+            if party_ready.finding is not None:
+                finding=party_ready.finding;finding_source='PARTY_READY'
             elif trace_spec is not None and trace_spec.operation.upper().startswith('READY'):
-                finding=None
+                finding=None;finding_source='NONE';boundary_graph_mode='PARTY_READY'
                 boundary_graph=[edge for graph in party_ready.account_graphs for edge in graph['edges']]+list(party_ready.shared_graph)
 
     finding_scope='INCLUDED_EVIDENCE_ONLY' if loss else 'COMPLETE_RECORDER_EVIDENCE'
@@ -404,14 +406,14 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     confidence=_loss_adjusted_confidence(retained_confidence,bool(loss))
     if finding is None:
         diagnosis=_legacy_diagnosis(code,boundary,detail,observer,events)
-        diagnosis.update({'evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope,
+        diagnosis.update({'finding_source':'NONE','evidence_loss_present':bool(loss),'first_divergence_scope':finding_scope,
                           'cause_scope':finding_scope,'candidate_causes_may_be_incomplete':bool(loss)})
         first_boundary='NOT_ESTABLISHED';confidence='UNDETERMINED';missing=[]
         next_test='Collect the earliest missing authoritative boundary evidence.'
     else:
         cause_status=('MULTIPLE_PLAUSIBLE' if len(finding.candidate_causes)>1 else
                       'SINGLE_SUPPORTED' if len(finding.candidate_causes)==1 else 'UNDETERMINED')
-        diagnosis={'schema_version':2,**finding.to_dict(),'confidence':confidence,
+        diagnosis={'schema_version':2,**finding.to_dict(),'finding_source':finding_source,'confidence':confidence,
                    'retained_evidence_confidence':retained_confidence,
                    'cause_status':cause_status,'cause_scope':finding_scope,
                    'candidate_causes_may_be_incomplete':bool(loss),'explanation':sanitize(detail),
@@ -437,7 +439,15 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
         'evidence_completeness':evidence_completeness,
     }
     next_verification={'schema_version':1,'recommended_next_test':next_test,'missing_evidence':missing}
-    graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,'edges':boundary_graph}
+    trace_payload=(None if trace_spec is None else {
+        'operation':trace_spec.operation,'correlation_keys':list(trace_spec.correlation_keys),
+        'expectations':[{
+            'event_name':expectation.event_name,'boundary':expectation.boundary,
+            'owner_system':expectation.owner_system,'evidence_section':expectation.evidence_section,
+        } for expectation in trace_spec.expectations],
+    })
+    graph_payload={'schema_version':1,'operation':trace_spec.operation if trace_spec else None,
+                   'analysis_mode':boundary_graph_mode,'trace_spec':trace_payload,'edges':boundary_graph}
     action_lifecycles=action_lifecycle_report(events)
     pre_action_outcomes=action_lifecycles.get('pre_action_outcomes',[]) if isinstance(action_lifecycles,dict) else []
     latest_included_pre_action_outcome=(pre_action_outcomes[-1] if pre_action_outcomes else None)
@@ -457,7 +467,7 @@ def _build_artifacts(observer, code:str, boundary:str, detail:str, *,
     gpt_finding_status=('NOT_ESTABLISHED' if finding is None else ('DIVERGENCE_CANDIDATE' if loss else 'DIVERGENCE_IDENTIFIED'))
     gpt_summary={
         'schema_version':1,'incident_code':sanitize(code),'attempted_operation':sanitize(attempted_operation),
-        'finding_status':gpt_finding_status,
+        'finding_status':gpt_finding_status,'finding_source':finding_source,
         'first_divergence':sanitize(first_boundary),'first_divergence_scope':finding_scope,
         'absence_is_conclusive':not bool(loss),'source_tail_uncertain':bool(flight.get('source_tail_uncertain',False)),
         'observed_export_boundary':sanitize(boundary),
