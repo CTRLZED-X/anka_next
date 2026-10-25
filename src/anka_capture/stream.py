@@ -61,8 +61,12 @@ class TransportEnvelopeAssembler:
         # A capture-level loss fence outranks otherwise contiguous TCP sequence evidence.
         if state.loss_epoch_seen < self._loss_epoch:
             continuity='GAP_INSIDE';state.loss_epoch_seen=self._loss_epoch
-        elif state.reconnected_pending:
-            continuity='RECONNECTED';state.reconnected_pending=False
+        if state.reconnected_pending:
+            # Reconnect is informative only when the bytes are otherwise trusted.
+            # It must never overwrite a stronger gap/reset continuity fence.
+            if continuity in ('COMPLETE','CONTIGUOUS'):
+                continuity='RECONNECTED'
+            state.reconnected_pending=False
         self._producer_sequence+=1
         utc,mono,provenance=self._times(seg)
         start=state.stream_offset;end=start+len(payload)
