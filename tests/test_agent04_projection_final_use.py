@@ -108,6 +108,29 @@ class Agent04ProjectionFinalUseTests(unittest.TestCase):
         self.assertFalse(result.valid)
         self.assertIn('INVALID_SPELL_ID', result.invalidators)
 
+    def test_context_turns_malformed_bridge_generation_into_incomplete_proof(self):
+        w = window()
+        malformed = BridgeMapReport(
+            'RESEARCH_PROJECTION_ONLY', 'TEST', True, 8, 9,
+            (1280, 649), (), True, True, False,
+        )
+        ctx = build_client_context(
+            character_name='Curseni', binding=binding(w), window=w,
+            calibration=calibration(), bridge=malformed, loadout=loadout(w),
+            observed_monotonic_ns=NOW, expected_map_id=777,
+        )
+        self.assertNotEqual(ctx.prerequisites_status, 'PROVEN')
+        self.assertIn('BRIDGE_GENERATION_MISSING', ctx.invalidators)
+
+    def test_cell_rejects_bool_bridge_flags_and_coordinates(self):
+        _w, _cal, _lo, br, ctx = proven_context()
+        bad_flag = replace(br, source_verified=1)
+        self.assertFalse(project_cell(ctx, bad_flag, 42, NOW).valid)
+        bad_cell = replace(br, cells=(CellProjection(42, True, 250, True, True, True),))
+        result = project_cell(ctx, bad_cell, 42, NOW)
+        self.assertFalse(result.valid)
+        self.assertIn('CELL_COORDINATES_OUT_OF_BOUNDS', result.invalidators)
+
     def test_cell_rejects_revoked_bridge_certification_with_same_generation(self):
         _w, _cal, _lo, br, ctx = proven_context()
         result = project_cell(ctx, replace(br, live_certified=False), 42, NOW)
