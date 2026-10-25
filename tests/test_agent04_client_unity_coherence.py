@@ -139,6 +139,19 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertEqual(report['status'], 'COMPLETE_PROCESS_MATCH')
         self.assertEqual(report['projection_ready_matches'], 0)
 
+    def test_unrelated_listener_owner_is_rejected_before_http_probe(self):
+        class MustNotRead:
+            def get_json(self, *_args, **_kwargs):
+                raise AssertionError('unrelated localhost service must not receive bridge HTTP')
+
+        report = probe_bridge_range(
+            (window(),), port_start=PORT, port_count=1,
+            reader_factory=lambda: MustNotRead(),
+            listener_owner_resolver=lambda _port: (9999, CREATED),
+        )
+        self.assertEqual(report['status'], 'NOT_DETECTED')
+        self.assertEqual(report['listener_owner_rejections'], 1)
+
     def test_listener_owner_pid_must_match_health_pid(self):
         report = probe_bridge_range(
             (window(),), port_start=PORT, port_count=1,
