@@ -84,7 +84,7 @@ class DeterministicPlanner:
         elif goal in ('WORLD_MOVE','PATROL_STEP'):result=self._world(frame)
         elif goal in ('FIGHT_ENTRY','START_FIGHT'):result=self._fight_entry(frame)
         elif goal in ('JOIN_FIGHT','PARTY_JOIN'):result=self._join_fight(frame)
-        elif goal=='READY':result=self._simple(frame,'READY',(('phase','placement'),),('READY_OR_PHASE_CONFIRMED',))
+        elif goal=='READY':result=self._ready(frame)
         else:result=PlannerResult('NO_ACTION',reason='DECISION_WORKFLOW_GOAL_UNSUPPORTED')
         payload={'frame_id':frame.frame_id,'disposition':result.disposition,'reason':result.reason}
         if result.plan is not None:payload.update({'plan_id':result.plan.plan_id,'kind':result.plan.kind,'action_key':result.plan.action_key})
@@ -157,6 +157,13 @@ class DeterministicPlanner:
             if verdict.status=='INDETERMINATE':unknown.append(verdict.reason)
         if unknown:return self._wait(*tuple(sorted(set(unknown))),reason='DECISION_KERNEL_INDETERMINATE')
         return PlannerResult('NO_ACTION',reason='DECISION_NO_LEGAL_PLACEMENT')
+
+    def _ready(self,frame):
+        missing=self._required_known(frame,('fight_phase','actor_cell'))
+        if missing:return self._wait(*missing,reason='DECISION_READY_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_READY_ACTOR_UNKNOWN')
+        return self._simple(frame,'READY',(('phase','placement'),),('READY_OR_PHASE_CONFIRMED',))
 
     def _world(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell'))
