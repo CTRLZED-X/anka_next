@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import unittest
 
+from anka_capture.stream import TransportEnvelopeAssembler
+from anka_contracts.capture import CapturedTcpSegment, CapturePoll
 from anka_contracts.protocol import AdapterReleaseDescriptor, ProtocolAdmissionDecision
 from anka_protocol.adapters.dofus_3_7_10_10.adapter import Historical371010Adapter
 from anka_protocol.adapters.dofus_3_7_10_10.manifest import descriptor as historical_descriptor
@@ -261,6 +263,59 @@ class TestAgent02ProtocolEvolution(unittest.TestCase):
         self.assertEqual(suffix.status, "REJECTED_POISONED")
         self.assertEqual(len(admission.seen), 1)
         self.assertTrue(all(not batch.candidates for batch in admission.seen))
+
+    def test_same_poll_overlap_conflict_prevents_semantic_commit(self):
+        flow = "flow-agent02-poll-protocol"
+        frame = framed_any("jtk", JTK)
+        conflict = bytes([frame[0] ^ 1]) + frame[1:]
+        assembler = TransportEnvelopeAssembler(
+            capture_session_id="capture-agent02-protocol",
+            flow_clients={flow: "client-cra"},
+        )
+
+        def captured(seq, payload=b"", *, packet, flags=0x18):
+            return CapturedTcpSegment(
+                flow,
+                "server_to_client",
+                seq,
+                payload,
+                packet,
+                flags,
+                f"2026-10-25T20:00:{packet:02d}+00:00",
+                20_000 + packet,
+                "TEST_FIXTURE",
+            )
+
+        returned = assembler.consume_poll(CapturePoll(
+            "source-agent02-poll-protocol",
+            (
+                captured(100, packet=1, flags=0x02),
+                captured(101, frame, packet=2),
+                captured(101, conflict, packet=3),
+            ),
+            0,
+            False,
+            False,
+            "AVAILABLE_CLEAN",
+        ))
+
+        self.assertEqual(assembler.health().status, "UNCERTAIN")
+        self.assertTrue(returned)
+        self.assertTrue(all(
+            env.continuity not in ("COMPLETE", "CONTIGUOUS", "RECONNECTED")
+            for env in returned
+        ))
+
+        first = returned[0]
+        txn, _adapter, admission = self.transaction(
+            generation=first.connection_generation,
+            connection=first.connection_id,
+        )
+        results = [txn.process(env) for env in returned]
+
+        self.assertTrue(txn.poisoned)
+        self.assertTrue(all(result.status != "COMMITTED" for result in results))
+        self.assertEqual(admission.seen, [])
 
     def test_unknown_wire_fences_entire_historical_adapter_batch(self):
         d = historical_descriptor()
