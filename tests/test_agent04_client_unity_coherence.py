@@ -161,6 +161,12 @@ class Agent04ClientUnityCoherenceTests(unittest.TestCase):
         self.assertIn('Canonical observation does not belong to the current Dofus window.', source)
         self.assertIn('Canonical observation does not belong to the current follower window.', source)
 
+    def test_native_observation_requires_revision_presence_not_default_zero(self):
+        contracts = (ROOT / 'native/unity_bridge/Contracts.cs').read_text(encoding='utf8')
+        adapter = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
+        self.assertIn('public long? CanonicalRevision', contracts)
+        self.assertIn('!observation.CanonicalRevision.HasValue', adapter)
+
     def test_native_observation_rejects_cross_client_and_revision_rollback(self):
         source = (ROOT / 'native/unity_bridge/AutomaticMapAdapter.cs').read_text(encoding='utf8')
         self.assertIn('OBSERVATION_CLIENT_INSTANCE_MISMATCH', source)
