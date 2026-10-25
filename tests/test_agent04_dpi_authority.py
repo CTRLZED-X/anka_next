@@ -1,7 +1,7 @@
 """Chat 04 current-calibration DPI authority regressions."""
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import fields, replace
 import hashlib
 import json
 from pathlib import Path
@@ -67,6 +67,17 @@ def bridge() -> BridgeMapReport:
         (CellProjection(42, 500, 250, True, True, True),),
         True, True, False,
     )
+
+
+def forge_dataclass(instance, **changes):
+    """Simulate a deserializer that bypasses dataclass __post_init__ validation."""
+    forged = object.__new__(type(instance))
+    for item in fields(instance):
+        object.__setattr__(
+            forged, item.name,
+            changes.get(item.name, getattr(instance, item.name)),
+        )
+    return forged
 
 
 def context_for(cal: CalibrationProfileEvidence, *, window_dpi=96) -> ClientContextProof:
@@ -144,6 +155,24 @@ class Agent04DpiAuthorityTests(unittest.TestCase):
         self.assertEqual(ctx.prerequisites_status, 'BLOCKED')
         self.assertIn('CALIBRATION_DPI_UNPROVEN', ctx.invalidators)
 
+    def test_forged_current_certified_invalid_dpi_fails_context_and_spell(self):
+        good = calibration(dpi=96)
+        good_ctx = context_for(good, window_dpi=96)
+        self.assertEqual(good_ctx.prerequisites_status, 'PROVEN')
+
+        for bad_dpi in (True, 0, -1, 96.0, '96'):
+            with self.subTest(expected_dpi=bad_dpi):
+                malformed = forge_dataclass(good, expected_dpi=bad_dpi)
+                bad_ctx = context_for(malformed, window_dpi=96)
+                self.assertEqual(bad_ctx.prerequisites_status, 'BLOCKED')
+                self.assertIn('CALIBRATION_DPI_UNPROVEN', bad_ctx.invalidators)
+
+                result = project_spell(
+                    good_ctx, malformed, loadout(window(dpi=96)), 13058, NOW
+                )
+                self.assertFalse(result.valid)
+                self.assertIn('CALIBRATION_DPI_UNPROVEN', result.invalidators)
+
     def test_manual_current_certified_dto_missing_dpi_fails_spell_final_use(self):
         good = calibration(dpi=96)
         ctx = context_for(good, window_dpi=96)
@@ -165,6 +194,19 @@ class Agent04DpiAuthorityTests(unittest.TestCase):
         result = project_cell(forged, bridge(), 42, NOW)
         self.assertFalse(result.valid)
         self.assertIn('CALIBRATION_DPI_UNPROVEN', result.invalidators)
+
+    def test_forged_proven_context_invalid_dpi_fails_cell_final_use(self):
+        good = context_for(calibration(dpi=96), window_dpi=96)
+        for bad_dpi in (True, 0, -1, 96.0, '96'):
+            with self.subTest(vector_dpi=bad_dpi):
+                forged_vector = forge_dataclass(good.vector, dpi=bad_dpi)
+                forged = ClientContextProof(
+                    good.character_name, good.breed, good.class_id,
+                    forged_vector, 'PROVEN', (), False,
+                )
+                result = project_cell(forged, bridge(), 42, NOW)
+                self.assertFalse(result.valid)
+                self.assertIn('CALIBRATION_DPI_UNPROVEN', result.invalidators)
 
     def test_dpi_changes_calibration_generation(self):
         with tempfile.TemporaryDirectory() as directory:
