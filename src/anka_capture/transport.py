@@ -123,7 +123,9 @@ class TransportAuditor:
             if seg.syn and current.anchored and current.syn_seq != seg.seq:
                 reconnects += 1
                 # Audit the previous generation too; a later clean connection
-                # must NOT erase unresolved gaps from the earlier one.
+                # must NOT erase unresolved gaps from the earlier one. Retired
+                # generations keep metadata only, never historical payload proof.
+                current.overlap_proof.clear()
                 current = directions[key] = _Direction()
                 generations.append(current)
             elif seg.syn and current.anchored and current.syn_seq == seg.seq:
@@ -185,6 +187,7 @@ class IncrementalTransportAuditor:
                 self._max_reached=True
                 return
             self._reconnects+=1
+            current.overlap_proof.clear()
             current=self._directions[key]=_Direction()
             self._generations.append(current)
         elif segment.syn and current.anchored and current.syn_seq==segment.seq:
