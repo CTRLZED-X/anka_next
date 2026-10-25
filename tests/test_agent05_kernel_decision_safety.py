@@ -88,5 +88,105 @@ class TestAgent05KernelTargetCellSafety(unittest.TestCase):
         self.assertIn("map_cell:229", result.missing_inputs)
 
 
+
+class TestAgent05MapResearchIdentity(unittest.TestCase):
+    def test_complete_map_order_cannot_change_origin_identity(self):
+        from unittest.mock import patch
+
+        from anka_contracts.decision import CastProbe
+        from anka_contracts.map_research import MapResearchRequest
+        from anka_decision import map_research as module
+        from anka_game_kernel.domain.ids import ActorId, CellId, MapId
+
+        class Cell:
+            def __init__(self, cell_id, *, walkable=True):
+                self.cell_id = CellId(cell_id)
+                self.walkable = walkable
+                self.non_walkable_during_fight = False
+
+        # Full canonical coverage, deliberately reversed.  Cell 10 is legal,
+        # while tuple index 10 is cell 549 and illegal.  Index-based lookup
+        # therefore reproduces the old false block.
+        cells = [Cell(i) for i in reversed(range(560))]
+        next(cell for cell in cells if int(cell.cell_id) == 549).walkable = False
+
+        class FakeMap:
+            map_id = MapId(190580738)
+            cells = tuple(cells)
+
+        actor = SimpleNamespace(
+            actor_id=ActorId(41),
+            cell_id=CellId(10),
+            current_ap=11,
+            current_mp=6,
+            current_hp=100,
+            max_hp=100,
+            cooldowns_complete=True,
+            cooldowns=(),
+        )
+
+        class FakeFight:
+            geometry_live_walkable_cells = frozenset()
+            active_actor_id = ActorId(41)
+            occupied_cells = frozenset({CellId(10)})
+
+            def require_map(self, map_id):
+                return map_id == FakeMap.map_id
+
+            def actor(self, actor_id):
+                return actor if actor_id == actor.actor_id else None
+
+        class FakeSpellDecisions:
+            @staticmethod
+            def evaluate_cast_cell(**kwargs):
+                return SimpleNamespace(legal=True, failed_stages=(), missing_inputs=())
+
+        class FakeFightQueries:
+            @staticmethod
+            def reachable_cells(*args, **kwargs):
+                return SimpleNamespace(reachable=(), missing_inputs=())
+
+        kernel = SimpleNamespace(
+            spell_decisions=FakeSpellDecisions(),
+            fight_queries=FakeFightQueries(),
+        )
+        snapshot = {
+            "actors": {
+                "41": {
+                    "cell_id": 10,
+                    "AP": 11,
+                    "MP": 6,
+                    "hp": 100,
+                    "max_hp": 100,
+                    "cooldowns": [],
+                }
+            }
+        }
+        request = MapResearchRequest(
+            CastProbe("session-a", "acct-cra", 1, "fight-a", 1, 41, 32435, 3, 10),
+            190580738,
+            (10,),
+        )
+        gate = SimpleNamespace(
+            status="RESEARCH_ONLY",
+            reasons=(),
+            missing_kernel_inputs=(),
+        )
+
+        with patch.object(module, "MapDefinition", FakeMap.__class__), \
+             patch.object(module, "FightContext", FakeFight.__class__), \
+             patch.object(module, "inspect_cast_probe", return_value=gate):
+            result = module.inspect_map_research(
+                snapshot,
+                request,
+                map_definition=FakeMap(),
+                fight_context=FakeFight(),
+                kernel=kernel,
+            )
+
+        self.assertEqual(result.status, "RESEARCH_ONLY")
+        self.assertNotIn("ACTOR_ORIGIN_GEOMETRY_CONFLICT", result.reasons)
+
+
 if __name__ == "__main__":
     unittest.main()
