@@ -184,7 +184,7 @@ class ReadOnlyBridgeInspector:
                     _int(snapshot, 'projectableCellCount') != MAX_MAP_CELLS or
                     _int(snapshot, 'generatedCoordinateCount') != len(cells)):
                 raise ValueError('COORDINATE_COUNT_MISMATCH')
-            parsed=[];seen=set()
+            parsed=[];seen=set();actual_projectable=0;actual_verified=0;actual_inside=0
             for c in cells:
                 if type(c) is not dict:
                     raise ValueError('INVALID_COORDINATE_ENTRY')
@@ -195,6 +195,9 @@ class ReadOnlyBridgeInspector:
                 is_inside=_bool(c,'insideCameraViewport')
                 projected=_bool(c,'projectable')
                 verified=_bool(c,'sourceVerified')
+                actual_projectable+=int(projected)
+                actual_verified+=int(verified)
+                actual_inside+=int(is_inside)
                 cx=c.get('clientX'); cy=c.get('clientY')
                 if projected and is_inside and verified:
                     if type(cx) is not int or type(cy) is not int or not (0 <= cx < w and 0 <= cy < h):
@@ -202,6 +205,12 @@ class ReadOnlyBridgeInspector:
                 elif type(cx) is not int or type(cy) is not int:
                     cx=-1;cy=-1
                 parsed.append(CellProjection(i,cx,cy,is_inside,verified,projected))
+            if actual_projectable != _int(snapshot,'projectableCellCount'):
+                raise ValueError('COORDINATE_PROJECTABLE_COUNT_MISMATCH')
+            if actual_verified != len(cells):
+                raise ValueError('COORDINATE_CELL_SOURCE_UNVERIFIED')
+            if 'insideViewportCount' in snapshot and actual_inside != _int(snapshot,'insideViewportCount'):
+                raise ValueError('COORDINATE_VIEWPORT_COUNT_MISMATCH')
             return BridgeMapReport('RESEARCH_PROJECTION_ONLY','WINDOW_AND_COORDINATE_SCOPE_MATCH',
                 map_id,obs[4],obs[5],(w,h),tuple(sorted(parsed,key=lambda c:c.cell_id)),True)
         except (BridgeTransportRejected, ValueError, TypeError, KeyError, AttributeError) as exc:
