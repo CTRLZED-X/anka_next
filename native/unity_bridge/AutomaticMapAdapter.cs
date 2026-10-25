@@ -580,11 +580,20 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
         }
         else
         {
-            _lastError = _source.ProjectionVerified
-                ? _camera == null
-                    ? "The gameplay camera could not be proven from authoritative cell projections."
-                    : "The Dofus window could not be read."
-                : _source.LastError;
+            var wrongClientWindow = _source.ProjectionVerified
+                && _camera != null
+                && window != null
+                && !string.Equals(
+                    observation.ClientInstanceId,
+                    LocalClientInstanceId(window),
+                    StringComparison.Ordinal);
+            _lastError = wrongClientWindow
+                ? "The current Dofus window does not match the canonical observation client instance."
+                : _source.ProjectionVerified
+                    ? _camera == null
+                        ? "The gameplay camera could not be proven from authoritative cell projections."
+                        : "The Dofus window could not be read."
+                    : _source.LastError;
             if (!string.IsNullOrWhiteSpace(windowError)) _lastError = windowError;
             _coordinates = NotReadyCoordinates(
                 _source.ProjectionVerified ? "COORDINATE_NOT_READY" : "CELL_POSITION_SOURCE_UNVERIFIED",
