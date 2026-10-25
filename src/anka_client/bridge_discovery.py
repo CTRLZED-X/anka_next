@@ -110,6 +110,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
     valid=ready_count=unmatched=0
     matched=[];ready=[];ambiguous_window_generations=set()
     listener_owner_rejections=0
+    bridge_identity_rejections=0
     workers=min(12,port_count)
     with ThreadPoolExecutor(max_workers=workers,thread_name_prefix='anka-bridge-probe') as pool:
         futures=[pool.submit(one,p) for p in range(port_start,port_start+port_count)]
@@ -117,8 +118,11 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
             result=future.result()
             if result is None:continue
             status,generation,is_ready=result
-            if status in ('OWNER_UNVERIFIED','OWNER_MISMATCH','STALE_OR_FOREIGN_BRIDGE'):
+            if status in ('OWNER_UNVERIFIED','OWNER_MISMATCH'):
                 listener_owner_rejections+=1
+                continue
+            if status=='STALE_OR_FOREIGN_BRIDGE':
+                bridge_identity_rejections+=1
                 continue
             if status=='AMBIGUOUS_WINDOW':
                 valid+=1
@@ -160,6 +164,7 @@ def probe_bridge_range(windows: tuple[WindowObservation, ...], *,
         'projection_ready_duplicate_responses':max(0,ready_count-ready_unique),
         'listener_owner_proof_active':owner_proof_active,
         'listener_owner_rejections':listener_owner_rejections,
+        'bridge_identity_rejections':bridge_identity_rejections,
         'character_identity_provided':False,
         'physical_input_permitted':False,
     }
