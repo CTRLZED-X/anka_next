@@ -205,6 +205,15 @@ class TestTemporalWatermarkPhaseA(unittest.TestCase):
         self.assertEqual(accepted.last_processed_tick,120)
         self.assertEqual(world.last_processed_tick,100)
 
+    def test_watermark_is_independent_from_new_resume_watchdog_origin(self):
+        resumed=snap(phase_started_tick=150,watchdog_deadline_tick=155,last_processed_tick=100)
+        self.assertEqual(resumed.last_processed_tick,100)
+        self.assertEqual(admit_workflow_resume(resumed,150).status,'ALLOWED')
+        advanced=persist_workflow_signal_tick(resumed,151,accepted=True)
+        self.assertEqual(advanced.last_processed_tick,151)
+        self.assertEqual(advanced.phase_started_tick,150)
+        self.assertEqual(advanced.watchdog_deadline_tick,155)
+
     def test_nonprogress_persistence_does_not_refresh_watchdog(self):
         world=snap(last_processed_tick=100,watchdog_deadline_tick=6)
         updated=persist_workflow_signal_tick(world,120,accepted=True)
