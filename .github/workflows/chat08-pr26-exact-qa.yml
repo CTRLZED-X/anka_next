@@ -1,0 +1,43 @@
+name: chat08-pr26-exact-qa
+
+on:
+  push:
+    branches: [agent/08-adversarial-qa]
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/src
+  TARGET_SHA: 8dd3a1eb97d1365845faebd82cba32b8a6bb8d3a
+
+jobs:
+  exact-head-capture-protocol-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact PR26 head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.TARGET_SHA }}
+      - name: Assert exact source identity
+        run: |
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_SHA=$TARGET_SHA"
+          echo "ACTUAL_SHA=$actual"
+          test "$actual" = "$TARGET_SHA"
+      - name: Set up Python 3.13
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-p1.txt
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-p1.txt
+      - name: Compile Capture Protocol Python
+        run: python -m compileall -q src/anka_capture src/anka_protocol
+      - name: Agent02 exact-head suites
+        run: python -m pytest -q tests/test_agent02_*.py
+      - name: Required Capture Protocol regression matrix
+        run: |
+          python -m pytest -q             tests/test_m4_wire_envelopes.py             tests/test_capture_transport.py             tests/test_capture_live.py             tests/test_p51_windows_flow_owner_stability.py             tests/test_p62_capture_loss_metadata.py             tests/test_p65_capture_abort_integrity.py             tests/test_capture_architecture.py             tests/test_protocol_architecture.py             tests/test_m5_protocol_sdk.py
