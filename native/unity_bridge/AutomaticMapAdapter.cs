@@ -110,6 +110,9 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "The follower-local live map projection is not verified.");
         if (!CoordinateProjection.TryGetDofusWindow(out var window, out var windowError))
             return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", windowError ?? "Dofus window is unavailable.");
+        if (!CoordinateTableIsReady()
+            || !string.Equals(ProjectionSignature(window), _lastProjectionSignature, StringComparison.Ordinal))
+            return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "Projection generation is not current for the follower window.");
 
         var target = _scanner.FindFightEntryTarget(request, _camera, _source.SnapshotPositions(), out var diagnostics);
         if (target == null)
@@ -125,6 +128,9 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 "FIGHT_ENTRY_NOT_PROVEN",
                 "The proven fight-entry object is not safely projectable in the current follower viewport.",
                 diagnostics);
+
+        if (!string.Equals(ProjectionSignature(window), _lastProjectionSignature, StringComparison.Ordinal))
+            return FightEntryFailure(request, "FIGHT_ENTRY_NOT_PROVEN", "Projection changed during fight-entry resolution.");
 
         return new FightEntryResponse
         {
