@@ -11,7 +11,10 @@ import json
 import re
 
 from anka_contracts.diagnostics import DiagnosticEvent, now_utc
-from anka_observability.api import FrozenDiagnostics, is_priority_event
+from anka_observability.api import (
+    FrozenDiagnostics, is_priority_event,
+    DIAGNOSTIC_EVENT_ID_RE, DIAGNOSTIC_INVOCATION_ID_RE, DIAGNOSTIC_RUN_ID_RE,
+)
 from anka_observability.bundle import export_incident, verify_incident
 from anka_observability.redaction import has_diagnostic_truncation
 
@@ -75,9 +78,9 @@ def recover_unclean_run(folder:Path)->Path|None:
     state_run=state.get('run_id') if isinstance(state.get('run_id'),str) else None
     if state_run is not None and state_run!=folder.name:return None
     run_id=state_run or folder.name
-    if not isinstance(run_id,str) or not run_id.startswith('run-'):return None
+    if not isinstance(run_id,str) or DIAGNOSTIC_RUN_ID_RE.fullmatch(run_id) is None:return None
     state_inv=state.get('invocation_id') if isinstance(state.get('invocation_id'),str) else None
-    invocation_id=state_inv if state_inv is not None and state_inv.startswith('inv-') else None
+    invocation_id=(state_inv if state_inv is not None and DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(state_inv) is not None else None)
     errors=['UNCLEAN_RUN_RECOVERED_TAIL_MAY_BE_MISSING']
     if state_inv is not None and invocation_id is None:errors.append('RECOVERY_STATE_INVOCATION_ID_INVALID')
     rows=_read_rows(folder/'events.jsonl',run_id=run_id,invocation_id=invocation_id,errors=errors)
@@ -96,8 +99,14 @@ def recover_unclean_run(folder:Path)->Path|None:
             errors.append('RECOVERY_PRODUCER_SEQ_CONFLICT_SKIPPED');continue
         try:
             event=DiagnosticEvent.from_dict(row)
-            if not re.fullmatch(r'evt-[A-Za-z0-9][A-Za-z0-9_.-]{0,127}',event.event_id):
+            if DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.event_id) is None:
                 raise ValueError('event-id')
+            if event.parent_event_id is not None and DIAGNOSTIC_EVENT_ID_RE.fullmatch(event.parent_event_id) is None:
+                raise ValueError('parent-event-id')
+            if DIAGNOSTIC_INVOCATION_ID_RE.fullmatch(event.invocation_id) is None:
+                raise ValueError('invocation-id')
+            if event.run_id is None or DIAGNOSTIC_RUN_ID_RE.fullmatch(event.run_id) is None:
+                raise ValueError('run-id')
             stamp=datetime.fromisoformat(event.occurred_utc.replace('Z','+00:00'))
             if stamp.tzinfo is None:raise ValueError('timestamp')
         except (TypeError,ValueError):
