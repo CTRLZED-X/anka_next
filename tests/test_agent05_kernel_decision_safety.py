@@ -334,5 +334,30 @@ class TestAgent05ActionIdentitySafety(unittest.TestCase):
         self.assertNotEqual(changed_kernel, changed_data)
 
 
+
+class TestAgent05KernelPortFailureSafety(unittest.TestCase):
+    def test_kernel_exception_becomes_explicit_fault_without_plan(self):
+        class FailingKernel:
+            def validate_plan(self, frame, plan):
+                raise RuntimeError("boom")
+
+        result = DeterministicPlanner(FailingKernel()).plan(combat_frame())
+
+        self.assertEqual(result.disposition, "FAULT")
+        self.assertEqual(result.failure_code, "KERNEL_VALIDATION_FAILED")
+        self.assertIsNone(result.plan)
+
+    def test_invalid_kernel_result_becomes_explicit_fault_without_plan(self):
+        class InvalidKernel:
+            def validate_plan(self, frame, plan):
+                return SimpleNamespace(status="LEGAL", reason="")
+
+        result = DeterministicPlanner(InvalidKernel()).plan(combat_frame())
+
+        self.assertEqual(result.disposition, "FAULT")
+        self.assertEqual(result.failure_code, "KERNEL_RESULT_INVALID")
+        self.assertIsNone(result.plan)
+
+
 if __name__ == "__main__":
     unittest.main()
