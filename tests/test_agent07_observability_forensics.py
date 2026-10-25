@@ -152,6 +152,26 @@ class TestAgent07IncidentPrivacyVerification(unittest.TestCase):
             finally:
                 obs.finish('BLOCKED')
 
+    def test_manifest_with_unredacted_sensitive_field_fails_verification(self):
+        with tempfile.TemporaryDirectory() as td:
+            obs = LocalDiagnostics(Path(td), run_id='run-agent07-manifest-privacy', invocation_id='inv-agent07-manifest-privacy')
+            try:
+                obs.record('workflow.heartbeat', owner_system='anka_workflow', boundary='workflow.watchdog')
+                path = obs.export_incident('MANIFEST_PRIVACY_TEST', boundary='observability.bundle')
+                with ZipFile(path) as z:
+                    files = {entry: z.read(entry) for entry in z.namelist()}
+                manifest = json.loads(files['manifest.json'])
+                manifest['access_token'] = 'agent07-manifest-secret'
+                files['manifest.json'] = (json.dumps(manifest, sort_keys=True, ensure_ascii=True, indent=2) + '\\n').encode('utf8')
+                with ZipFile(path, 'w', ZIP_DEFLATED) as z:
+                    for entry, data in files.items():
+                        z.writestr(entry, data)
+                result = verify_incident(path)
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertIn('UNREDACTED_SENSITIVE_DATA:manifest.json', result['errors'])
+            finally:
+                obs.finish('BLOCKED')
+
     def test_sensitive_detector_allows_redacted_value_and_safe_token_count(self):
         self.assertFalse(has_unredacted_sensitive_data({'access_token': '[REDACTED]', 'token_count': 7}))
         self.assertTrue(has_unredacted_sensitive_data({'access_token': 'plain-secret'}))
