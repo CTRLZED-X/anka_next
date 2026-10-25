@@ -32,8 +32,6 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     if (type(source_digest) is not str or len(source_digest)!=64
             or any(ch not in '0123456789abcdef' for ch in source_digest)):
         raise ValueError('CALIBRATION_SOURCE_HASH_MISSING')
-    if current_client_certified and source_path is None:
-        raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
     if source_path is not None and sha256(source_path.read_bytes()).hexdigest()!=source_digest:
         raise ValueError('CALIBRATION_SOURCE_HASH_MISMATCH')
     size=data.get('client_size',{})
@@ -52,6 +50,8 @@ def load_calibration_profile(path: Path, *, source_path: Path | None=None,
     historical=status=='HISTORICAL_COORDINATES_NOT_LIVE_CERTIFIED'
     if current_client_certified and historical:
         raise ValueError('HISTORICAL_CALIBRATION_CANNOT_SELF_CERTIFY_CURRENT_CLIENT')
+    if current_client_certified and source_path is None:
+        raise ValueError('CURRENT_CALIBRATION_SOURCE_PROVENANCE_REQUIRED')
     # The evidence generation must change when authority-relevant external
     # calibration evidence changes even if the JSON profile bytes are identical.
     generation_material=(
