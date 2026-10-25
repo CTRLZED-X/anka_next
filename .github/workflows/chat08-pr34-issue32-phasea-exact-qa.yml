@@ -1,0 +1,258 @@
+name: chat08-pr34-issue32-phasea-exact-qa
+
+on:
+  push:
+    branches: [agent/08-adversarial-qa]
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/src
+  TARGET_SHA: 6f60c6762c299c4809487ca5edbd4f46dd0fb6e0
+
+jobs:
+  exact-head-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact PR34 head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+
+      - name: Assert exact source identity
+        run: |
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_SHA=$TARGET_SHA"
+          echo "ACTUAL_SHA=$actual"
+          test "$actual" = "$TARGET_SHA"
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-p1.txt
+
+      - name: Compile Phase A source
+        run: python -m compileall -q src/anka_contracts src/anka_app
+
+      - name: Run committed Phase A module
+        run: python -m pytest -q tests/test_agent10_issue32_workflow_contract_migration.py
+
+      - name: Run existing Workflow and contract regressions
+        run: |
+          python -m pytest -q             tests/test_m9_m10_generated.py             tests/test_m9_m10_q6.py             tests/test_p17_coordination_workflow.py             tests/test_m1_contracts_lab.py             tests/test_m1_architecture_gate.py
+
+      - name: Independent Issue32 Phase A adversarial matrix
+        run: |
+          python - <<'PY'
+          from dataclasses import asdict, replace
+
+          from anka_app.workflow_persistence import (
+              admit_workflow_resume,
+              admit_workflow_signal_tick,
+              dump_workflow_snapshot,
+              load_workflow_snapshot,
+              persist_workflow_signal_tick,
+              prepare_recovery_outcome_signal,
+          )
+          from anka_contracts.workflow import (
+              EffectiveMissionPlan,
+              MissionConfigSpec,
+              RECOVERY_RESUME_PHASES,
+              RoutePlan,
+              WorkflowSnapshot,
+              initial_workflow_progress_token,
+          )
+          from anka_workflow.engine import MissionWorkflow
+
+          VALID_TARGETS=(
+              'PREFLIGHT','WORLD','ENCOUNTER_SELECTED','FIGHT_ENTRY','PARTY_JOIN',
+              'PLACEMENT','READY','FIGHT_ACTIVE','FIGHT_END_RECONCILIATION','WORLD_REENTRY',
+          )
+          INVALID_TARGETS=(None,'BOGUS','CREATED','RECOVERING','COMPLETED','STOPPED','BLOCKED')
+
+          def snap(**kw):
+              data=dict(
+                  run_id='run-chat08-phasea',
+                  phase='RECOVERING',
+                  fight_epoch=1,
+                  attempts=0,wins=0,losses=0,unknowns=0,aborted=0,
+                  route_index=0,
+                  pending_action_id=None,
+                  counted_fight_epochs=(),
+                  started_fight_epochs=(1,),
+                  processed_signal_ids=('wfsig-old',),
+                  progress_generation=4,
+                  progress_token='a'*64,
+                  phase_started_tick=90,
+                  watchdog_deadline_tick=105,
+                  recovery_budget_remaining=1,
+                  resume_phase='READY',
+                  expected_next_evidence=('RECOVERY_SUCCEEDED','RECOVERY_FAILED'),
+                  terminal_reason=None,
+                  goal_reached_pending_reentry=False,
+                  plan_id='missionplan-chat08-phasea',
+                  selected_encounter_id=None,
+                  selected_encounter_map_id=None,
+                  recovery_generation=2,
+                  active_recovery_generation=2,
+                  last_processed_tick=100,
+              )
+              data.update(kw)
+              return WorkflowSnapshot(**data)
+
+          # Recovery identity.
+          current=snap()
+          for kind in ('RECOVERY_SUCCEEDED','RECOVERY_FAILED'):
+              stale=prepare_recovery_outcome_signal(
+                  current,signal_id='wfsig-stale-'+kind.lower(),kind=kind,
+                  monotonic_tick=101,recovery_generation=1,
+              )
+              assert stale.admission.status=='REJECTED' and stale.signal is None,stale
+              matching=prepare_recovery_outcome_signal(
+                  current,signal_id='wfsig-current-'+kind.lower(),kind=kind,
+                  monotonic_tick=101,recovery_generation=2,
+              )
+              assert matching.admission.status=='ALLOWED' and matching.signal is not None,matching
+          missing=prepare_recovery_outcome_signal(
+              current,signal_id='wfsig-missing',kind='RECOVERY_SUCCEEDED',
+              monotonic_tick=101,recovery_generation=None,
+          )
+          assert missing.admission.status=='REJECTED' and missing.signal is None
+          future=prepare_recovery_outcome_signal(
+              current,signal_id='wfsig-future',kind='RECOVERY_FAILED',
+              monotonic_tick=101,recovery_generation=3,
+          )
+          assert future.admission.status=='REJECTED' and future.signal is None
+          settled=snap(
+              phase='READY',resume_phase=None,active_recovery_generation=None,
+              phase_started_tick=101,watchdog_deadline_tick=106,last_processed_tick=101,
+          )
+          dupe=prepare_recovery_outcome_signal(
+              settled,signal_id='wfsig-dupe',kind='RECOVERY_SUCCEEDED',
+              monotonic_tick=100,recovery_generation=2,
+          )
+          assert dupe.admission.status=='IDEMPOTENT' and dupe.signal is None
+          print("RECOVERY_IDENTITY=PASS")
+
+          # Recovery target authority: constructor, raw persistence, and final admission.
+          assert tuple(RECOVERY_RESUME_PHASES)==VALID_TARGETS
+          valid=current
+          payload=dump_workflow_snapshot(valid)
+          loaded=load_workflow_snapshot(payload)
+          assert loaded.classification=='SAFE' and loaded.resume_authorized
+          assert loaded.snapshot.resume_phase=='READY'
+          for target in VALID_TARGETS:
+              v=replace(current,resume_phase=target)
+              roundtrip=load_workflow_snapshot(dump_workflow_snapshot(v))
+              assert roundtrip.classification=='SAFE' and roundtrip.resume_authorized,target
+              assert roundtrip.snapshot.resume_phase==target,target
+              assert admit_workflow_resume(v,100).status=='ALLOWED',target
+          for target in INVALID_TARGETS:
+              try:
+                  replace(current,resume_phase=target)
+              except ValueError as exc:
+                  assert 'RECOVERY_RESUME_PHASE' in str(exc),(target,exc)
+              else:
+                  raise AssertionError(("invalid recovery target constructed",target))
+
+              raw={'schema_version':payload['schema_version'],'snapshot':dict(payload['snapshot'])}
+              raw['snapshot']['resume_phase']=target
+              migrated=load_workflow_snapshot(raw)
+              assert migrated.classification=='INCOMPATIBLE' and not migrated.resume_authorized,(target,migrated)
+
+              # Defense in depth: simulate a malformed in-memory object that bypassed dataclass construction.
+              malformed=replace(current)
+              object.__setattr__(malformed,'resume_phase',target)
+              admission=admit_workflow_resume(malformed,100)
+              assert admission.status=='REJECTED',(target,admission)
+          print("RECOVERY_TARGET_AUTHORITY=PASS")
+
+          # Durable temporal watermark / watchdog separation.
+          world=snap(
+              phase='WORLD',resume_phase=None,active_recovery_generation=None,
+              phase_started_tick=1,watchdog_deadline_tick=6,last_processed_tick=100,
+          )
+          assert admit_workflow_resume(world,50).status=='REJECTED'
+          for tick in (100,101,1000):
+              assert admit_workflow_resume(world,tick).status=='ALLOWED'
+          assert admit_workflow_signal_tick(world,99).status=='REJECTED'
+          assert admit_workflow_signal_tick(world,100).status=='ALLOWED'
+          rejected=persist_workflow_signal_tick(world,120,accepted=False)
+          assert rejected is world and rejected.last_processed_tick==100
+          advanced=persist_workflow_signal_tick(world,120,accepted=True)
+          assert advanced.last_processed_tick==120
+          assert advanced.phase_started_tick==world.phase_started_tick==1
+          assert advanced.watchdog_deadline_tick==world.watchdog_deadline_tick==6
+          assert advanced.progress_generation==world.progress_generation
+          try:
+              persist_workflow_signal_tick(advanced,119,accepted=True)
+          except ValueError as exc:
+              assert 'TICK_BELOW_WATERMARK' in str(exc)
+          else:
+              raise AssertionError("watermark regressed")
+          print("TEMPORAL_WATERMARK=PASS")
+
+          # Real constructor token equality for several run identities.
+          cfg=MissionConfigSpec('qa-route',1,1,1,2,False,True,'c'*64)
+          route=RoutePlan('qa-route',0,0,('R',),True,'d'*64)
+          plan=EffectiveMissionPlan('missionplan-chat08-token',cfg,route,5,3)
+          for run_id in ('run-a','run-curseni','run-sosoking-2026'):
+              created=MissionWorkflow(run_id,plan).snapshot()
+              assert created.progress_token==initial_workflow_progress_token(run_id),(run_id,created.progress_token)
+          print("INITIAL_PROGRESS_TOKEN_ENGINE_MATCH=PASS")
+
+          # Sole SAFE legacy CREATED bootstrap and contradictory history.
+          base=MissionWorkflow('run-chat08-legacy',plan).snapshot()
+          raw=asdict(base)
+          for field in ('recovery_generation','active_recovery_generation','last_processed_tick'):
+              raw.pop(field)
+          migrated=load_workflow_snapshot(raw)
+          assert migrated.classification=='SAFE' and migrated.resume_authorized
+          assert migrated.snapshot.recovery_generation==0
+          assert migrated.snapshot.last_processed_tick==0
+
+          wrong_token='f'*64 if base.progress_token!='f'*64 else 'e'*64
+          bad_token=dict(raw)
+          bad_token['progress_token']=wrong_token
+          bad=load_workflow_snapshot(bad_token)
+          assert bad.classification!='SAFE' and not bad.resume_authorized,bad
+          assert bad.snapshot.recovery_generation is None
+          assert bad.snapshot.last_processed_tick is None
+
+          cases=[]
+          def legacy_of(s):
+              d=asdict(s)
+              for field in ('recovery_generation','active_recovery_generation','last_processed_tick'):
+                  d.pop(field)
+              return d
+          cases.extend([
+              replace(base,fight_epoch=1),
+              replace(base,attempts=1,wins=1),
+              replace(base,started_fight_epochs=(1,)),
+              replace(base,counted_fight_epochs=(1,)),
+              replace(base,processed_signal_ids=('wfsig-history',)),
+              replace(base,progress_generation=1),
+              replace(base,route_index=1),
+              replace(base,pending_action_id='action-history'),
+              replace(base,resume_phase='READY'),
+              replace(base,selected_encounter_id='encounter-history',selected_encounter_map_id=123),
+              replace(base,goal_reached_pending_reentry=True),
+              replace(base,terminal_reason='HISTORY'),
+              replace(base,watchdog_deadline_tick=1),
+              replace(base,phase_started_tick=1),
+              replace(base,expected_next_evidence=('PREFLIGHT_OK',)),
+          ])
+          for index, changed in enumerate(cases,1):
+              m=load_workflow_snapshot(legacy_of(changed))
+              assert m.classification!='SAFE' and not m.resume_authorized,(index,m)
+              assert m.snapshot.recovery_generation is None,(index,m)
+              assert m.snapshot.last_processed_tick is None,(index,m)
+          print("LEGACY_CREATED_MIGRATION=PASS")
+          print("CHAT08_ISSUE32_PHASE_A_INDEPENDENT_MATRIX=PASS")
+          PY
