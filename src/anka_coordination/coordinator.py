@@ -226,18 +226,25 @@ class PartyCoordinatorService:
             local_conflicts.append('TURN_OWNER_SKEW')
         elif len(owner_values)==1:
             owner_actor=next(iter(owner_values))
-            if owner_actor not in self._by_actor:
+            owner_binding=self._by_actor.get(owner_actor)
+            if owner_binding is None:
                 local_conflicts.append('TURN_OWNER_NOT_PARTY_MEMBER')
+            elif not owner_binding.required:
+                # Required-member observations cannot authorize input for a
+                # non-required roster member whose own state is outside the
+                # authoritative quorum.  Fail closed instead of constructing a
+                # snapshot whose owner is absent from its authoritative members.
+                local_conflicts.append('TURN_OWNER_NOT_REQUIRED_MEMBER')
             elif (len(obs)==len(required)
                   and all(o is not None and o.turn_owner_actor_id==owner_actor for o in obs)
                   and all_turn_epochs_proven):
-                turn_owner=self._by_actor[owner_actor].account_id
+                turn_owner=owner_binding.account_id
             else:
                 missing=tuple(sorted(set(missing)|{'TURN_OWNER_NOT_COHERENT'}))
         else:
             missing=tuple(sorted(set(missing)|{'TURN_OWNER_UNPROVEN'}))
         if not obs or any(o is None for o in obs):phase='WAIT_MEMBERS'
-        elif local_conflicts and any(x in local_conflicts for x in ('FIGHT_ID_CONFLICT','FIGHT_EPOCH_CONFLICT','FIGHT_MAP_CONFLICT','TURN_OWNER_NOT_PARTY_MEMBER')):phase='BLOCKED'
+        elif local_conflicts and any(x in local_conflicts for x in ('FIGHT_ID_CONFLICT','FIGHT_EPOCH_CONFLICT','FIGHT_MAP_CONFLICT','TURN_OWNER_NOT_PARTY_MEMBER','TURN_OWNER_NOT_REQUIRED_MEMBER')):phase='BLOCKED'
         elif not same:phase='WAIT_SAME_FIGHT'
         elif not join.satisfied:phase='WAIT_JOIN'
         elif not placement.satisfied:phase='WAIT_PLACEMENT'
