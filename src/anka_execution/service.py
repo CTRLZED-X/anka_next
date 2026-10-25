@@ -28,7 +28,15 @@ class DefinitiveExecutionService:
         if not run_id.startswith('run-') or type(run_generation) is not int or run_generation<=0:raise ExecutionServiceRejected('INVALID_EXECUTION_RUN')
         self.run_id=run_id;self.run_generation=run_generation;self.ledger=ledger;self.arbiter=arbiter;self.state_reader=state_reader;self.client=client;self.mechanics=mechanics;self.coordination=coordination;self.driver=driver;self.clock_ns=clock_ns or time.monotonic_ns;self._observer=observer
         self._armed=False;self._authority_generation=0;self.physical_input_count=0;self._last_safety_fault=None
-        self.ledger.recover_after_restart()
+        # Never recover or arm from an unchecked projection.  The durable event
+        # chain is the authority; a coherently-looking actions row may have been
+        # corrupted or partially rewritten after a crash/disk fault.
+        try:
+            self.ledger.audit()
+            self.ledger.recover_after_restart()
+            self.ledger.audit()
+        except Exception as exc:
+            raise ExecutionServiceRejected('EXECUTION_LEDGER_BOOTSTRAP_INTEGRITY_FAILED:'+type(exc).__name__) from exc
     def _record(self,name:str,command:ActionCommand|None=None,**kwargs)->None:
         if self._observer is None:return
         if command is not None:
@@ -58,6 +66,13 @@ class DefinitiveExecutionService:
         # action fence: this service instance itself is no longer trusted to own
         # physical input. Surface that root cause first and require reconstruction.
         if self._last_safety_fault is not None:raise ExecutionServiceRejected('SAFETY_FAULT_REQUIRES_NEW_SERVICE_INSTANCE')
+        # Re-audit immediately before granting authority so corruption that occurs
+        # after service construction cannot turn an unresolved send into an
+        # apparently settled/retryable action.
+        try:self.ledger.audit()
+        except Exception as exc:
+            self._last_safety_fault='EXECUTION_LEDGER_INTEGRITY_FAILED:'+type(exc).__name__;self._armed=False
+            raise ExecutionServiceRejected(self._last_safety_fault) from exc
         if self.ledger.unresolved():raise ExecutionServiceRejected('UNRESOLVED_ACTIONS_BLOCK_ARM')
         self._authority_generation=authority_generation;self._armed=True
     def disarm(self,reason='DISARM_REQUESTED'):
@@ -198,18 +213,17 @@ class DefinitiveExecutionService:
                     a=self.ledger.mark_uncertain(command.action_id,reason)
                     return self._durable_outcome(a,attempt)
                 except Exception as ledger_exc:
-                    if driver_invoked:
-                        # The external driver boundary was entered but the durable
-                        # ledger can no longer record/re-read uncertainty.  Never
-                        # manufacture NOT_SENT or permit a blind retry.  Permanently
-                        # disarm this service instance and return an explicitly local
-                        # fail-safe marker (not an authoritative game outcome proof).
-                        reason='EXECUTION_LEDGER_UNAVAILABLE_AFTER_DRIVER:'+type(ledger_exc).__name__
-                        self._last_safety_fault=reason;self.disarm(reason)
-                        self._record('execution.safety_fault',command,boundary='execution.durable_settlement',
-                                     attempt_id=attempt,severity='CRITICAL',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
-                        marker='exec-failsafe-'+sha256(f'{command.action_id}:{attempt}:{reason}'.encode()).hexdigest()[:32]
-                        return ActionOutcome(command.action_id,attempt,'UNCERTAIN',(marker,),False,(),reason)
+                    # SEND_STARTED is already durable whenever attempt exists. Even
+                    # if the driver call itself has not yet begun, losing the ledger
+                    # now means a safe NOT_SENT transition can no longer be proven.
+                    prefix=('EXECUTION_LEDGER_UNAVAILABLE_AFTER_DRIVER:' if driver_invoked
+                            else 'EXECUTION_LEDGER_UNAVAILABLE_AFTER_SEND_STARTED:')
+                    reason=prefix+type(ledger_exc).__name__
+                    self._last_safety_fault=reason;self.disarm(reason)
+                    self._record('execution.safety_fault',command,boundary='execution.durable_settlement',
+                                 attempt_id=attempt,severity='CRITICAL',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
+                    marker='exec-failsafe-'+sha256(f'{command.action_id}:{attempt}:{reason}'.encode()).hexdigest()[:32]
+                    return ActionOutcome(command.action_id,attempt,'UNCERTAIN',(marker,),False,(),reason)
             reason='EXECUTION_EXCEPTION_BEFORE_SEND:'+type(exc).__name__
             try:self.ledger.cancel_pre_send(command.action_id,reason)
             except Exception:pass
