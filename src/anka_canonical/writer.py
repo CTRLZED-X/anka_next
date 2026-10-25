@@ -284,12 +284,46 @@ class CanonicalWriter:
             ev=_event_from_json(raw)
             if ev.canonical_cursor!=cursor or ev.event_id!=event_id:raise CanonicalIntegrityError('CANONICAL_EVENT_CONTRACT_MISMATCH')
             events.append(ev);prev=stored_hash
-        # Batch receipts must reference only durable cursor ranges and exact counts.
-        for batch_id,first,last,n in self.db.execute('SELECT batch_id,first_cursor,last_cursor,event_count FROM canonical_batches'):
+        # Batch receipts are part of durable provenance, not optional metadata.
+        # Every committed event cursor must be covered exactly once by one
+        # non-empty batch receipt, and that receipt must agree with the event's
+        # adapter/build provenance. Otherwise replay can look correct while the
+        # source/checkpoint lineage needed to trust it has been lost or altered.
+        expected_cursor=1
+        batch_rows=self.db.execute(
+            '''SELECT batch_id,source_digest,adapter_release_id,observed_client_build,
+                      connection_id,connection_generation,decoder_checkpoint_sha256,
+                      first_cursor,last_cursor,event_count,batch_digest
+               FROM canonical_batches
+               ORDER BY CASE WHEN first_cursor IS NULL THEN 1 ELSE 0 END,first_cursor,batch_id'''
+        ).fetchall()
+        for batch_id,source_digest,adapter_id,build,connection_id,generation,checkpoint,first,last,n,batch_digest in batch_rows:
+            hashes=(source_digest,checkpoint,batch_digest)
+            if (type(batch_id) is not str or not batch_id.startswith('batch-') or
+                    type(adapter_id) is not str or not adapter_id.startswith('adapter-') or
+                    type(build) is not str or not build or
+                    type(connection_id) is not str or not connection_id.startswith('conn-') or
+                    type(generation) is not int or generation<=0 or
+                    any(type(value) is not str or len(value)!=64 or any(c not in '0123456789abcdef' for c in value) for value in hashes)):
+                raise CanonicalIntegrityError('CANONICAL_BATCH_PROVENANCE_INVALID')
+            if type(n) is not int or n<0 or type(last) is not int:
+                raise CanonicalIntegrityError('CANONICAL_BATCH_RANGE_INVALID')
             if n==0:
-                if first is not None or last>count:raise CanonicalIntegrityError('CANONICAL_EMPTY_BATCH_RANGE_INVALID')
-            else:
-                if first is None or last-first+1!=n or not (1<=first<=last<=count):raise CanonicalIntegrityError('CANONICAL_BATCH_RANGE_INVALID')
+                if first is not None or not 0<=last<=count:
+                    raise CanonicalIntegrityError('CANONICAL_EMPTY_BATCH_RANGE_INVALID')
+                continue
+            if type(first) is not int or last-first+1!=n or not (1<=first<=last<=count):
+                raise CanonicalIntegrityError('CANONICAL_BATCH_RANGE_INVALID')
+            if first!=expected_cursor:
+                raise CanonicalIntegrityError('CANONICAL_BATCH_COVERAGE_INVALID')
+            segment=events[first-1:last]
+            if len(segment)!=n or any(
+                    ev.source_adapter_release!=adapter_id or ev.observed_client_build!=build
+                    for ev in segment):
+                raise CanonicalIntegrityError('CANONICAL_BATCH_EVENT_PROVENANCE_MISMATCH')
+            expected_cursor=last+1
+        if expected_cursor!=count+1:
+            raise CanonicalIntegrityError('CANONICAL_BATCH_COVERAGE_INVALID')
         # Re-project each account from durable history and compare the latest stored snapshot.
         by_account={}
         for ev in events:by_account.setdefault(ev.account_id,[]).append(ev)
