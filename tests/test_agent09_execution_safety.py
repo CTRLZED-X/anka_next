@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Event, Thread
@@ -12,7 +13,7 @@ from anka_execution.arbiter import HostInputArbiter
 from anka_execution.definitive_ledger import DefinitiveExecutionLedger, DefinitiveExecutionLedgerError
 from anka_execution.drivers.fake_input import FakePhysicalInputDriver
 from anka_execution.drivers.windows_input import PointerTransaction
-import anka_execution.service as execution_service_module
+import anka_execution.definitive_ledger as execution_ledger_module
 from anka_execution.service import DefinitiveExecutionService, ExecutionServiceRejected
 from tests.test_m11_execution import (
     command, state, client, permit, evidence,
@@ -198,6 +199,7 @@ class Agent09ExecutionSafetyCase(unittest.TestCase):
         ledger.audit()
 
     def test_concurrent_outcome_proofs_are_serialized_and_accumulate(self):
+        # Required G: retain the two-thread / single-service regression.
         c = command(9021)
         service, ledger, _ = self.make_service(c)
         self.assertEqual(service.submit(c).status, "PENDING")
@@ -205,7 +207,7 @@ class Agent09ExecutionSafetyCase(unittest.TestCase):
         first_entered = Event()
         release_first = Event()
         second_entered = Event()
-        real_correlate = execution_service_module.correlate
+        real_correlate = execution_ledger_module.correlate
         calls = []
 
         def slow_correlate(*args, **kwargs):
@@ -229,7 +231,7 @@ class Agent09ExecutionSafetyCase(unittest.TestCase):
         proof_a = evidence(c, 9021, proofs=("SPELL_CAST_CONFIRMED",))
         proof_b = evidence(c, 9022, proofs=("RESOURCE_DELTA_OR_TURN_PROGRESS",))
 
-        with patch.object(execution_service_module, "correlate", slow_correlate):
+        with patch.object(execution_ledger_module, "correlate", slow_correlate):
             t1 = Thread(target=settle, args=(proof_a,), name="agent09-settle-a")
             t2 = Thread(target=settle, args=(proof_b,), name="agent09-settle-b")
             t1.start()
@@ -246,6 +248,164 @@ class Agent09ExecutionSafetyCase(unittest.TestCase):
         self.assertTrue(second_entered.is_set())
         self.assertEqual(ledger.get(c.action_id).status, "SETTLED_SUCCESS")
         self.assertEqual(ledger.get(c.action_id).unresolved_obligations, ())
+        ledger.audit()
+
+    def test_two_services_cannot_correlate_from_same_stale_pending_projection(self):
+        # Required A.  Stronger-than-CAS design: BEGIN IMMEDIATE is acquired before
+        # the settlement read, so the forbidden "both correlate the same snapshot"
+        # interleaving is structurally impossible across service instances.
+        c = command(9030)
+        service_a, ledger, _ = self.make_service(c)
+        service_b, _, _ = self.make_service(c, ledger=ledger)
+        self.assertEqual(service_a.submit(c).status, "PENDING")
+
+        first_entered = Event(); release_first = Event(); second_entered = Event()
+        real_correlate = execution_ledger_module.correlate
+        calls = []
+
+        def blocked_correlate(*args, **kwargs):
+            calls.append(len(calls) + 1)
+            if len(calls) == 1:
+                first_entered.set(); self.assertTrue(release_first.wait(2))
+            else:
+                second_entered.set()
+            return real_correlate(*args, **kwargs)
+
+        results=[];errors=[]
+        def settle(service, proof):
+            try:results.append(service.reconcile(c.action_id, proof))
+            except Exception as exc:errors.append(exc)
+
+        proof_a=evidence(c,9030,proofs=("SPELL_CAST_CONFIRMED",))
+        proof_b=evidence(c,9031,proofs=("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+        with patch.object(execution_ledger_module,"correlate",blocked_correlate):
+            t1=Thread(target=settle,args=(service_a,proof_a),name="agent09-cross-a")
+            t2=Thread(target=settle,args=(service_b,proof_b),name="agent09-cross-b")
+            t1.start();self.assertTrue(first_entered.wait(2));t2.start()
+            self.assertFalse(second_entered.wait(0.15))
+            release_first.set();t1.join(3);t2.join(3)
+
+        self.assertEqual(errors,[])
+        self.assertFalse(t1.is_alive());self.assertFalse(t2.is_alive())
+        self.assertTrue(second_entered.is_set())
+        final=ledger.get(c.action_id)
+        self.assertEqual(final.status,"SETTLED_SUCCESS")
+        self.assertEqual(final.unresolved_obligations,())
+        self.assertIn(proof_a.evidence_id,final.evidence_ids)
+        self.assertIn(proof_b.evidence_id,final.evidence_ids)
+        ledger.audit()
+
+    def test_cross_instance_partial_state_unions_independent_remaining_proofs(self):
+        # Required B.  Start with one of three obligations proven, then race the two
+        # independent remaining proofs through separate service instances.
+        base=command(9040)
+        c=replace(base,expected_outcome_proofs=(
+            "SPELL_CAST_CONFIRMED","RESOURCE_DELTA_OR_TURN_PROGRESS","TARGET_EFFECT_CONFIRMED"))
+        service_a,ledger,_=self.make_service(c)
+        service_b,_,_=self.make_service(c,ledger=ledger)
+        self.assertEqual(service_a.submit(c).status,"PENDING")
+        first=evidence(c,9040,proofs=("SPELL_CAST_CONFIRMED",))
+        self.assertEqual(service_a.reconcile(c.action_id,first).status,"CONFIRMED_UNSETTLED")
+        self.assertEqual(set(ledger.get(c.action_id).unresolved_obligations),
+                         {"RESOURCE_DELTA_OR_TURN_PROGRESS","TARGET_EFFECT_CONFIRMED"})
+
+        proof_b=evidence(c,9041,proofs=("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+        proof_c=evidence(c,9042,proofs=("TARGET_EFFECT_CONFIRMED",))
+        barrier=Event();release=Event();real_correlate=execution_ledger_module.correlate;calls=[]
+        def blocked(*args,**kwargs):
+            calls.append(len(calls)+1)
+            if len(calls)==1:
+                barrier.set();self.assertTrue(release.wait(2))
+            return real_correlate(*args,**kwargs)
+        results=[];errors=[]
+        def settle(svc,proof):
+            try:results.append(svc.reconcile(c.action_id,proof))
+            except Exception as exc:errors.append(exc)
+        with patch.object(execution_ledger_module,"correlate",blocked):
+            t1=Thread(target=settle,args=(service_a,proof_b));t2=Thread(target=settle,args=(service_b,proof_c))
+            t1.start();self.assertTrue(barrier.wait(2));t2.start();release.set();t1.join(3);t2.join(3)
+        self.assertEqual(errors,[])
+        final=ledger.get(c.action_id)
+        self.assertEqual(final.status,"SETTLED_SUCCESS")
+        self.assertEqual(final.unresolved_obligations,())
+        for proof in (first,proof_b,proof_c):self.assertIn(proof.evidence_id,final.evidence_ids)
+        ledger.audit()
+
+    def test_cross_instance_duplicate_evidence_and_duplicate_proof_are_idempotent(self):
+        # Required C.
+        c=command(9050)
+        service_a,ledger,_=self.make_service(c)
+        service_b,_,_=self.make_service(c,ledger=ledger)
+        self.assertEqual(service_a.submit(c).status,"PENDING")
+        proof_a=evidence(c,9050,proofs=("SPELL_CAST_CONFIRMED",))
+        first=service_a.reconcile(c.action_id,proof_a)
+        self.assertEqual(first.status,"CONFIRMED_UNSETTLED")
+        before=list(ledger.get(c.action_id).evidence_ids)
+        duplicate=service_b.reconcile(c.action_id,proof_a)
+        self.assertEqual(duplicate.status,"CONFIRMED_UNSETTLED")
+        self.assertEqual(duplicate.reason,"DUPLICATE_OUTCOME_EVIDENCE_ALREADY_APPLIED")
+        self.assertEqual(list(ledger.get(c.action_id).evidence_ids),before)
+        self.assertEqual(ledger.get(c.action_id).unresolved_obligations,("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+
+        same_proof_new_id=evidence(c,9051,proofs=("SPELL_CAST_CONFIRMED",))
+        again=service_b.reconcile(c.action_id,same_proof_new_id)
+        self.assertEqual(again.status,"CONFIRMED_UNSETTLED")
+        self.assertEqual(ledger.get(c.action_id).unresolved_obligations,("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+        self.assertIn(same_proof_new_id.evidence_id,ledger.get(c.action_id).evidence_ids)
+        ledger.audit()
+
+    def test_terminal_writer_blocks_cross_instance_stale_nonterminal_writer(self):
+        # Required D.
+        c=command(9060)
+        service_a,ledger,_=self.make_service(c)
+        service_b,_,_=self.make_service(c,ledger=ledger)
+        self.assertEqual(service_a.submit(c).status,"PENDING")
+        terminal=evidence(c,9060,result="FAILURE",proofs=())
+        stale=evidence(c,9061,proofs=("SPELL_CAST_CONFIRMED",))
+        first_entered=Event();release=Event();second_entered=Event();real_correlate=execution_ledger_module.correlate;calls=[]
+        def blocked(*args,**kwargs):
+            calls.append(len(calls)+1)
+            if len(calls)==1:
+                first_entered.set();self.assertTrue(release.wait(2))
+            else:second_entered.set()
+            return real_correlate(*args,**kwargs)
+        box={};errors=[]
+        def run(name,svc,proof):
+            try:box[name]=svc.reconcile(c.action_id,proof)
+            except Exception as exc:errors.append(exc)
+        with patch.object(execution_ledger_module,"correlate",blocked):
+            t1=Thread(target=run,args=("terminal",service_a,terminal));t2=Thread(target=run,args=("stale",service_b,stale))
+            t1.start();self.assertTrue(first_entered.wait(2));t2.start();self.assertFalse(second_entered.wait(0.15))
+            release.set();t1.join(3);t2.join(3)
+        self.assertEqual(errors,[])
+        self.assertEqual(box["terminal"].status,"PROVEN_FAILURE")
+        self.assertEqual(box["stale"].status,"PROVEN_FAILURE")
+        final=ledger.get(c.action_id)
+        self.assertEqual(final.status,"PROVEN_FAILURE")
+        self.assertFalse(box["stale"].retry_eligible)
+        self.assertIn(terminal.evidence_id,final.evidence_ids)
+        self.assertNotIn(stale.evidence_id,final.evidence_ids)
+        ledger.audit()
+
+    def test_restart_reconstruction_continues_from_durable_partial_truth(self):
+        # Required F.
+        c=command(9070)
+        service_a,ledger,_=self.make_service(c)
+        self.assertEqual(service_a.submit(c).status,"PENDING")
+        first=evidence(c,9070,proofs=("SPELL_CAST_CONFIRMED",))
+        self.assertEqual(service_a.reconcile(c.action_id,first).status,"CONFIRMED_UNSETTLED")
+        self.assertEqual(ledger.get(c.action_id).unresolved_obligations,("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+
+        reconstructed,_,_=self.make_service(c,ledger=ledger,arm=False)
+        duplicate=reconstructed.reconcile(c.action_id,first)
+        self.assertEqual(duplicate.status,"CONFIRMED_UNSETTLED")
+        self.assertEqual(duplicate.reason,"DUPLICATE_OUTCOME_EVIDENCE_ALREADY_APPLIED")
+        second=evidence(c,9071,proofs=("RESOURCE_DELTA_OR_TURN_PROGRESS",))
+        done=reconstructed.reconcile(c.action_id,second)
+        self.assertEqual(done.status,"SETTLED_SUCCESS")
+        self.assertEqual(ledger.get(c.action_id).unresolved_obligations,())
+        self.assertIn(first.evidence_id,ledger.get(c.action_id).evidence_ids)
+        self.assertIn(second.evidence_id,ledger.get(c.action_id).evidence_ids)
         ledger.audit()
 
 
