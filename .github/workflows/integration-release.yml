@@ -83,6 +83,35 @@ jobs:
           python -m unittest discover -s tests -p "test_configuration.py" -v
           python -m unittest discover -s tests -p "test_m12_003_live_readiness_hardening.py" -v
 
+      - name: Windows verification-runner smoke
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+          from anka_app.verification_runner import VerificationRejected, verify_isolated
+          with TemporaryDirectory() as td:
+              root = Path(td)
+              (root / "tests").mkdir()
+              (root / "src").mkdir()
+              for i in range(3):
+                  (root / "tests" / f"test_case_{i}.py").write_text(
+                      "import unittest\nclass Unit(unittest.TestCase):\n"
+                      "    def test_truth(self): self.assertTrue(True)\n",
+                      encoding="utf-8",
+                  )
+              try:
+                  result = verify_isolated(root, shards=2, per_shard_timeout=20)
+              except VerificationRejected as exc:
+                  print("VERIFICATION_SMOKE_CODE=" + exc.code)
+                  print("VERIFICATION_SMOKE_MODULES=" + repr(exc.modules))
+                  print("VERIFICATION_SMOKE_OUTPUT_BEGIN")
+                  print(exc.output)
+                  print("VERIFICATION_SMOKE_OUTPUT_END")
+                  raise
+              print("VERIFICATION_SMOKE=" + result.status)
+          '@ | python -
+
       - name: Release and verification integrity
         shell: pwsh
         run: |
