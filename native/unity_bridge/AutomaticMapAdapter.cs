@@ -413,11 +413,12 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             || string.IsNullOrWhiteSpace(observation.ClientInstanceId)
             || !observation.ClientInstanceId.StartsWith("client-", StringComparison.Ordinal)
             || string.IsNullOrWhiteSpace(observation.ObservationSignature)
+            || string.IsNullOrWhiteSpace(observation.ObservationEpoch)
             || !observation.CanonicalRevision.HasValue
             || observation.CanonicalRevision.Value < 0)
             return RejectObservation(
                 "INVALID_OBSERVATION_PROVENANCE",
-                "account_id, client_instance_id, observation_signature and a non-negative canonical_revision are required.");
+                "account_id, client_instance_id, observation_signature, observation_epoch and a non-negative canonical_revision are required.");
 
         if (!CoordinateProjection.TryGetDofusWindow(out var identityWindow, out var identityWindowError))
             return RejectObservation(
@@ -431,6 +432,7 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 "OBSERVATION_CLIENT_INSTANCE_MISMATCH",
                 "Canonical observation client_instance_id does not identify this Dofus window/process generation.");
 
+        var observationEpochChanged = false;
         if (_lastObservation != null)
         {
             if (!string.Equals(observation.AccountId, _lastObservation.AccountId, StringComparison.Ordinal)
@@ -438,22 +440,31 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
                 return RejectObservation(
                     "OBSERVATION_SCOPE_MISMATCH",
                     "Observation account/client scope does not match the bridge's latched canonical scope.");
-            if (observation.CanonicalRevision.Value < _lastObservation.CanonicalRevision.Value)
-                return RejectObservation(
-                    "STALE_OBSERVATION_REVISION",
-                    "Canonical observation revision moved backwards.");
-            if (observation.CanonicalRevision.Value == _lastObservation.CanonicalRevision.Value)
+
+            observationEpochChanged = !string.Equals(
+                observation.ObservationEpoch,
+                _lastObservation.ObservationEpoch,
+                StringComparison.Ordinal);
+
+            if (!observationEpochChanged)
             {
-                if (!string.Equals(
-                        observation.ObservationSignature,
-                        _lastObservationSignature,
-                        StringComparison.Ordinal))
+                if (observation.CanonicalRevision.Value < _lastObservation.CanonicalRevision.Value)
                     return RejectObservation(
-                        "OBSERVATION_REVISION_CONFLICT",
-                        "The same canonical revision was received with a different observation signature.");
-                // Exact duplicate delivery is idempotent. Do not repeat discovery,
-                // rewrite evidence, increment counters, or mutate projection state.
-                return Observation(false, 0, null);
+                        "STALE_OBSERVATION_REVISION",
+                        "Canonical observation revision moved backwards.");
+                if (observation.CanonicalRevision.Value == _lastObservation.CanonicalRevision.Value)
+                {
+                    if (!string.Equals(
+                            observation.ObservationSignature,
+                            _lastObservationSignature,
+                            StringComparison.Ordinal))
+                        return RejectObservation(
+                            "OBSERVATION_REVISION_CONFLICT",
+                            "The same canonical revision was received with a different observation signature.");
+                    // Exact duplicate delivery is idempotent. Do not repeat discovery,
+                    // rewrite evidence, increment counters, or mutate projection state.
+                    return Observation(false, 0, null);
+                }
             }
         }
         var stableWorld = !observation.ActiveFight
@@ -472,7 +483,8 @@ public sealed class AutomaticMapAdapter : IDofusMapAdapter
             observation.ObservationSignature,
             StringComparison.Ordinal);
         var mapContext = observation.ActiveFight ? "FIGHT" : "WORLD";
-        var generationChanged = _loadedMapId != mapId
+        var generationChanged = observationEpochChanged
+                                || _loadedMapId != mapId
                                 || !string.Equals(_lastMapContext, mapContext, StringComparison.Ordinal)
                                 || (observation.ActiveFight && _lastCombatId != observation.CombatId);
         if (generationChanged)
