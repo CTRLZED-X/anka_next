@@ -174,7 +174,14 @@ def recover_unclean_run(folder:Path)->Path|None:
         # retry the durable evidence with a stronger recovery parser.
         return None
     try:
-        marker.write_text(json.dumps({'schema_version':1,'recovered_utc':now_utc(),'incident':path.name},sort_keys=True,indent=2)+'\n',encoding='utf8')
+        marker_payload=json.dumps(
+            {'schema_version':1,'recovered_utc':now_utc(),'incident':path.name},
+            sort_keys=True,indent=2,
+        )+'\n'
+        # Exclusive creation prevents a symlink/file inserted after the earlier
+        # check from being followed or overwritten.
+        with marker.open('x',encoding='utf8') as out:
+            out.write(marker_payload)
     except OSError:
         # Idempotence marker loss can cause a duplicate recovery next launch, but
         # must never make diagnostic recovery authoritative or block startup.
