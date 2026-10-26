@@ -20,7 +20,11 @@ from anka_contracts.wire import WireEnvelope
 ADAPTER='adapter-issue31-r1'
 BUILD='Dofus Issue31'
 CONNECTION='conn-issue31'
+
+# Accepted-base Canonical-style digest for the direct legacy fixture below.
 LEGACY_SOURCE_DIGEST='a958cad9999b3ccfa7491dc47a82e8579f6038e8a9fdf26e029a5289870e6965'
+# Accepted-base Canonical-style digest for the real/default from_envelope source.
+NORMAL_PRODUCTION_SOURCE_DIGEST='dd5e57220eb57fb4eb0052dc61a47fa197dccc07ae0cb0366a1e955c7daaff08'
 
 
 def envelope(*,client='client-cra',seq=1,payload=b'wire',capture='capture-issue31'):
@@ -63,6 +67,7 @@ def batch(refs, candidates=(), *, batch_id='batch-issue31'):
 
 
 def canonical_style_source_digest(value):
+    """Mirror unchanged Canonical production _source_digest behavior."""
     obj={
         'adapter_release_id':value.adapter_release_id,
         'observed_client_build':value.observed_client_build,
@@ -77,6 +82,15 @@ def canonical_style_source_digest(value):
 def legacy_ref():
     return WireEnvelopeRef(
         'capture-legacy',CONNECTION,1,7,'server_to_client','COMPLETE','a'*64
+    )
+
+
+def accepted_base_ref_for(source):
+    """Reconstruct exactly what accepted-base from_envelope() serialized."""
+    return WireEnvelopeRef(
+        source.capture_session_id,source.connection_id,source.connection_generation,
+        source.producer_sequence,source.direction,source.continuity,
+        sha256(source.payload).hexdigest(),
     )
 
 
@@ -130,8 +144,8 @@ class TestIssue31LegacyCompatibility(unittest.TestCase):
         self.assertFalse(binding.authoritative)
 
 
-class TestIssue31BoundSourceIdentity(unittest.TestCase):
-    def test_from_envelope_returns_bound_subtype_with_exact_client_identity(self):
+class TestIssue31NormalProductionCompatibility(unittest.TestCase):
+    def test_from_envelope_returns_client_bound_ref(self):
         source=envelope(client='client-cra')
         ref=WireEnvelopeRef.from_envelope(source)
         self.assertIsInstance(ref,WireEnvelopeRef)
@@ -143,35 +157,64 @@ class TestIssue31BoundSourceIdentity(unittest.TestCase):
 
     def test_direct_bound_constructor_cannot_assert_client_identity(self):
         source=envelope(client='client-cra')
-        ref=WireEnvelopeRef.from_envelope(source)
+        old=accepted_base_ref_for(source)
         with self.assertRaisesRegex(ValueError,'BOUND_WIRE_REF_REQUIRES_ENVELOPE'):
             BoundWireEnvelopeRef(
-                ref.capture_session_id,ref.connection_id,ref.connection_generation,
-                ref.producer_sequence,ref.direction,ref.continuity,ref.payload_sha256,
+                old.capture_session_id,old.connection_id,old.connection_generation,
+                old.producer_sequence,old.direction,old.continuity,old.payload_sha256,
                 'client-forged',
             )
 
-    def test_bound_asdict_adds_client_only_to_the_bound_representation(self):
-        ref=WireEnvelopeRef.from_envelope(envelope(client='client-cra'))
-        obj=asdict(ref)
-        self.assertEqual(set(obj),{
-            'capture_session_id','connection_id','connection_generation',
-            'producer_sequence','direction','continuity','payload_sha256',
-            'client_instance_id',
-        })
-        self.assertEqual(obj['client_instance_id'],'client-cra')
+    def test_from_envelope_asdict_remains_exact_accepted_base_seven_fields(self):
+        source=envelope(client='client-cra')
+        bound=WireEnvelopeRef.from_envelope(source)
+        accepted=accepted_base_ref_for(source)
+        self.assertEqual(asdict(bound),asdict(accepted))
+        self.assertEqual(
+            tuple(asdict(bound)),
+            (
+                'capture_session_id','connection_id','connection_generation',
+                'producer_sequence','direction','continuity','payload_sha256',
+            ),
+        )
+        self.assertNotIn('client_instance_id',asdict(bound))
 
-    def test_bound_cra_and_enu_same_bytes_have_distinct_source_identity(self):
+    def test_normal_production_canonical_digest_matches_accepted_base_constant(self):
+        source=envelope(client='client-cra')
+        current=batch((WireEnvelopeRef.from_envelope(source),),batch_id='batch-current')
+        accepted=batch((accepted_base_ref_for(source),),batch_id='batch-accepted-base')
+        self.assertEqual(canonical_style_source_digest(current),NORMAL_PRODUCTION_SOURCE_DIGEST)
+        self.assertEqual(canonical_style_source_digest(accepted),NORMAL_PRODUCTION_SOURCE_DIGEST)
+
+    def test_persisted_preupgrade_normal_batch_recognizes_same_replay_digest(self):
+        stored=NORMAL_PRODUCTION_SOURCE_DIGEST
+        replay=batch(
+            (WireEnvelopeRef.from_envelope(envelope(client='client-cra')),),
+            batch_id='batch-normal-replay',
+        )
+        self.assertEqual(canonical_style_source_digest(replay),stored)
+
+    def test_current_canonical_digest_stays_compatible_while_new_identity_distinguishes_clients(self):
+        cra=batch(
+            (WireEnvelopeRef.from_envelope(envelope(client='client-cra',payload=b'same')),),
+            batch_id='batch-cra',
+        )
+        enu=batch(
+            (WireEnvelopeRef.from_envelope(envelope(client='client-enu',payload=b'same')),),
+            batch_id='batch-enu',
+        )
+        # Existing Canonical is intentionally unchanged during EXPAND.
+        self.assertEqual(canonical_style_source_digest(cra),canonical_style_source_digest(enu))
+        # The new contract helper carries the stronger client-bound identity.
+        self.assertNotEqual(cra.source_identity_sha256,enu.source_identity_sha256)
+
+    def test_bound_ref_explicit_source_identity_distinguishes_cra_and_enu(self):
         cra=WireEnvelopeRef.from_envelope(envelope(client='client-cra',payload=b'same'))
         enu=WireEnvelopeRef.from_envelope(envelope(client='client-enu',payload=b'same'))
-        self.assertEqual(cra.payload_sha256,enu.payload_sha256)
+        self.assertEqual(asdict(cra),asdict(enu))
         self.assertNotEqual(cra.source_identity_sha256,enu.source_identity_sha256)
-        self.assertNotEqual(
-            batch((cra,),batch_id='batch-cra').source_identity_sha256,
-            batch((enu,),batch_id='batch-enu').source_identity_sha256,
-        )
 
-    def test_protocol_current_ref_equality_and_membership_work_for_bound_refs(self):
+    def test_protocol_current_ref_equality_hash_and_membership_work_for_bound_refs(self):
         source=envelope(client='client-cra',seq=9,payload=b'current')
         current_ref=WireEnvelopeRef.from_envelope(source)
         adapter_ref=WireEnvelopeRef.from_envelope(source)
@@ -179,19 +222,25 @@ class TestIssue31BoundSourceIdentity(unittest.TestCase):
         self.assertEqual(hash(current_ref),hash(adapter_ref))
         self.assertIn(current_ref,(adapter_ref,))
 
+    def test_bound_refs_for_different_clients_are_not_equal_or_hash_equal(self):
+        cra=WireEnvelopeRef.from_envelope(envelope(client='client-cra',payload=b'same'))
+        enu=WireEnvelopeRef.from_envelope(envelope(client='client-enu',payload=b'same'))
+        self.assertNotEqual(cra,enu)
+        self.assertNotEqual(hash(cra),hash(enu))
+
     def test_bound_and_unbound_evidence_are_not_equal_authority(self):
         source=envelope(client='client-cra',seq=4,payload=b'equal-shape')
         bound=WireEnvelopeRef.from_envelope(source)
-        unbound=WireEnvelopeRef(
-            bound.capture_session_id,bound.connection_id,bound.connection_generation,
-            bound.producer_sequence,bound.direction,bound.continuity,bound.payload_sha256,
-        )
+        unbound=accepted_base_ref_for(source)
+        self.assertEqual(asdict(bound),asdict(unbound))
         self.assertNotEqual(bound,unbound)
         binding=batch((bound,unbound),batch_id='batch-bound-unbound').client_binding
         self.assertEqual(binding.status,'LEGACY_UNBOUND')
         self.assertEqual(binding.source_client_instance_ids,('client-cra',))
         self.assertFalse(binding.authoritative)
 
+
+class TestIssue31BindingSemantics(unittest.TestCase):
     def test_same_client_multi_envelope_buffered_source_is_proven(self):
         refs=(
             WireEnvelopeRef.from_envelope(envelope(client='client-cra',seq=1,payload=b'part-a')),
@@ -245,6 +294,13 @@ class TestIssue31BoundSourceIdentity(unittest.TestCase):
         result=derive_protocol_client_binding(first)
         self.assertEqual(result.status,'CANDIDATE_MISMATCH')
         self.assertFalse(result.authoritative)
+
+    def test_bound_plus_unbound_remains_non_authoritative(self):
+        source=envelope(client='client-cra',seq=2,payload=b'partial')
+        refs=(WireEnvelopeRef.from_envelope(source),accepted_base_ref_for(source))
+        binding=batch(refs,batch_id='batch-partial-unbound').client_binding
+        self.assertEqual(binding.status,'LEGACY_UNBOUND')
+        self.assertFalse(binding.authoritative)
 
     def test_zero_candidate_framing_batch_retains_bound_client_proof(self):
         framing=batch(
