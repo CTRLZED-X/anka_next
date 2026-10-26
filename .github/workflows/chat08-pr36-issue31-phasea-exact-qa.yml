@@ -290,7 +290,7 @@ jobs:
           e2=WireEnvelope(
               'capture-buffer','client-cra','conn-buffer','server_to_client',1,2,
               '2026-10-26T00:00:01+00:00',2,b'\x00\x00',
-              continuity='COMPLETE',transport_start_offset=1,transport_end_offset=3,
+              continuity='COMPLETE',transport_end_offset=3,
               connection_generation=1,source_packet_number=2,
               timestamp_provenance='TEST_FIXTURE',
           )
