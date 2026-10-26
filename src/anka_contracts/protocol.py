@@ -123,18 +123,20 @@ class WireEnvelopeRef:
     direction: str
     continuity: str
     payload_sha256: str
-    # EXPAND compatibility: legacy persisted/manual refs may be unbound, but
-    # refs derived from a real WireEnvelope always retain the exact source
-    # client. None is never interpreted as "same client".
-    client_instance_id: str | None = None
+    # EXPAND compatibility: direct legacy/manual construction stays explicitly
+    # unbound. Public callers cannot assert a bound client independently; only
+    # from_envelope() derives and attaches the exact WireEnvelope identity.
+    client_instance_id: str | None = field(default=None, init=False)
 
     @classmethod
     def from_envelope(cls, envelope: WireEnvelope) -> 'WireEnvelopeRef':
         if not isinstance(envelope,WireEnvelope):
             raise ValueError('WIRE_ENVELOPE_REQUIRED')
-        return cls(envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
-                   envelope.producer_sequence,envelope.direction,envelope.continuity,
-                   _sha256(envelope.payload).hexdigest(),envelope.client_instance_id)
+        ref=cls(envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
+                envelope.producer_sequence,envelope.direction,envelope.continuity,
+                _sha256(envelope.payload).hexdigest())
+        object.__setattr__(ref,'client_instance_id',envelope.client_instance_id)
+        return ref
 
     def __post_init__(self):
         if not self.capture_session_id.startswith('capture-') or not self.connection_id.startswith('conn-'):
@@ -147,13 +149,6 @@ class WireEnvelopeRef:
             raise ValueError('INVALID_WIRE_REF_CONTINUITY')
         if type(self.payload_sha256) is not str or len(self.payload_sha256)!=64 or any(c not in '0123456789abcdef' for c in self.payload_sha256):
             raise ValueError('INVALID_WIRE_REF_HASH')
-        if self.client_instance_id is not None and (
-            type(self.client_instance_id) is not str or
-            not self.client_instance_id.startswith('client-') or
-            len(self.client_instance_id)>128
-        ):
-            raise ValueError('INVALID_WIRE_REF_CLIENT')
-
     @property
     def client_identity_proven(self) -> bool:
         return self.client_instance_id is not None
