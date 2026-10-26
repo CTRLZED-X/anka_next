@@ -1,6 +1,6 @@
 """Stable P6 wire-observation contracts: no game-state mutations or raw evidence in exports."""
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, FrozenInstanceError
 import json as _json
 
 
@@ -195,6 +195,9 @@ class BoundWireEnvelopeRef(WireEnvelopeRef):
                 len(client_instance_id)>128):
             raise ValueError('INVALID_BOUND_WIRE_REF_CLIENT')
         object.__setattr__(self,'client_instance_id',client_instance_id)
+
+    def __setattr__(self,name,value):
+        raise FrozenInstanceError("cannot assign to field '"+name+"'")
 
     @property
     def client_identity_proven(self) -> bool:
