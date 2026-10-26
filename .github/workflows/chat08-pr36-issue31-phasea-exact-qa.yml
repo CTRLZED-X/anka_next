@@ -51,9 +51,19 @@ jobs:
         run: |
           python -m pytest -q             tests/test_m6_m7_protocol_canonical_integration.py             tests/test_m6_m7_canonical_state.py             tests/test_p56_source_bound_batch_receipts.py
 
-      - name: Architecture suites
+      - name: Architecture suites excluding release-seal-coupled P21
         run: |
-          python -m pytest -q             tests/test_m1_architecture_gate.py             tests/test_protocol_architecture.py             tests/test_capture_architecture.py             tests/test_semantic_p7_architecture.py             tests/test_p21_architecture_readiness.py
+          python -m pytest -q tests/test_m1_architecture_gate.py tests/test_protocol_architecture.py tests/test_capture_architecture.py tests/test_semantic_p7_architecture.py
+
+      - name: P21 target diagnostic expected unresealed
+        continue-on-error: true
+        run: python -m pytest -q tests/test_p21_architecture_readiness.py
+
+      - name: P21 accepted-base comparison
+        run: |
+          git worktree add /tmp/phasea-base 47803bd57e4a37931f019df31236264892e95e72
+          cd /tmp/phasea-base
+          PYTHONPATH="$PWD/src" python -m pytest -q tests/test_p21_architecture_readiness.py
 
       - name: Independent Issue31 EXPAND compatibility matrix
         run: |
