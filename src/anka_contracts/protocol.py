@@ -1,6 +1,7 @@
 """Stable P6 wire-observation contracts: no game-state mutations or raw evidence in exports."""
 from __future__ import annotations
 from dataclasses import dataclass, field, asdict
+import json as _json
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,12 +123,18 @@ class WireEnvelopeRef:
     direction: str
     continuity: str
     payload_sha256: str
+    # EXPAND compatibility: legacy persisted/manual refs may be unbound, but
+    # refs derived from a real WireEnvelope always retain the exact source
+    # client. None is never interpreted as "same client".
+    client_instance_id: str | None = None
 
     @classmethod
     def from_envelope(cls, envelope: WireEnvelope) -> 'WireEnvelopeRef':
+        if not isinstance(envelope,WireEnvelope):
+            raise ValueError('WIRE_ENVELOPE_REQUIRED')
         return cls(envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
                    envelope.producer_sequence,envelope.direction,envelope.continuity,
-                   _sha256(envelope.payload).hexdigest())
+                   _sha256(envelope.payload).hexdigest(),envelope.client_instance_id)
 
     def __post_init__(self):
         if not self.capture_session_id.startswith('capture-') or not self.connection_id.startswith('conn-'):
@@ -140,6 +147,81 @@ class WireEnvelopeRef:
             raise ValueError('INVALID_WIRE_REF_CONTINUITY')
         if type(self.payload_sha256) is not str or len(self.payload_sha256)!=64 or any(c not in '0123456789abcdef' for c in self.payload_sha256):
             raise ValueError('INVALID_WIRE_REF_HASH')
+        if self.client_instance_id is not None and (
+            type(self.client_instance_id) is not str or
+            not self.client_instance_id.startswith('client-') or
+            len(self.client_instance_id)>128
+        ):
+            raise ValueError('INVALID_WIRE_REF_CLIENT')
+
+    @property
+    def client_identity_proven(self) -> bool:
+        return self.client_instance_id is not None
+
+    @property
+    def source_identity_sha256(self) -> str:
+        # Client binding is part of immutable source identity. Byte-identical
+        # source evidence under CRA versus ENU therefore cannot alias.
+        raw=_json.dumps(asdict(self),sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+
+ClientBindingStatus = Literal['PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH']
+
+@dataclass(frozen=True, slots=True)
+class ProtocolClientBinding:
+    """Derived client-scope proof for one immutable candidate batch.
+
+    This type never infers account identity. authoritative means only that all
+    contributing wire refs prove one source client and every semantic candidate,
+    if any, names that same client.
+    """
+    status: ClientBindingStatus
+    source_client_instance_id: str | None
+    source_client_instance_ids: tuple[str,...]
+    candidate_client_instance_ids: tuple[str,...]
+    source_identity_sha256: str
+
+    def __post_init__(self):
+        if self.status not in ('PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH'):
+            raise ValueError('INVALID_PROTOCOL_CLIENT_BINDING_STATUS')
+        for values in (self.source_client_instance_ids,self.candidate_client_instance_ids):
+            if tuple(sorted(set(values)))!=values or any(
+                type(x) is not str or not x.startswith('client-') or len(x)>128 for x in values
+            ):
+                raise ValueError('INVALID_PROTOCOL_CLIENT_BINDING_IDS')
+        if type(self.source_identity_sha256) is not str or len(self.source_identity_sha256)!=64 or any(
+            c not in '0123456789abcdef' for c in self.source_identity_sha256
+        ):
+            raise ValueError('INVALID_PROTOCOL_SOURCE_IDENTITY')
+        if self.source_client_instance_id is not None and (
+            type(self.source_client_instance_id) is not str or
+            not self.source_client_instance_id.startswith('client-') or
+            len(self.source_client_instance_id)>128
+        ):
+            raise ValueError('INVALID_PROTOCOL_SOURCE_CLIENT')
+        if self.status=='PROVEN':
+            if len(self.source_client_instance_ids)!=1 or self.source_client_instance_id!=self.source_client_instance_ids[0]:
+                raise ValueError('PROTOCOL_PROVEN_SOURCE_CLIENT_REQUIRED')
+            if any(x!=self.source_client_instance_id for x in self.candidate_client_instance_ids):
+                raise ValueError('PROTOCOL_PROVEN_CANDIDATE_CLIENT_MISMATCH')
+        elif self.status=='CANDIDATE_MISMATCH':
+            if len(self.source_client_instance_ids)!=1 or self.source_client_instance_id!=self.source_client_instance_ids[0]:
+                raise ValueError('PROTOCOL_MISMATCH_SOURCE_CLIENT_REQUIRED')
+            if not self.candidate_client_instance_ids or all(
+                x==self.source_client_instance_id for x in self.candidate_client_instance_ids
+            ):
+                raise ValueError('PROTOCOL_CANDIDATE_MISMATCH_REQUIRED')
+        elif self.status=='SOURCE_CONFLICT':
+            if self.source_client_instance_id is not None or len(self.source_client_instance_ids)<2:
+                raise ValueError('PROTOCOL_SOURCE_CONFLICT_REQUIRED')
+        elif self.source_client_instance_id is not None:
+            raise ValueError('PROTOCOL_UNBOUND_SOURCE_CLIENT_FORBIDDEN')
+
+    @property
+    def authoritative(self) -> bool:
+        return self.status=='PROVEN'
+
 
 @dataclass(frozen=True, slots=True)
 class DecoderCheckpointRef:
@@ -198,6 +280,51 @@ class CandidateCanonicalBatch:
             raise ValueError('PROTOCOL_BATCH_CHECKPOINT_SCOPE_MISMATCH')
         for fp in self.unknown_fingerprints:
             if type(fp) is not str or len(fp)!=64 or any(c not in '0123456789abcdef' for c in fp): raise ValueError('INVALID_UNKNOWN_FINGERPRINT')
+
+    @property
+    def source_identity_sha256(self) -> str:
+        # Mirrors the stable source-identity inputs used by Canonical. Caller
+        # batch_id and decoded semantic output are deliberately excluded.
+        obj={
+            'adapter_release_id':self.adapter_release_id,
+            'observed_client_build':self.observed_client_build,
+            'connection_id':self.connection_id,
+            'connection_generation':self.connection_generation,
+            'source_envelopes':[asdict(x) for x in self.source_envelopes],
+        }
+        raw=_json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+    @property
+    def client_binding(self) -> ProtocolClientBinding:
+        return derive_protocol_client_binding(self)
+
+
+def derive_protocol_client_binding(batch: CandidateCanonicalBatch) -> ProtocolClientBinding:
+    """Derive source/candidate client agreement without historical state.
+
+    Source disagreement outranks legacy-unbound status. Any absent source
+    identity is non-authoritative; absence never means same client.
+    """
+    if not isinstance(batch,CandidateCanonicalBatch):
+        raise ValueError('PROTOCOL_CANDIDATE_BATCH_REQUIRED')
+    source_ids=tuple(sorted({
+        ref.client_instance_id for ref in batch.source_envelopes
+        if ref.client_instance_id is not None
+    }))
+    candidate_ids=tuple(sorted({candidate.client_instance_id for candidate in batch.candidates}))
+    has_unbound=any(ref.client_instance_id is None for ref in batch.source_envelopes)
+    digest=batch.source_identity_sha256
+
+    if len(source_ids)>1:
+        return ProtocolClientBinding('SOURCE_CONFLICT',None,source_ids,candidate_ids,digest)
+    if has_unbound or not source_ids:
+        return ProtocolClientBinding('LEGACY_UNBOUND',None,source_ids,candidate_ids,digest)
+
+    source_client=source_ids[0]
+    if any(candidate_id!=source_client for candidate_id in candidate_ids):
+        return ProtocolClientBinding('CANDIDATE_MISMATCH',source_client,source_ids,candidate_ids,digest)
+    return ProtocolClientBinding('PROVEN',source_client,source_ids,candidate_ids,digest)
 
 @dataclass(frozen=True, slots=True)
 class ProtocolAdmissionDecision:
