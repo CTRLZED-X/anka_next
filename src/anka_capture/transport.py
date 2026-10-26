@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from threading import RLock
 
 from anka_contracts.capture import CapturedTcpSegment
+from anka_capture.overlap import MATCH, RecentByteProof
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +26,7 @@ class TransportHealth:
 
 
 class _Direction:
-    __slots__ = ('anchored','expected','pending','duplicates','reorders','has_gaps','finished','syn_seq')
+    __slots__ = ('anchored','expected','pending','duplicates','reorders','has_gaps','finished','syn_seq','overlap_proof')
 
     def __init__(self):
         self.anchored = False
@@ -36,35 +37,46 @@ class _Direction:
         self.has_gaps = False
         self.finished = False
         self.syn_seq: int | None = None
+        self.overlap_proof = RecentByteProof()
 
-    def feed(self, segment: CapturedTcpSegment) -> None:
+    def feed(self, segment: CapturedTcpSegment, *, same_syn_retransmission: bool = False) -> None:
         if self.finished:
             # Payload after FIN/RST might be a reused tuple. Without a new SYN,
             # never certify this flow generation as continuous.
             self.has_gaps = True
-        if segment.syn:
+        if segment.syn and not same_syn_retransmission:
             self.syn_seq = segment.seq
             self.anchored = True
             self.expected = (segment.seq + 1) % 2**32
             self.pending.clear()
             self.has_gaps = False
             self.finished = False
+            self.overlap_proof.clear()
         if segment.rst or segment.fin:
             self.finished = True
         if not segment.payload:
             return
-        seq = (segment.seq + (1 if segment.syn else 0)) % 2**32
-        end = (seq + len(segment.payload)) % 2**32
-        # P4 intentionally does not implement wraparound/reassembly; mark it
-        # uncertifiable rather than accidentally compare modulo positions.
-        if end < seq:
+        seq = segment.seq + (1 if segment.syn else 0)
+        if seq >= 2**32 or seq + len(segment.payload) > 2**32:
+            # This metadata auditor deliberately does not model wraparound.
             self.has_gaps = True
             return
+        payload = segment.payload
+        end = seq + len(payload)
         if self.expected is None:
             self.expected = seq
-        if end <= self.expected:
-            self.duplicates += 1
-            return
+        if seq < self.expected:
+            overlap_end = min(end,self.expected)
+            verdict = self.overlap_proof.compare(seq,payload,overlap_end)
+            if verdict != MATCH:
+                self.has_gaps = True
+            if end <= self.expected:
+                if verdict == MATCH:
+                    self.duplicates += 1
+                return
+            payload = payload[self.expected-seq:]
+            seq = self.expected
+            end = seq + len(payload)
         if seq > self.expected:
             self.reorders += 1
             self.pending.append((seq,end))
@@ -73,10 +85,18 @@ class _Direction:
                 self.has_gaps = True
                 self.pending.clear()
             return
-        self.expected = max(self.expected, end)
+        self.expected = end
+        self.overlap_proof.remember(seq,payload)
         while self.pending and self.pending[0][0] <= self.expected:
             start, stop = self.pending.pop(0)
-            self.expected = max(self.expected, stop)
+            if start < self.expected:
+                # Pending metadata deliberately does not retain payload bytes.
+                # Any overlap can therefore no longer be proved identical.
+                self.has_gaps = True
+            if stop > self.expected:
+                self.expected = stop
+                # The accepted pending range has no retained byte proof.
+                self.overlap_proof.clear()
 
     def gap(self) -> bool:
         return self.has_gaps or bool(self.pending)
@@ -103,13 +123,18 @@ class TransportAuditor:
             if seg.syn and current.anchored and current.syn_seq != seg.seq:
                 reconnects += 1
                 # Audit the previous generation too; a later clean connection
-                # must NOT erase unresolved gaps from the earlier one.
+                # must NOT erase unresolved gaps from the earlier one. Retired
+                # generations keep metadata only, never historical payload proof.
+                current.overlap_proof.clear()
                 current = directions[key] = _Direction()
                 generations.append(current)
             elif seg.syn and current.anchored and current.syn_seq == seg.seq:
-                # Exact SYN retransmission before useful traffic does not start
-                # a new connection generation.
-                current.duplicates += 1
+                # SYN sequence identity alone does not prove SYN payload bytes.
+                if not seg.payload:
+                    current.duplicates += 1
+                    continue
+                current.feed(seg,same_syn_retransmission=True)
+                payload_bytes += len(seg.payload)
                 continue
             current.feed(seg)
             payload_bytes += len(seg.payload)
@@ -126,10 +151,11 @@ class TransportAuditor:
 
 
 class IncrementalTransportAuditor:
-    """Bounded *metadata-only* transport auditor over multiple live polls.
+    """Bounded live transport auditor over multiple polls.
 
-    Never retains bytes or packet contents. A gap in an old connection
-    generation cannot disappear when another connection starts.
+    It retains at most the small RecentByteProof suffix per active direction so
+    exact retransmission equality can be proved. Payload is never serialized or
+    exposed in the report. A gap in an old generation cannot disappear later.
     """
     def __init__(self, *, max_directions: int = 8192):
         self.max_directions=max_directions
@@ -161,10 +187,14 @@ class IncrementalTransportAuditor:
                 self._max_reached=True
                 return
             self._reconnects+=1
+            current.overlap_proof.clear()
             current=self._directions[key]=_Direction()
             self._generations.append(current)
         elif segment.syn and current.anchored and current.syn_seq==segment.seq:
-            current.duplicates+=1
+            if not segment.payload:
+                current.duplicates+=1
+                return
+            current.feed(segment,same_syn_retransmission=True)
             return
         current.feed(segment)
 

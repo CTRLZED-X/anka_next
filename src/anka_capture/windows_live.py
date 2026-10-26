@@ -72,6 +72,7 @@ class WindowsLiveCapture:
         self._quiescing=False
         self._quiesced=False
         self._quiesce_error:str|None=None
+        self._secondary_cleanup_error:str|None=None
         self._active_callbacks=0
 
     def _ensure_factory(self):
@@ -85,18 +86,68 @@ class WindowsLiveCapture:
             # a usable Windows capture provider is available).
             self._sniffer_factory=AsyncSniffer
 
-    def ingest_fields(self, *, src:str,dst:str,sport:int,dport:int,seq:int,
-                      flags:int,payload:bytes, observed_utc:str|None=None, observed_monotonic_ns:int|None=None):
-        """Ingress contract used by Scapy callback and deterministic tests.
+    def _stop_backend_bounded(self, sniffer, *, timeout_seconds:float,
+                              thread_code:str='LIVE_CAPTURE_STOP_THREAD_FAILED',
+                              timeout_code:str='LIVE_CAPTURE_STOP_TIMEOUT',
+                              failure_code:str='LIVE_CAPTURE_STOP_FAILED')->tuple[str|None,BaseException|None]:
+        """Attempt one backend stop without ever blocking the lifecycle indefinitely."""
+        backend_error=[]
+        done=Event()
+        def stop_backend()->None:
+            try:sniffer.stop()
+            except BaseException as exc:backend_error.append(exc)
+            finally:done.set()
+        worker=Thread(target=stop_backend,name='anka-capture-sniffer-stop',daemon=True)
+        try:worker.start()
+        except Exception as exc:
+            return thread_code,exc
+        if not done.wait(timeout=max(0.0,float(timeout_seconds))):
+            return timeout_code,None
+        if backend_error:
+            return failure_code,backend_error[0]
+        return None,None
 
-        A callback that entered before quiesce may finish; callbacks that enter
-        after the stop fence are rejected.  This is intentionally separate from
-        queue locking so shutdown can wait for the sniffer without deadlocking.
+    def _cleanup_late_start(self, sniffer)->str|None:
+        """Bounded cleanup after shutdown timed out while backend start was blocked.
+
+        The stored quiesce error remains authoritative. This helper only records
+        whether the secondary cleanup itself could be proven complete.
         """
+        deadline=monotonic()+self._lifecycle_timeout_seconds
+        code,_exc=self._stop_backend_bounded(
+            sniffer,timeout_seconds=max(0.0,deadline-monotonic()),
+            thread_code='LIVE_CAPTURE_LATE_START_STOP_THREAD_FAILED',
+            timeout_code='LIVE_CAPTURE_LATE_START_STOP_TIMEOUT',
+            failure_code='LIVE_CAPTURE_LATE_START_STOP_FAILED')
+        if code is not None:
+            return code
+        with self._quiesce_condition:
+            while self._active_callbacks:
+                remaining=deadline-monotonic()
+                if remaining<=0:
+                    return 'LIVE_CAPTURE_LATE_START_CALLBACK_DRAIN_TIMEOUT'
+                self._quiesce_condition.wait(timeout=remaining)
+        # The original start/quiesce timeout should already have marked evidence
+        # incomplete. If that marking itself failed, never seal the recorder:
+        # a clean-looking artifact would be stronger than the evidence permits.
         with self._state_lock:
-            if self._stopped or not self._started:return False
-            self._frame_no+=1
-            frame_no=self._frame_no
+            prior_secondary=self._secondary_cleanup_error
+        if prior_secondary=='LIVE_CAPTURE_INTERRUPT_MARK_FAILED':
+            return prior_secondary
+        if self._evidence_recorder is not None and self._raw_evidence_receipt is None:
+            try:
+                receipt=self._evidence_recorder.close()
+            except Exception:
+                return 'LIVE_CAPTURE_LATE_START_EVIDENCE_SEAL_FAILED'
+            with self._state_lock:
+                if self._raw_evidence_receipt is None:
+                    self._raw_evidence_receipt=receipt
+        return None
+
+    def _ingest_reserved_fields(self, *, frame_no:int, src:str,dst:str,sport:int,dport:int,seq:int,
+                                flags:int,payload:bytes, observed_utc:str|None=None,
+                                observed_monotonic_ns:int|None=None):
+        """Validate and enqueue one frame whose lifecycle admission is already fixed."""
         try:
             if not (isinstance(src,str) and isinstance(dst,str) and
                     type(sport) is int and type(dport) is int and 0<=sport<=65535 and 0<=dport<=65535):
@@ -134,6 +185,22 @@ class WindowsLiveCapture:
             self.queue.push(None)  # count as observable loss, not silent skip
             return False
 
+    def ingest_fields(self, *, src:str,dst:str,sport:int,dport:int,seq:int,
+                      flags:int,payload:bytes, observed_utc:str|None=None, observed_monotonic_ns:int|None=None):
+        """Direct ingress contract used by deterministic tests and adapters.
+
+        Direct callers must cross the lifecycle fence at the moment the frame
+        number is reserved. Scapy callbacks use the private reserved path after
+        their callback-entry lease has already crossed the same fence.
+        """
+        with self._state_lock:
+            if self._stopped or not self._started:return False
+            self._frame_no+=1
+            frame_no=self._frame_no
+        return self._ingest_reserved_fields(frame_no=frame_no,src=src,dst=dst,sport=sport,dport=dport,
+            seq=seq,flags=flags,payload=payload,observed_utc=observed_utc,
+            observed_monotonic_ns=observed_monotonic_ns)
+
     def ingest_packet(self, packet)->None:
         """Scapy callback. Keep imports local; no dependency in offline runs.
 
@@ -160,8 +227,15 @@ class WindowsLiveCapture:
                     self._evidence_recorder.mark_incomplete()
                 return
             ip=packet[IP] if has_v4 else packet[IPv6];tcp=packet[TCP]
-            accepted=self.ingest_fields(src=str(ip.src),dst=str(ip.dst),sport=int(tcp.sport),dport=int(tcp.dport),
-                               seq=int(tcp.seq),flags=int(tcp.flags),payload=bytes(tcp.payload))
+            # This callback already crossed the lifecycle fence above. Reserve
+            # its frame ordinal without re-checking _stopped: quiesce may have
+            # begun meanwhile, but it must wait for this admitted callback.
+            with self._state_lock:
+                self._frame_no+=1
+                frame_no=self._frame_no
+            accepted=self._ingest_reserved_fields(frame_no=frame_no,src=str(ip.src),dst=str(ip.dst),
+                               sport=int(tcp.sport),dport=int(tcp.dport),seq=int(tcp.seq),
+                               flags=int(tcp.flags),payload=bytes(tcp.payload))
             if self._evidence_recorder is not None:
                 if not accepted:
                     self._evidence_recorder.mark_incomplete()
@@ -215,23 +289,29 @@ class WindowsLiveCapture:
             expression='tcp and ('+' or '.join(terms)+')'
         else:
             expression='tcp and ('+' or '.join('port '+str(p) for p in self.ports)+')'
+        sniffer=None
         try:
             self._ensure_factory()
             sniffer=self._sniffer_factory(iface=self.interface,filter=expression,
                                                store=False,prn=self.ingest_packet)
             with self._state_lock:self._sniffer=sniffer
             sniffer.start()
-            with self._quiesce_condition:
-                self._starting=False
-                self._quiesce_condition.notify_all()
         except Exception as exc:
-            self.queue.close()
             with self._quiesce_condition:
+                authoritative=self._quiesce_error if self._stopped and self._quiesce_error is not None else None
                 self._starting=False
-                self._started=False
-                self._stopped=True
-                self._quiesced=True
+                if authoritative is None:
+                    self._started=False
+                    self._stopped=True
+                    self._quiesced=True
                 self._quiesce_condition.notify_all()
+            if authoritative is not None:
+                # Shutdown already won while start() was blocked. Preserve that
+                # exact failure even if backend start now fails or cleanup fails.
+                secondary=self._cleanup_late_start(sniffer) if sniffer is not None else None
+                with self._state_lock:self._secondary_cleanup_error=secondary
+                raise RuntimeError(authoritative) from exc
+            self.queue.close()
             if self._evidence_recorder is not None:
                 try:
                     self.mark_capture_interrupted()
@@ -244,6 +324,18 @@ class WindowsLiveCapture:
                   str(exc)=='SCAPY_NOT_INSTALLED_OPTIONAL_CAPTURE_DEPENDENCY'
                   else 'LIVE_CAPTURE_START_FAILED')
             raise RuntimeError(code) from exc
+
+        with self._quiesce_condition:
+            authoritative=self._quiesce_error if self._stopped and self._quiesce_error is not None else None
+            self._starting=False
+            self._quiesce_condition.notify_all()
+        if authoritative is not None:
+            # A quiesce timeout can occur while sniffer.start() is blocked. Once
+            # start finally returns, actively stop that backend through a fresh
+            # bounded cleanup window; never convert the original timeout to success.
+            secondary=self._cleanup_late_start(sniffer)
+            with self._state_lock:self._secondary_cleanup_error=secondary
+            raise RuntimeError(authoritative)
 
     def poll(self, *,max_segments:int,timeout_seconds:float):
         if not self._started:raise RuntimeError('LIVE_CAPTURE_NOT_STARTED')
@@ -262,7 +354,12 @@ class WindowsLiveCapture:
                 remaining=deadline-monotonic()
                 if remaining<=0:
                     self._stopped=True;self._quiesce_error='LIVE_CAPTURE_START_QUIESCE_TIMEOUT'
-                    self.queue.close();self.mark_capture_interrupted()
+                    self.queue.close()
+                    try:self.mark_capture_interrupted()
+                    except Exception:
+                        # Preserve the lifecycle timeout as authoritative while
+                        # recording that the raw evidence could not be safely marked.
+                        self._secondary_cleanup_error='LIVE_CAPTURE_INTERRUPT_MARK_FAILED'
                     raise RuntimeError(self._quiesce_error)
                 self._quiesce_condition.wait(timeout=remaining)
             if self._quiesced:return
@@ -280,23 +377,12 @@ class WindowsLiveCapture:
             started=self._started
 
         error_code=None
-        backend_error=[]
+        backend_exc=None
         if not started:
             self.mark_capture_interrupted()
         elif sniffer is not None:
-            done=Event()
-            def stop_backend()->None:
-                try:sniffer.stop()
-                except BaseException as exc:backend_error.append(exc)
-                finally:done.set()
-            worker=Thread(target=stop_backend,name='anka-capture-sniffer-stop',daemon=True)
-            try:worker.start()
-            except Exception:
-                error_code='LIVE_CAPTURE_STOP_THREAD_FAILED'
-            else:
-                remaining=max(0.0,deadline-monotonic())
-                if not done.wait(timeout=remaining):error_code='LIVE_CAPTURE_STOP_TIMEOUT'
-                elif backend_error:error_code='LIVE_CAPTURE_STOP_FAILED'
+            error_code,backend_exc=self._stop_backend_bounded(
+                sniffer,timeout_seconds=max(0.0,deadline-monotonic()))
 
         # Even after backend stop returns, prove callbacks that entered before the
         # fence have completed.  This protects the raw evidence recorder from being
@@ -309,7 +395,12 @@ class WindowsLiveCapture:
                         error_code='LIVE_CAPTURE_CALLBACK_DRAIN_TIMEOUT';break
                     self._quiesce_condition.wait(timeout=remaining)
 
-        if error_code is not None:self.mark_capture_interrupted()
+        if error_code is not None:
+            try:self.mark_capture_interrupted()
+            except Exception:
+                with self._state_lock:
+                    if self._secondary_cleanup_error is None:
+                        self._secondary_cleanup_error='LIVE_CAPTURE_INTERRUPT_MARK_FAILED'
         self.queue.close()
         with self._quiesce_condition:
             self._quiescing=False
@@ -317,7 +408,7 @@ class WindowsLiveCapture:
             else:self._quiesce_error=error_code
             self._quiesce_condition.notify_all()
         if error_code is not None:
-            raise RuntimeError(error_code) from (backend_error[0] if backend_error else None)
+            raise RuntimeError(error_code) from backend_exc
 
     def stop(self)->None:
         """Idempotently quiesce and seal evidence only after proven shutdown."""
@@ -336,12 +427,16 @@ class WindowsLiveCapture:
         stats=self.queue.stats()
         with self._state_lock:
             rejected=self._rejected_frames;unsupported=self._unsupported_frames;raw=self._raw_evidence_receipt
+            lifecycle_error=self._quiesce_error;secondary_cleanup=self._secondary_cleanup_error
         return {'accepted_segments':stats.accepted_total,'queued_segments':stats.queued_segments,
                 'queue_drop_total':stats.dropped_total,'invalid_frames':stats.invalid_total,
                 'rejected_frames':rejected,
                 'unsupported_frames':unsupported,
                 'driver_loss_visibility':'UNKNOWN','account_binding_verified':False,
                 'physical_input_sent':False,
+                # Stable internal lifecycle codes only; no backend exception text.
+                'lifecycle_error':lifecycle_error,
+                'secondary_cleanup_error':secondary_cleanup,
                 'raw_evidence':raw}
 
 
