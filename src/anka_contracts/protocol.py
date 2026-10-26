@@ -1,6 +1,7 @@
 """Stable P6 wire-observation contracts: no game-state mutations or raw evidence in exports."""
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, FrozenInstanceError
+import json as _json
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,6 +116,12 @@ class AdapterReleaseDescriptor:
 
 @dataclass(frozen=True, slots=True)
 class WireEnvelopeRef:
+    """Legacy seven-field wire reference.
+
+    EXPAND compatibility rule: the dataclass field set is intentionally identical
+    to the accepted base.  Therefore asdict(legacy_ref) and Canonical's existing
+    legacy source digest remain byte-for-byte stable.
+    """
     capture_session_id: str
     connection_id: str
     connection_generation: int
@@ -124,10 +131,17 @@ class WireEnvelopeRef:
     payload_sha256: str
 
     @classmethod
-    def from_envelope(cls, envelope: WireEnvelope) -> 'WireEnvelopeRef':
-        return cls(envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
-                   envelope.producer_sequence,envelope.direction,envelope.continuity,
-                   _sha256(envelope.payload).hexdigest())
+    def from_envelope(cls, envelope: WireEnvelope) -> 'BoundWireEnvelopeRef':
+        if not isinstance(envelope,WireEnvelope):
+            raise ValueError('WIRE_ENVELOPE_REQUIRED')
+        # A proven client binding can only originate from the validated source
+        # envelope.  Direct seven-field construction always remains unbound.
+        return BoundWireEnvelopeRef(
+            envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
+            envelope.producer_sequence,envelope.direction,envelope.continuity,
+            _sha256(envelope.payload).hexdigest(),envelope.client_instance_id,
+            _binding_token=_BOUND_WIRE_REF_TOKEN,
+        )
 
     def __post_init__(self):
         if not self.capture_session_id.startswith('capture-') or not self.connection_id.startswith('conn-'):
@@ -140,6 +154,139 @@ class WireEnvelopeRef:
             raise ValueError('INVALID_WIRE_REF_CONTINUITY')
         if type(self.payload_sha256) is not str or len(self.payload_sha256)!=64 or any(c not in '0123456789abcdef' for c in self.payload_sha256):
             raise ValueError('INVALID_WIRE_REF_HASH')
+
+    @property
+    def client_identity_proven(self) -> bool:
+        return False
+
+    @property
+    def source_identity_sha256(self) -> str:
+        # For the legacy base class this hashes the exact original seven-field
+        # asdict() shape. For BoundWireEnvelopeRef the inherited method naturally
+        # includes the subtype's immutable client field.
+        raw=_json.dumps(asdict(self),sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+
+_BOUND_WIRE_REF_TOKEN=object()
+
+class BoundWireEnvelopeRef(WireEnvelopeRef):
+    """Client-bound source evidence without changing dataclass serialization.
+
+    This is deliberately *not* a dataclass. dataclasses.asdict() therefore sees
+    only WireEnvelopeRef's accepted-base seven fields, while equality/hash and
+    the explicit source-identity helper still include client_instance_id.
+    """
+    __slots__=('client_instance_id',)
+
+    def __init__(
+        self,capture_session_id:str,connection_id:str,connection_generation:int,
+        producer_sequence:int,direction:str,continuity:str,payload_sha256:str,
+        client_instance_id:str,*,_binding_token=None,
+    ):
+        if _binding_token is not _BOUND_WIRE_REF_TOKEN:
+            raise ValueError('BOUND_WIRE_REF_REQUIRES_ENVELOPE')
+        super().__init__(
+            capture_session_id,connection_id,connection_generation,producer_sequence,
+            direction,continuity,payload_sha256,
+        )
+        if (type(client_instance_id) is not str or
+                not client_instance_id.startswith('client-') or
+                len(client_instance_id)>128):
+            raise ValueError('INVALID_BOUND_WIRE_REF_CLIENT')
+        object.__setattr__(self,'client_instance_id',client_instance_id)
+
+    def __setattr__(self,name,value):
+        raise FrozenInstanceError("cannot assign to field '"+name+"'")
+
+    @property
+    def client_identity_proven(self) -> bool:
+        return True
+
+    @property
+    def source_identity_sha256(self) -> str:
+        obj=asdict(self)
+        obj['client_instance_id']=self.client_instance_id
+        raw=_json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+    def __eq__(self,other) -> bool:
+        if not isinstance(other,BoundWireEnvelopeRef):
+            return False
+        return (
+            self.capture_session_id,self.connection_id,self.connection_generation,
+            self.producer_sequence,self.direction,self.continuity,self.payload_sha256,
+            self.client_instance_id,
+        )==(
+            other.capture_session_id,other.connection_id,other.connection_generation,
+            other.producer_sequence,other.direction,other.continuity,other.payload_sha256,
+            other.client_instance_id,
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            self.capture_session_id,self.connection_id,self.connection_generation,
+            self.producer_sequence,self.direction,self.continuity,self.payload_sha256,
+            self.client_instance_id,
+        ))
+
+
+ClientBindingStatus = Literal['PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH']
+
+@dataclass(frozen=True, slots=True)
+class ProtocolClientBinding:
+    """Derived client-scope proof for one immutable candidate batch.
+
+    This type never infers account identity. authoritative means only that all
+    contributing wire refs prove one source client and every semantic candidate,
+    if any, names that same client.
+    """
+    status: ClientBindingStatus
+    source_client_instance_id: str | None
+    source_client_instance_ids: tuple[str,...]
+    candidate_client_instance_ids: tuple[str,...]
+    source_identity_sha256: str
+
+    def __post_init__(self):
+        if self.status not in ('PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH'):
+            raise ValueError('INVALID_PROTOCOL_CLIENT_BINDING_STATUS')
+        for values in (self.source_client_instance_ids,self.candidate_client_instance_ids):
+            if tuple(sorted(set(values)))!=values or any(
+                type(x) is not str or not x.startswith('client-') or len(x)>128 for x in values
+            ):
+                raise ValueError('INVALID_PROTOCOL_CLIENT_BINDING_IDS')
+        if type(self.source_identity_sha256) is not str or len(self.source_identity_sha256)!=64 or any(
+            c not in '0123456789abcdef' for c in self.source_identity_sha256
+        ):
+            raise ValueError('INVALID_PROTOCOL_SOURCE_IDENTITY')
+        if self.source_client_instance_id is not None and (
+            type(self.source_client_instance_id) is not str or
+            not self.source_client_instance_id.startswith('client-') or
+            len(self.source_client_instance_id)>128
+        ):
+            raise ValueError('INVALID_PROTOCOL_SOURCE_CLIENT')
+        if self.status=='PROVEN':
+            if len(self.source_client_instance_ids)!=1 or self.source_client_instance_id!=self.source_client_instance_ids[0]:
+                raise ValueError('PROTOCOL_PROVEN_SOURCE_CLIENT_REQUIRED')
+            if any(x!=self.source_client_instance_id for x in self.candidate_client_instance_ids):
+                raise ValueError('PROTOCOL_PROVEN_CANDIDATE_CLIENT_MISMATCH')
+        elif self.status=='CANDIDATE_MISMATCH':
+            if len(self.source_client_instance_ids)!=1 or self.source_client_instance_id!=self.source_client_instance_ids[0]:
+                raise ValueError('PROTOCOL_MISMATCH_SOURCE_CLIENT_REQUIRED')
+            if not self.candidate_client_instance_ids or all(
+                x==self.source_client_instance_id for x in self.candidate_client_instance_ids
+            ):
+                raise ValueError('PROTOCOL_CANDIDATE_MISMATCH_REQUIRED')
+        elif self.status=='SOURCE_CONFLICT':
+            if self.source_client_instance_id is not None or len(self.source_client_instance_ids)<2:
+                raise ValueError('PROTOCOL_SOURCE_CONFLICT_REQUIRED')
+        elif self.source_client_instance_id is not None:
+            raise ValueError('PROTOCOL_UNBOUND_SOURCE_CLIENT_FORBIDDEN')
+
+    @property
+    def authoritative(self) -> bool:
+        return self.status=='PROVEN'
+
 
 @dataclass(frozen=True, slots=True)
 class DecoderCheckpointRef:
@@ -198,6 +345,58 @@ class CandidateCanonicalBatch:
             raise ValueError('PROTOCOL_BATCH_CHECKPOINT_SCOPE_MISMATCH')
         for fp in self.unknown_fingerprints:
             if type(fp) is not str or len(fp)!=64 or any(c not in '0123456789abcdef' for c in fp): raise ValueError('INVALID_UNKNOWN_FINGERPRINT')
+
+    @property
+    def source_identity_sha256(self) -> str:
+        # Strong new source identity for later consumers. Existing Canonical
+        # production still hashes asdict(ref) directly, which stays seven-field
+        # compatible for both legacy and bound refs during EXPAND.
+        source_envelopes=[]
+        for ref in self.source_envelopes:
+            item=asdict(ref)
+            if isinstance(ref,BoundWireEnvelopeRef):
+                item['client_instance_id']=ref.client_instance_id
+            source_envelopes.append(item)
+        obj={
+            'adapter_release_id':self.adapter_release_id,
+            'observed_client_build':self.observed_client_build,
+            'connection_id':self.connection_id,
+            'connection_generation':self.connection_generation,
+            'source_envelopes':source_envelopes,
+        }
+        raw=_json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+    @property
+    def client_binding(self) -> ProtocolClientBinding:
+        return derive_protocol_client_binding(self)
+
+
+def derive_protocol_client_binding(batch: CandidateCanonicalBatch) -> ProtocolClientBinding:
+    """Derive source/candidate client agreement without historical state.
+
+    Source disagreement outranks legacy-unbound status. Any absent source
+    identity is non-authoritative; absence never means same client.
+    """
+    if not isinstance(batch,CandidateCanonicalBatch):
+        raise ValueError('PROTOCOL_CANDIDATE_BATCH_REQUIRED')
+    source_ids=tuple(sorted({
+        ref.client_instance_id for ref in batch.source_envelopes
+        if isinstance(ref,BoundWireEnvelopeRef)
+    }))
+    candidate_ids=tuple(sorted({candidate.client_instance_id for candidate in batch.candidates}))
+    has_unbound=any(not isinstance(ref,BoundWireEnvelopeRef) for ref in batch.source_envelopes)
+    digest=batch.source_identity_sha256
+
+    if len(source_ids)>1:
+        return ProtocolClientBinding('SOURCE_CONFLICT',None,source_ids,candidate_ids,digest)
+    if has_unbound or not source_ids:
+        return ProtocolClientBinding('LEGACY_UNBOUND',None,source_ids,candidate_ids,digest)
+
+    source_client=source_ids[0]
+    if any(candidate_id!=source_client for candidate_id in candidate_ids):
+        return ProtocolClientBinding('CANDIDATE_MISMATCH',source_client,source_ids,candidate_ids,digest)
+    return ProtocolClientBinding('PROVEN',source_client,source_ids,candidate_ids,digest)
 
 @dataclass(frozen=True, slots=True)
 class ProtocolAdmissionDecision:
