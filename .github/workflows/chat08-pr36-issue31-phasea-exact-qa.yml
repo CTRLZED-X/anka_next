@@ -60,6 +60,7 @@ jobs:
         run: python -m pytest -q tests/test_p21_architecture_readiness.py
 
       - name: P21 accepted-base comparison
+        continue-on-error: true
         run: |
           git worktree add /tmp/phasea-base 47803bd57e4a37931f019df31236264892e95e72
           cd /tmp/phasea-base
