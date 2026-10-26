@@ -1,6 +1,6 @@
 """Stable P6 wire-observation contracts: no game-state mutations or raw evidence in exports."""
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict, InitVar
+from dataclasses import dataclass, field, asdict
 import json as _json
 
 
@@ -170,24 +170,62 @@ class WireEnvelopeRef:
 
 _BOUND_WIRE_REF_TOKEN=object()
 
-@dataclass(frozen=True, slots=True)
 class BoundWireEnvelopeRef(WireEnvelopeRef):
-    """Eight-field source reference whose client identity came from WireEnvelope."""
-    client_instance_id: str
-    _binding_token: InitVar[object] = None
+    """Client-bound source evidence without changing dataclass serialization.
 
-    def __post_init__(self,_binding_token):
-        WireEnvelopeRef.__post_init__(self)
+    This is deliberately *not* a dataclass. dataclasses.asdict() therefore sees
+    only WireEnvelopeRef's accepted-base seven fields, while equality/hash and
+    the explicit source-identity helper still include client_instance_id.
+    """
+    __slots__=('client_instance_id',)
+
+    def __init__(
+        self,capture_session_id:str,connection_id:str,connection_generation:int,
+        producer_sequence:int,direction:str,continuity:str,payload_sha256:str,
+        client_instance_id:str,*,_binding_token=None,
+    ):
         if _binding_token is not _BOUND_WIRE_REF_TOKEN:
             raise ValueError('BOUND_WIRE_REF_REQUIRES_ENVELOPE')
-        if (type(self.client_instance_id) is not str or
-                not self.client_instance_id.startswith('client-') or
-                len(self.client_instance_id)>128):
+        super().__init__(
+            capture_session_id,connection_id,connection_generation,producer_sequence,
+            direction,continuity,payload_sha256,
+        )
+        if (type(client_instance_id) is not str or
+                not client_instance_id.startswith('client-') or
+                len(client_instance_id)>128):
             raise ValueError('INVALID_BOUND_WIRE_REF_CLIENT')
+        object.__setattr__(self,'client_instance_id',client_instance_id)
 
     @property
     def client_identity_proven(self) -> bool:
         return True
+
+    @property
+    def source_identity_sha256(self) -> str:
+        obj=asdict(self)
+        obj['client_instance_id']=self.client_instance_id
+        raw=_json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+        return _sha256(raw.encode('utf-8')).hexdigest()
+
+    def __eq__(self,other) -> bool:
+        if not isinstance(other,BoundWireEnvelopeRef):
+            return False
+        return (
+            self.capture_session_id,self.connection_id,self.connection_generation,
+            self.producer_sequence,self.direction,self.continuity,self.payload_sha256,
+            self.client_instance_id,
+        )==(
+            other.capture_session_id,other.connection_id,other.connection_generation,
+            other.producer_sequence,other.direction,other.continuity,other.payload_sha256,
+            other.client_instance_id,
+        )
+
+    def __hash__(self) -> int:
+        return hash((
+            self.capture_session_id,self.connection_id,self.connection_generation,
+            self.producer_sequence,self.direction,self.continuity,self.payload_sha256,
+            self.client_instance_id,
+        ))
 
 
 ClientBindingStatus = Literal['PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH']
@@ -307,14 +345,21 @@ class CandidateCanonicalBatch:
 
     @property
     def source_identity_sha256(self) -> str:
-        # Mirrors the stable source-identity inputs used by Canonical. Caller
-        # batch_id and decoded semantic output are deliberately excluded.
+        # Strong new source identity for later consumers. Existing Canonical
+        # production still hashes asdict(ref) directly, which stays seven-field
+        # compatible for both legacy and bound refs during EXPAND.
+        source_envelopes=[]
+        for ref in self.source_envelopes:
+            item=asdict(ref)
+            if isinstance(ref,BoundWireEnvelopeRef):
+                item['client_instance_id']=ref.client_instance_id
+            source_envelopes.append(item)
         obj={
             'adapter_release_id':self.adapter_release_id,
             'observed_client_build':self.observed_client_build,
             'connection_id':self.connection_id,
             'connection_generation':self.connection_generation,
-            'source_envelopes':[asdict(x) for x in self.source_envelopes],
+            'source_envelopes':source_envelopes,
         }
         raw=_json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
         return _sha256(raw.encode('utf-8')).hexdigest()
