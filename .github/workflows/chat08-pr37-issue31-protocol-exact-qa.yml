@@ -1,0 +1,393 @@
+name: chat08-pr37-issue31-protocol-exact-qa
+
+on:
+  push:
+    branches: [agent/08-adversarial-qa]
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/src
+  TARGET_SHA: 4c8931a52eb57bc2612d48445b1194c8307c8510
+
+jobs:
+  exact-head-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact PR37 head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+
+      - name: Assert exact source identity
+        run: |
+          actual="$(git rev-parse HEAD)"
+          echo "EXPECTED_SHA=$TARGET_SHA"
+          echo "ACTUAL_SHA=$actual"
+          test "$actual" = "$TARGET_SHA"
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-p1.txt
+
+      - name: Verify frozen PR26 blobs and current runtime blob
+        run: |
+          test "$(git rev-parse HEAD:src/anka_capture/overlap.py)" = "cbe1d7f2e1942d36507ab5712466d172bdfa5419"
+          test "$(git rev-parse HEAD:src/anka_capture/stream.py)" = "bdcbfd6d85998ffec5a902c576bb4dfafad95aa2"
+          test "$(git rev-parse HEAD:src/anka_capture/transport.py)" = "3b48f0d48e669458f038cd0b67087fc69c0fb68c"
+          test "$(git rev-parse HEAD:src/anka_capture/windows_live.py)" = "fa3419633fa07e03d1775c6a8f918ea9a90a6408"
+          test "$(git rev-parse HEAD:tests/test_agent02_capture_lifecycle.py)" = "8112569128b56ddec1fdc4e1626cf279d5c0644a"
+          test "$(git rev-parse HEAD:tests/test_agent02_capture_protocol_finality.py)" = "c302550ff802159a21f2a10b864272376063a16a"
+          test "$(git rev-parse HEAD:tests/test_agent02_protocol_evolution.py)" = "bd0addd4c20da9b9ac9e33ba7b57715d8e8c8306"
+          test "$(git rev-parse HEAD:src/anka_protocol/sdk/runtime.py)" = "c938ae0c4cfc33e36923648353ccd0b698630633"
+          test "$(git rev-parse 1fd64829d36ec5aca61ee58c0c31b23ebabe242c:src/anka_protocol/sdk/runtime.py)" = "a61b7abeabdaba4e61f0e5370c656c4af26a0c05"
+          echo "FROZEN_PR26_BLOBS=PASS"
+          echo "ISSUE31_RUNTIME_BLOB=PASS"
+
+      - name: Compile Capture Protocol and contracts
+        run: python -m compileall -q src/anka_capture src/anka_protocol src/anka_contracts
+
+      - name: Issue31 Protocol consumer focused
+        run: python -m pytest -q tests/test_agent02_issue31_protocol_client_binding.py
+
+      - name: All existing Chat02 tests
+        run: python -m pytest -q tests/test_agent02_*.py
+
+      - name: Permanent Chat08 same-poll finality unchanged
+        run: |
+          test "$(git rev-parse 00c264a38c991ebb1c1ff2f07b6051ece627b416:tests/test_agent08_capture_poll_overlap_finality.py)" = "6a79f0465359417d1464593628f43bcdc8d7cbdb"
+          git show 00c264a38c991ebb1c1ff2f07b6051ece627b416:tests/test_agent08_capture_poll_overlap_finality.py > /tmp/test_agent08_capture_poll_overlap_finality.py
+          PYTHONPATH="$PWD/src" python -m pytest -q /tmp/test_agent08_capture_poll_overlap_finality.py
+
+      - name: M5 real-adapter Protocol
+        run: python -m pytest -q tests/test_m5_protocol_sdk.py
+
+      - name: Protocol contract wire integration
+        run: |
+          python -m pytest -q             tests/test_m4_wire_envelopes.py             tests/test_protocol_wire.py             tests/test_protocol_integration.py
+
+      - name: Protocol Canonical and canonical identity
+        run: |
+          python -m pytest -q             tests/test_m6_m7_protocol_canonical_integration.py             tests/test_m6_m7_canonical_state.py             tests/test_p56_source_bound_batch_receipts.py             tests/test_agent10_issue31_client_identity_contract.py
+
+      - name: Retained Capture Protocol matrix
+        run: |
+          python -m pytest -q             tests/test_capture_transport.py             tests/test_capture_integration.py             tests/test_capture_live.py             tests/test_capture_parser.py             tests/test_p59_capture_bound_admission.py             tests/test_p60_packet_local_wire_provenance.py             tests/test_p62_capture_loss_metadata.py             tests/test_p65_capture_abort_integrity.py
+
+      - name: Architecture gates
+        run: |
+          python -m pytest -q             tests/test_m1_architecture_gate.py             tests/test_protocol_architecture.py             tests/test_capture_architecture.py             tests/test_semantic_p7_architecture.py
+          python -m unittest tests.test_p21_architecture_readiness.TestP21Architecture -v
+
+      - name: Unresealed release context
+        run: |
+          set +e
+          python tools/verify_release_offline.py > /tmp/release.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/release.log
+          test "$rc" -ne 0
+          grep -q "M12_RELEASE FAIL" /tmp/release.log
+          grep -q "architecture_violations=0" /tmp/release.log
+          grep -q "physical_input_count=0" /tmp/release.log
+          echo "EXPECTED_UNRESEALED_RELEASE_CONTEXT=PASS"
+
+      - name: Independent Issue31 Protocol adversarial matrix
+        run: |
+          python - <<'PY'
+          from dataclasses import asdict, fields
+          from hashlib import sha256
+          import json
+
+          from anka_contracts.canonical import CanonicalCandidate
+          from anka_contracts.evidence import EvidencePointer
+          from anka_contracts.protocol import (
+              AdapterReleaseDescriptor, BoundWireEnvelopeRef, CandidateCanonicalBatch,
+              DecoderCheckpointRef, ProtocolAdmissionDecision, WireEnvelopeRef,
+          )
+          from anka_contracts.wire import WireEnvelope
+          from anka_protocol.sdk.runtime import AdapterContextCheckpoint, ProtocolTransaction
+
+          ADAPTER='adapter-chat08-pr37'
+          BUILD='Dofus Chat08 PR37'
+          CONN='conn-chat08-pr37'
+
+          def descriptor():
+              return AdapterReleaseDescriptor(ADAPTER,BUILD,'0'*64,'1'*64,1,0,'STAGED')
+
+          def envelope(*,client='client-cra',generation=1,producer=1,payload=b'wire',
+                       connection=CONN,capture='capture-chat08-pr37',direction='server_to_client',
+                       continuity='COMPLETE'):
+              return WireEnvelope(
+                  capture,client,connection,direction,0,producer,
+                  '2026-10-26T02:00:00+00:00',producer,payload,
+                  continuity,len(payload),generation,producer,'TEST_FIXTURE',
+              )
+
+          def evidence(tag):
+              d=sha256(tag.encode()).hexdigest()
+              return EvidencePointer(
+                  'evidence-'+d[:32],'OBSERVED_EXTERNAL','anka_protocol',
+                  'chat08-pr37:'+d,d,'ISSUE31_PHASE_B_QA',
+              )
+
+          def candidate(tag,*,client='client-cra',account='acct-cra'):
+              d=sha256(tag.encode()).hexdigest()
+              return CanonicalCandidate(
+                  'candidate-'+d[:32],'ACTOR_SEEN',account,client,
+                  (evidence(tag),),(('actor_id','41'),),
+              )
+
+          def legacy_ref(source):
+              return WireEnvelopeRef(
+                  source.capture_session_id,source.connection_id,source.connection_generation,
+                  source.producer_sequence,source.direction,source.continuity,
+                  sha256(source.payload).hexdigest(),
+              )
+
+          class Admission:
+              def __init__(self): self.calls=[]
+              def admit_candidate_batch(self,batch):
+                  self.calls.append(batch)
+                  return ProtocolAdmissionDecision('COMMITTED',len(self.calls),None)
+
+          class Adapter:
+              def __init__(self,factory,*,generation=1,connection=CONN):
+                  self.descriptor=descriptor()
+                  self.connection_id=connection
+                  self.connection_generation=generation
+                  self.factory=factory
+                  self.revision=0
+                  self.decode_calls=0
+                  self.restore_calls=0
+                  self.checkpoint_calls=0
+              def _digest(self):
+                  return sha256(f'{self.connection_id}|{self.connection_generation}|{self.revision}'.encode()).hexdigest()
+              def checkpoint_runtime_context(self):
+                  self.checkpoint_calls+=1
+                  return AdapterContextCheckpoint(
+                      self.descriptor.adapter_release_id,self.descriptor.observed_client_build,
+                      self.connection_id,self.connection_generation,self.revision,self.revision,self._digest(),
+                  )
+              def restore_runtime_context(self,cp):
+                  self.restore_calls+=1
+                  self.revision=cp.revision
+              def decode_envelope(self,source):
+                  self.decode_calls+=1
+                  self.revision+=1
+                  return self.factory(self,source)
+
+          def make_batch(adapter,refs,candidates=(),*,health=None,bid='batch-chat08-pr37'):
+              refs=tuple(refs); candidates=tuple(candidates)
+              cp=adapter.checkpoint_runtime_context()
+              return CandidateCanonicalBatch(
+                  bid,adapter.descriptor.adapter_release_id,adapter.descriptor.observed_client_build,
+                  adapter.connection_id,adapter.connection_generation,refs,candidates,
+                  health or ('SEMANTIC_CANDIDATES' if candidates else 'FRAMING_IN_PROGRESS'),
+                  DecoderCheckpointRef(
+                      cp.adapter_release_id,cp.observed_client_build,cp.connection_id,
+                      cp.connection_generation,cp.revision,cp.digest,
+                  ),
+              )
+
+          def matching(adapter,source):
+              return make_batch(
+                  adapter,(WireEnvelopeRef.from_envelope(source),),
+                  (candidate('match-'+source.client_instance_id,client=source.client_instance_id),),
+                  bid='batch-match-'+source.client_instance_id,
+              )
+
+          def txn(factory=matching,*,generation=1):
+              a=Admission(); ad=Adapter(factory,generation=generation)
+              return ProtocolTransaction(ad,a),ad,a
+
+          # First batch: valid may reach Canonical; mismatches cannot.
+          t,ad,ca=txn()
+          good=t.process(envelope(client='client-cra'))
+          assert good.status=='COMMITTED' and len(ca.calls)==1 and not t.poisoned
+
+          for source_client,candidate_client in (
+              ('client-cra','client-enu'),('client-enu','client-cra')
+          ):
+              def f(adapter,source,cc=candidate_client):
+                  return make_batch(
+                      adapter,(WireEnvelopeRef.from_envelope(source),),
+                      (candidate('mismatch-'+cc,client=cc),),
+                  )
+              t,ad,ca=txn(f)
+              r=t.process(envelope(client=source_client))
+              assert r.status=='REJECTED_CLIENT_BINDING'
+              assert r.failure_code=='PROTOCOL_BATCH_CLIENT_CANDIDATE_MISMATCH'
+              assert ca.calls==[] and ad.restore_calls==1 and t.poisoned
+          print('FIRST_BATCH=PASS')
+
+          # Source evidence matrix, including post-decode rollback and poisoning.
+          factories=[]
+          def unbound(adapter,source):
+              return make_batch(adapter,(legacy_ref(source),),bid='batch-unbound')
+          factories.append((unbound,'PROTOCOL_BATCH_CLIENT_UNBOUND'))
+          def bound_plus_unbound(adapter,source):
+              return make_batch(adapter,(legacy_ref(source),WireEnvelopeRef.from_envelope(source)),bid='batch-mixed-unbound')
+          factories.append((bound_plus_unbound,'PROTOCOL_BATCH_CLIENT_UNBOUND'))
+          def conflict(adapter,source):
+              other=envelope(client='client-enu',producer=1,payload=b'other',capture=source.capture_session_id,direction=source.direction)
+              return make_batch(adapter,(WireEnvelopeRef.from_envelope(other),WireEnvelopeRef.from_envelope(source)),bid='batch-conflict')
+          factories.append((conflict,'PROTOCOL_BATCH_CLIENT_SOURCE_CONFLICT'))
+          def candidate_mismatch(adapter,source):
+              return make_batch(adapter,(WireEnvelopeRef.from_envelope(source),),(candidate('bad-candidate',client='client-enu'),),bid='batch-candidate-mismatch')
+          factories.append((candidate_mismatch,'PROTOCOL_BATCH_CLIENT_CANDIDATE_MISMATCH'))
+          def proven_source_mismatch(adapter,source):
+              relabeled=envelope(
+                  client='client-enu',generation=source.connection_generation,
+                  producer=source.producer_sequence,payload=source.payload,
+                  connection=source.connection_id,capture=source.capture_session_id,
+                  direction=source.direction,
+              )
+              return make_batch(adapter,(WireEnvelopeRef.from_envelope(relabeled),),(candidate('enu-source',client='client-enu',account='acct-enu'),),bid='batch-source-mismatch')
+          factories.append((proven_source_mismatch,'PROTOCOL_BATCH_CLIENT_SOURCE_MISMATCH'))
+
+          for factory,code in factories:
+              t,ad,ca=txn(factory)
+              before=ad.checkpoint_runtime_context()
+              r=t.process(envelope(client='client-cra',producer=2))
+              after=ad.checkpoint_runtime_context()
+              assert r.status=='REJECTED_CLIENT_BINDING',(code,r)
+              assert r.failure_code==code,(code,r.failure_code)
+              assert ca.calls==[]
+              assert r.rollback_performed and ad.restore_calls==1
+              assert before.revision==after.revision and before.digest==after.digest
+              assert t.poisoned
+              later=t.process(envelope(client='client-cra',producer=3,payload=b'later'))
+              assert later.status=='REJECTED_POISONED'
+              assert ad.decode_calls==1
+          print('POST_DECODE_BINDING_FAILURES=PASS')
+
+          # Same-client buffered source and zero-candidate framing.
+          def buffered(adapter,source):
+              earlier=envelope(
+                  client=source.client_instance_id,producer=1,payload=b'part-a',
+                  capture=source.capture_session_id,direction=source.direction,
+              )
+              return make_batch(
+                  adapter,(WireEnvelopeRef.from_envelope(earlier),WireEnvelopeRef.from_envelope(source)),
+                  (candidate('buffered',client=source.client_instance_id),),bid='batch-buffered',
+              )
+          t,ad,ca=txn(buffered)
+          r=t.process(envelope(client='client-cra',producer=2,payload=b'part-b'))
+          assert r.status=='COMMITTED' and len(ca.calls)==1
+
+          def framing(adapter,source):
+              return make_batch(
+                  adapter,(WireEnvelopeRef.from_envelope(source),),(),
+                  health='FRAMING_IN_PROGRESS',bid='batch-framing',
+              )
+          t,ad,ca=txn(framing)
+          r=t.process(envelope(client='client-cra'))
+          assert r.status=='COMMITTED' and len(ca.calls)==1
+          assert r.batch.candidates==() and r.batch.client_binding.status=='PROVEN'
+
+          for factory in (unbound,conflict):
+              t,ad,ca=txn(lambda adapter,source,f=factory: make_batch(
+                  adapter,
+                  f(adapter,source).source_envelopes,
+                  (),
+                  health='FRAMING_IN_PROGRESS',
+                  bid='batch-zero-bad',
+              ))
+              r=t.process(envelope(client='client-cra',producer=2))
+              assert r.status=='REJECTED_CLIENT_BINDING' and ca.calls==[]
+          print('BUFFERED_AND_ZERO_CANDIDATE=PASS')
+
+          # First trusted envelope pins client; drift is pre-decode/no fake rollback.
+          t,ad,ca=txn()
+          first=t.process(envelope(client='client-cra',producer=1))
+          assert first.status=='COMMITTED' and t.client_instance_id=='client-cra'
+          before=(ad.revision,ad.decode_calls,ad.restore_calls,ad.checkpoint_calls,len(ca.calls))
+          drift=t.process(envelope(client='client-enu',producer=2,payload=b'drift'))
+          after=(ad.revision,ad.decode_calls,ad.restore_calls,ad.checkpoint_calls,len(ca.calls))
+          assert drift.status=='REJECTED_CLIENT_BINDING'
+          assert drift.failure_code=='PROTOCOL_TRANSACTION_CLIENT_DRIFT'
+          assert not drift.rollback_performed
+          assert after==before,(before,after)
+          assert t.poisoned
+          assert t.process(envelope(client='client-cra',producer=3)).status=='REJECTED_POISONED'
+          print('TRANSACTION_CLIENT_SCOPE=PASS')
+
+          # Fresh generation may bind another client normally.
+          fresh,fa,fca=txn(generation=2)
+          r=fresh.process(envelope(client='client-enu',generation=2,producer=1))
+          assert r.status=='COMMITTED'
+          assert fresh.client_instance_id=='client-enu' and len(fca.calls)==1 and not fresh.poisoned
+          print('FRESH_GENERATION=PASS')
+
+          # Causality checks must remain after client binding passes.
+          def missing_current(adapter,source):
+              older=envelope(client=source.client_instance_id,producer=1,payload=b'older',capture=source.capture_session_id,direction=source.direction)
+              return make_batch(adapter,(WireEnvelopeRef.from_envelope(older),),(candidate('missing-current',client=source.client_instance_id),),bid='batch-missing-current')
+          t,ad,ca=txn(missing_current)
+          r=t.process(envelope(client='client-cra',producer=2,payload=b'current'))
+          assert r.status=='DECODE_FAILED' and r.failure_code=='PROTOCOL_BATCH_CURRENT_ENVELOPE_EVIDENCE_MISSING' and ca.calls==[]
+
+          def current_not_final(adapter,source):
+              current=WireEnvelopeRef.from_envelope(source)
+              future=envelope(client=source.client_instance_id,producer=source.producer_sequence+1,payload=b'future',capture=source.capture_session_id,direction=source.direction)
+              return make_batch(adapter,(current,WireEnvelopeRef.from_envelope(future)),(candidate('future',client=source.client_instance_id),),bid='batch-future')
+          t,ad,ca=txn(current_not_final)
+          r=t.process(envelope(client='client-cra',producer=1))
+          assert r.status=='DECODE_FAILED' and r.failure_code=='PROTOCOL_BATCH_SOURCE_CAUSALITY_INVALID' and ca.calls==[]
+
+          for variant in ('cross-session','cross-direction'):
+              def cross(adapter,source,v=variant):
+                  if v=='cross-session':
+                      other=envelope(client=source.client_instance_id,producer=1,payload=b'old',capture='capture-other',direction=source.direction)
+                  else:
+                      other=envelope(client=source.client_instance_id,producer=1,payload=b'old',capture=source.capture_session_id,direction='client_to_server')
+                  return make_batch(
+                      adapter,(WireEnvelopeRef.from_envelope(other),WireEnvelopeRef.from_envelope(source)),
+                      (candidate('cross-'+v,client=source.client_instance_id),),bid='batch-'+v,
+                  )
+              t,ad,ca=txn(cross)
+              r=t.process(envelope(client='client-cra',producer=2))
+              assert r.status=='DECODE_FAILED' and r.failure_code=='PROTOCOL_BATCH_SOURCE_CAUSALITY_INVALID' and ca.calls==[]
+          print('CAUSALITY_PRESERVED=PASS')
+
+          # Phase A compatibility still holds on this current stack.
+          flds=tuple(x.name for x in fields(WireEnvelopeRef))
+          assert flds==(
+              'capture_session_id','connection_id','connection_generation',
+              'producer_sequence','direction','continuity','payload_sha256',
+          )
+          source=envelope(client='client-cra')
+          b1=WireEnvelopeRef.from_envelope(source)
+          b2=WireEnvelopeRef.from_envelope(source)
+          assert isinstance(b1,BoundWireEnvelopeRef)
+          assert 'client_instance_id' not in asdict(b1)
+          assert b1==b2 and hash(b1)==hash(b2) and b1 in (b2,)
+          obj={
+              'adapter_release_id':'adapter-issue31-r1',
+              'observed_client_build':'Dofus Issue31',
+              'connection_id':'conn-issue31',
+              'connection_generation':1,
+              'source_envelopes':[{
+                  'capture_session_id':'capture-issue31',
+                  'connection_id':'conn-issue31',
+                  'connection_generation':1,
+                  'producer_sequence':1,
+                  'direction':'server_to_client',
+                  'continuity':'COMPLETE',
+                  'payload_sha256':sha256(b'wire').hexdigest(),
+              }],
+          }
+          raw=json.dumps(obj,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
+          assert sha256(raw.encode()).hexdigest()=='dd5e57220eb57fb4eb0052dc61a47fa197dccc07ae0cb0366a1e955c7daaff08'
+          print('PHASE_A_COMPATIBILITY=PASS')
+
+          print('CHAT08_ISSUE31_PHASE_B_PROTOCOL_INDEPENDENT_MATRIX=PASS')
+          PY
