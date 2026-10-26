@@ -1,6 +1,6 @@
 """Stable P6 wire-observation contracts: no game-state mutations or raw evidence in exports."""
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, InitVar
 import json as _json
 
 
@@ -140,6 +140,7 @@ class WireEnvelopeRef:
             envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
             envelope.producer_sequence,envelope.direction,envelope.continuity,
             _sha256(envelope.payload).hexdigest(),envelope.client_instance_id,
+            _binding_token=_BOUND_WIRE_REF_TOKEN,
         )
 
     def __post_init__(self):
@@ -167,13 +168,18 @@ class WireEnvelopeRef:
         return _sha256(raw.encode('utf-8')).hexdigest()
 
 
+_BOUND_WIRE_REF_TOKEN=object()
+
 @dataclass(frozen=True, slots=True)
 class BoundWireEnvelopeRef(WireEnvelopeRef):
     """Eight-field source reference whose client identity came from WireEnvelope."""
     client_instance_id: str
+    _binding_token: InitVar[object] = None
 
-    def __post_init__(self):
+    def __post_init__(self,_binding_token):
         WireEnvelopeRef.__post_init__(self)
+        if _binding_token is not _BOUND_WIRE_REF_TOKEN:
+            raise ValueError('BOUND_WIRE_REF_REQUIRES_ENVELOPE')
         if (type(self.client_instance_id) is not str or
                 not self.client_instance_id.startswith('client-') or
                 len(self.client_instance_id)>128):
