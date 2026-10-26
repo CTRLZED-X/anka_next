@@ -116,6 +116,12 @@ class AdapterReleaseDescriptor:
 
 @dataclass(frozen=True, slots=True)
 class WireEnvelopeRef:
+    """Legacy seven-field wire reference.
+
+    EXPAND compatibility rule: the dataclass field set is intentionally identical
+    to the accepted base.  Therefore asdict(legacy_ref) and Canonical's existing
+    legacy source digest remain byte-for-byte stable.
+    """
     capture_session_id: str
     connection_id: str
     connection_generation: int
@@ -123,20 +129,18 @@ class WireEnvelopeRef:
     direction: str
     continuity: str
     payload_sha256: str
-    # EXPAND compatibility: direct legacy/manual construction stays explicitly
-    # unbound. Public callers cannot assert a bound client independently; only
-    # from_envelope() derives and attaches the exact WireEnvelope identity.
-    client_instance_id: str | None = field(default=None, init=False)
 
     @classmethod
-    def from_envelope(cls, envelope: WireEnvelope) -> 'WireEnvelopeRef':
+    def from_envelope(cls, envelope: WireEnvelope) -> 'BoundWireEnvelopeRef':
         if not isinstance(envelope,WireEnvelope):
             raise ValueError('WIRE_ENVELOPE_REQUIRED')
-        ref=cls(envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
-                envelope.producer_sequence,envelope.direction,envelope.continuity,
-                _sha256(envelope.payload).hexdigest())
-        object.__setattr__(ref,'client_instance_id',envelope.client_instance_id)
-        return ref
+        # A proven client binding can only originate from the validated source
+        # envelope.  Direct seven-field construction always remains unbound.
+        return BoundWireEnvelopeRef(
+            envelope.capture_session_id,envelope.connection_id,envelope.connection_generation,
+            envelope.producer_sequence,envelope.direction,envelope.continuity,
+            _sha256(envelope.payload).hexdigest(),envelope.client_instance_id,
+        )
 
     def __post_init__(self):
         if not self.capture_session_id.startswith('capture-') or not self.connection_id.startswith('conn-'):
@@ -149,16 +153,35 @@ class WireEnvelopeRef:
             raise ValueError('INVALID_WIRE_REF_CONTINUITY')
         if type(self.payload_sha256) is not str or len(self.payload_sha256)!=64 or any(c not in '0123456789abcdef' for c in self.payload_sha256):
             raise ValueError('INVALID_WIRE_REF_HASH')
+
     @property
     def client_identity_proven(self) -> bool:
-        return self.client_instance_id is not None
+        return False
 
     @property
     def source_identity_sha256(self) -> str:
-        # Client binding is part of immutable source identity. Byte-identical
-        # source evidence under CRA versus ENU therefore cannot alias.
+        # For the legacy base class this hashes the exact original seven-field
+        # asdict() shape. For BoundWireEnvelopeRef the inherited method naturally
+        # includes the subtype's immutable client field.
         raw=_json.dumps(asdict(self),sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)
         return _sha256(raw.encode('utf-8')).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class BoundWireEnvelopeRef(WireEnvelopeRef):
+    """Eight-field source reference whose client identity came from WireEnvelope."""
+    client_instance_id: str
+
+    def __post_init__(self):
+        WireEnvelopeRef.__post_init__(self)
+        if (type(self.client_instance_id) is not str or
+                not self.client_instance_id.startswith('client-') or
+                len(self.client_instance_id)>128):
+            raise ValueError('INVALID_BOUND_WIRE_REF_CLIENT')
+
+    @property
+    def client_identity_proven(self) -> bool:
+        return True
 
 
 ClientBindingStatus = Literal['PROVEN','LEGACY_UNBOUND','SOURCE_CONFLICT','CANDIDATE_MISMATCH']
@@ -305,10 +328,10 @@ def derive_protocol_client_binding(batch: CandidateCanonicalBatch) -> ProtocolCl
         raise ValueError('PROTOCOL_CANDIDATE_BATCH_REQUIRED')
     source_ids=tuple(sorted({
         ref.client_instance_id for ref in batch.source_envelopes
-        if ref.client_instance_id is not None
+        if isinstance(ref,BoundWireEnvelopeRef)
     }))
     candidate_ids=tuple(sorted({candidate.client_instance_id for candidate in batch.candidates}))
-    has_unbound=any(ref.client_instance_id is None for ref in batch.source_envelopes)
+    has_unbound=any(not isinstance(ref,BoundWireEnvelopeRef) for ref in batch.source_envelopes)
     digest=batch.source_identity_sha256
 
     if len(source_ids)>1:
