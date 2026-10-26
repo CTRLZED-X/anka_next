@@ -190,11 +190,16 @@ class TestIssue31SourceClientExpansion(unittest.TestCase):
         self.assertEqual(b.client_binding.status,'LEGACY_UNBOUND')
         self.assertFalse(b.client_binding.authoritative)
 
-    def test_invalid_explicit_source_client_is_rejected(self):
-        with self.assertRaisesRegex(ValueError,'INVALID_WIRE_REF_CLIENT'):
+    def test_direct_constructor_cannot_assert_bound_source_client(self):
+        with self.assertRaises(TypeError):
             WireEnvelopeRef(
                 'capture-x',CONNECTION,1,1,'server_to_client','COMPLETE','e'*64,
-                'acct-not-a-client',
+                'client-forged',
+            )
+        with self.assertRaises(TypeError):
+            WireEnvelopeRef(
+                'capture-x',CONNECTION,1,1,'server_to_client','COMPLETE','e'*64,
+                client_instance_id='client-forged',
             )
 
 
