@@ -46,6 +46,10 @@ class ProtocolTransaction:
     """
     def __init__(self, adapter:ProtocolAdapterRuntime, admission, observer=None):
         self.adapter=adapter; self.admission=admission; self._lock=RLock();self._poisoned=False;self._observer=observer
+        # One ProtocolTransaction owns one connection generation and therefore
+        # exactly one client identity. The first trusted in-scope envelope binds
+        # this value; later client drift fails closed without decoder mutation.
+        self._client_instance_id:str|None=None
 
     def _record(self,name:str,envelope:WireEnvelope,result:TransactionResult,**kwargs)->None:
         """Publish Protocol transaction facts after releasing decoder authority lock.
@@ -103,8 +107,8 @@ class ProtocolTransaction:
                          evidence_class='OBSERVED_EXTERNAL')
         if result.status=='COMMITTED':
             self._record('protocol.canonical_admission_result',envelope,result,boundary='protocol.canonical_admission')
-        elif result.status in ('ROLLED_BACK','ROLLBACK_FAILED','ADMISSION_FAILED','DECODE_FAILED','CHECKPOINT_FAILED','RUNTIME_INVALID','REJECTED_POISONED','REJECTED_SCOPE','REJECTED_TRANSPORT'):
-            sev='SAFETY' if result.status in ('ROLLBACK_FAILED','CHECKPOINT_FAILED','RUNTIME_INVALID','REJECTED_POISONED') else 'WARNING'
+        elif result.status in ('ROLLED_BACK','ROLLBACK_FAILED','ADMISSION_FAILED','DECODE_FAILED','CHECKPOINT_FAILED','RUNTIME_INVALID','REJECTED_POISONED','REJECTED_SCOPE','REJECTED_TRANSPORT','REJECTED_CLIENT_BINDING'):
+            sev='SAFETY' if result.status in ('ROLLBACK_FAILED','CHECKPOINT_FAILED','RUNTIME_INVALID','REJECTED_POISONED','REJECTED_CLIENT_BINDING') else 'WARNING'
             self._record('protocol.transaction_rejected',envelope,result,boundary='protocol.transaction',severity=sev)
         return result
 
@@ -117,6 +121,11 @@ class ProtocolTransaction:
         whether partially-mutated decoder state is still usable.
         """
         with self._lock:return self._poisoned
+
+    @property
+    def client_instance_id(self)->str|None:
+        """Client identity permanently bound to this connection-generation transaction."""
+        with self._lock:return self._client_instance_id
 
     def _descriptor(self)->AdapterReleaseDescriptor|None:
         descriptor=getattr(self.adapter,'descriptor',None)
@@ -182,9 +191,24 @@ class ProtocolTransaction:
             return TransactionResult('RUNTIME_INVALID',None,None,False,'PROTOCOL_ADAPTER_RUNTIME_DESCRIPTOR_INVALID')
         if envelope.connection_id!=self.adapter.connection_id or envelope.connection_generation!=self.adapter.connection_generation:
             return TransactionResult('REJECTED_SCOPE',None,None,False,'PROTOCOL_CONNECTION_SCOPE_MISMATCH')
-        if envelope.client_instance_id=='' or envelope.continuity in ('GAP_BEFORE','GAP_INSIDE','RESET','UNKNOWN'):
-            # Never ask a version decoder to infer across untrusted transport continuity.
+        if envelope.client_instance_id=='':
             return TransactionResult('REJECTED_TRANSPORT',None,None,False,'PROTOCOL_TRANSPORT_CONTINUITY_UNTRUSTED')
+        if envelope.continuity in ('GAP_BEFORE','GAP_INSIDE','RESET','UNKNOWN'):
+            # Never ask a version decoder to infer across untrusted transport
+            # continuity. More importantly, decoder state accumulated before
+            # this discontinuity can no longer be trusted for this connection
+            # generation, even if a later envelope is labelled COMPLETE.
+            self._poisoned=True
+            return TransactionResult('REJECTED_TRANSPORT',None,None,False,'PROTOCOL_TRANSPORT_CONTINUITY_UNTRUSTED')
+        if self._client_instance_id is None:
+            self._client_instance_id=envelope.client_instance_id
+        elif envelope.client_instance_id!=self._client_instance_id:
+            # Same connection generation may never silently migrate from one
+            # client instance to another. This check is intentionally before
+            # checkpoint/decode so no decoder state is mutated under mixed scope.
+            self._poisoned=True
+            return TransactionResult('REJECTED_CLIENT_BINDING',None,None,False,
+                                     'PROTOCOL_TRANSACTION_CLIENT_DRIFT')
         try:
             before=self.adapter.checkpoint_runtime_context()
         except Exception:
@@ -204,6 +228,25 @@ class ProtocolTransaction:
             return self._rollback(before,batch=batch if isinstance(batch,CandidateCanonicalBatch) else None,
                                   decision=None,status='DECODE_FAILED',
                                   failure_code='PROTOCOL_DECODER_BATCH_SCOPE_MISMATCH')
+        # Phase A derives client authority solely from immutable source refs and
+        # candidates. Protocol consumes that proof before Canonical admission.
+        # This is deliberately first-batch capable and uses no Canonical history.
+        try:
+            binding=batch.client_binding
+        except Exception:
+            return self._rollback(before,batch=batch,decision=None,status='REJECTED_CLIENT_BINDING',
+                                  failure_code='PROTOCOL_BATCH_CLIENT_BINDING_INVALID')
+        if binding.status!='PROVEN' or not binding.authoritative:
+            failure_code={
+                'LEGACY_UNBOUND':'PROTOCOL_BATCH_CLIENT_UNBOUND',
+                'SOURCE_CONFLICT':'PROTOCOL_BATCH_CLIENT_SOURCE_CONFLICT',
+                'CANDIDATE_MISMATCH':'PROTOCOL_BATCH_CLIENT_CANDIDATE_MISMATCH',
+            }.get(binding.status,'PROTOCOL_BATCH_CLIENT_BINDING_INVALID')
+            return self._rollback(before,batch=batch,decision=None,status='REJECTED_CLIENT_BINDING',
+                                  failure_code=failure_code)
+        if binding.source_client_instance_id!=envelope.client_instance_id:
+            return self._rollback(before,batch=batch,decision=None,status='REJECTED_CLIENT_BINDING',
+                                  failure_code='PROTOCOL_BATCH_CLIENT_SOURCE_MISMATCH')
         current_ref=WireEnvelopeRef.from_envelope(envelope)
         if current_ref not in batch.source_envelopes:
             return self._rollback(before,batch=batch,decision=None,status='DECODE_FAILED',
