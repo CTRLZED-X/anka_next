@@ -73,4 +73,7 @@ class TargetCellSpec:
 @dataclass(frozen=True, slots=True)
 class TargetCellContext:
     caster_cell: CellId
+    # Conservative blocker occupancy. Unknown-life actors may be present here.
     occupied_cells: frozenset[CellId] | None
+    # Positive occupancy authority. Only explicitly alive actors belong here.
+    proven_occupied_cells: frozenset[CellId] | None = None

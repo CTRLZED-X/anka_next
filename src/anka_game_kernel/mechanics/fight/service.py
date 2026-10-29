@@ -138,6 +138,7 @@ class FightService:
                     availability=availability,
                     range_bonus=resolved_range_bonus,
                     occupied_cells=context.occupied_cells,
+                    proven_occupied_cells=context.proven_occupied_cells,
                 ),
             )
             if evaluated.legal is True:
@@ -198,6 +199,7 @@ class FightService:
             TargetCellContext(
                 caster_cell=context.caster_cell,
                 occupied_cells=context.occupied_cells,
+                proven_occupied_cells=context.proven_occupied_cells,
             ),
         )
 

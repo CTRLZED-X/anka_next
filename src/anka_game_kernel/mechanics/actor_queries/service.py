@@ -160,8 +160,12 @@ class ActorQueryService:
             if actor.summoner_id is None:
                 unresolved.append(f"actor:{actor.actor_id}.summoner_id")
                 continue
-            if actor.summoner_id == actor_id:
-                count += 1
+            if actor.summoner_id != actor_id:
+                continue
+            if actor.alive is None:
+                unresolved.append(f"actor:{actor.actor_id}.alive")
+                continue
+            count += 1
 
         if unresolved:
             return SummonCountResult.incomplete(

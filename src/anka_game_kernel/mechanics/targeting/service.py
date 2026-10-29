@@ -216,41 +216,62 @@ class TargetingService:
                 explanation="A target cell cannot be required to be both free and taken.",
             )
 
-        if not spec.need_free_cell and not spec.need_taken_cell:
-            return TargetCellResult.deterministic(
-                legal=True,
-                explanation="No target-cell occupancy constraint applies.",
-            )
-
-        if spec.need_taken_cell:
-            if target_cell == context.caster_cell:
-                return TargetCellResult.deterministic(
-                    legal=True,
-                    explanation="Taken-cell requirement accepts the caster cell.",
-                )
-            if context.occupied_cells is None:
-                return TargetCellResult.incomplete(
-                    missing_input="occupied_cells",
-                    explanation="Taken-cell evaluation requires the runtime occupancy snapshot.",
-                )
-            if target_cell in context.occupied_cells:
-                return TargetCellResult.deterministic(
-                    legal=True,
-                    explanation="Target cell is occupied.",
-                )
-            return TargetCellResult.deterministic(
-                legal=False,
-                failure=TargetCellFailureReason.CELL_NOT_TAKEN,
-                explanation="Taken-cell requirement failed because the target is not the caster and is unoccupied.",
-            )
-
         cells_by_id = {cell.cell_id: cell for cell in map_definition.cells}
         cell_definition = cells_by_id.get(target_cell)
         if cell_definition is None:
             return TargetCellResult.incomplete(
                 missing_input=f"map_cell:{target_cell}",
-                explanation="Free-cell evaluation requires the target cell's static map definition.",
+                explanation="Target-cell evaluation requires the target cell's static map definition.",
             )
+
+        if not spec.need_free_cell and not spec.need_taken_cell:
+            return TargetCellResult.deterministic(
+                legal=True,
+                explanation="The target cell exists and no target-cell occupancy constraint applies.",
+            )
+
+        if spec.need_taken_cell:
+            if (
+                context.occupied_cells is not None
+                and context.proven_occupied_cells is not None
+                and not context.proven_occupied_cells.issubset(context.occupied_cells)
+            ):
+                return TargetCellResult.incomplete(
+                    missing_input="occupancy_proof_conflict",
+                    explanation=(
+                        "Positive occupancy proof contradicts the complete conservative blocker snapshot."
+                    ),
+                )
+            if (
+                context.proven_occupied_cells is not None
+                and target_cell in context.proven_occupied_cells
+            ):
+                return TargetCellResult.deterministic(
+                    legal=True,
+                    explanation="Target cell is positively proven occupied by an alive actor.",
+                )
+            if context.occupied_cells is None:
+                return TargetCellResult.incomplete(
+                    missing_input="occupied_cells",
+                    explanation=(
+                        "Taken-cell evaluation cannot disprove occupancy because the conservative "
+                        "runtime occupancy snapshot is incomplete."
+                    ),
+                )
+            if target_cell in context.occupied_cells:
+                return TargetCellResult.incomplete(
+                    missing_input=f"target_occupant_alive:{int(target_cell)}",
+                    explanation=(
+                        "The target cell may be occupied, but the occupant life/presence is not "
+                        "proven strongly enough to authorize a taken-cell requirement."
+                    ),
+                )
+            return TargetCellResult.deterministic(
+                legal=False,
+                failure=TargetCellFailureReason.CELL_NOT_TAKEN,
+                explanation="Taken-cell requirement failed because no non-dead occupant is present.",
+            )
+
         if not cell_definition.walkable:
             return TargetCellResult.deterministic(
                 legal=False,

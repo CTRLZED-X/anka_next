@@ -58,7 +58,10 @@ def inspect_map_research(snapshot: dict, request: MapResearchRequest, *,
         or actor.current_hp != state_actor['hp']
         or actor.max_hp != state_actor['max_hp']):
         return _blocked('FIGHT_ACTOR_STATE_CONFLICT')
-    origin_cell=map_definition.cells[int(actor.cell_id)]
+    cells_by_id={cell.cell_id:cell for cell in map_definition.cells}
+    origin_cell=cells_by_id.get(actor.cell_id)
+    if origin_cell is None:
+        return _blocked('ACTOR_ORIGIN_GEOMETRY_MISSING')
     if not origin_cell.walkable or origin_cell.non_walkable_during_fight:
         return _blocked('ACTOR_ORIGIN_GEOMETRY_CONFLICT')
     if actor.cooldowns_complete is not True:

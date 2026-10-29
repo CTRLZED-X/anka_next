@@ -10,6 +10,7 @@ import json
 
 from anka_decision.policies import order_proven_spells
 from anka_contracts.decision import DecisionFrame,ActionPlan,PlannerResult
+from anka_contracts.mechanics import MechanicsResult
 
 class DecisionPlanningError(ValueError):pass
 
@@ -18,8 +19,9 @@ def _canonical_target(target):
 
 def action_key(frame:DecisionFrame,kind:str,target:tuple[tuple[str,str],...])->str:
     obj={'run_id':frame.run_id,'account_id':frame.account_id,'fight_epoch':frame.fight_epoch,'turn_epoch':frame.turn_epoch,
-         'snapshot_id':frame.snapshot_id,'snapshot_hash':frame.snapshot_semantic_sha256,'policy':frame.policy_profile,
-         'kind':kind,'target':list(_canonical_target(target))}
+         'snapshot_id':frame.snapshot_id,'snapshot_hash':frame.snapshot_semantic_sha256,
+         'kernel_ruleset_id':frame.kernel_ruleset_id,'game_data_revision':frame.game_data_revision,
+         'policy':frame.policy_profile,'kind':kind,'target':list(_canonical_target(target))}
     return sha256(json.dumps(obj,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
 def _plan(frame,kind,target,proofs):
@@ -63,17 +65,43 @@ class DeterministicPlanner:
     def _proofs(self,frame):return dict(frame.proof_statuses)
     def _wait(self,*evidence,reason):return PlannerResult('WAIT',required_evidence=tuple(dict.fromkeys(evidence)),reason=reason)
 
+    def _kernel_verdict(self,frame,plan):
+        try:
+            verdict=self.kernel.validate_plan(frame,plan)
+        except Exception:
+            return None,PlannerResult('FAULT',reason='DECISION_KERNEL_VALIDATION_FAILED',failure_code='KERNEL_VALIDATION_FAILED')
+        if not isinstance(verdict,MechanicsResult):
+            return None,PlannerResult('FAULT',reason='DECISION_KERNEL_RESULT_INVALID',failure_code='KERNEL_RESULT_INVALID')
+        return verdict,None
+
     def plan(self,frame:DecisionFrame)->PlannerResult:
         if not isinstance(frame,DecisionFrame):raise TypeError('DECISION_FRAME_REQUIRED')
         self._record('decision.frame_created',frame,boundary='decision.frame',canonical_cursor=frame.canonical_cursor,
                      payload={'frame_id':frame.frame_id,'workflow_goal':frame.workflow_goal,'snapshot_id':frame.snapshot_id,'snapshot_sha256':frame.snapshot_semantic_sha256,'proof_statuses':list(frame.proof_statuses)})
         goal=frame.workflow_goal.upper()
-        if goal in ('FIGHT_TURN','COMBAT_TURN'):result=self._fight(frame)
+        actionable_goals={
+            'FIGHT_TURN','COMBAT_TURN','PLACEMENT','FIGHT_PLACEMENT',
+            'WORLD_MOVE','PATROL_STEP','FIGHT_ENTRY','START_FIGHT',
+            'JOIN_FIGHT','PARTY_JOIN','READY',
+        }
+        missing_identity=tuple(
+            name for name,value in (
+                ('client_instance_id',frame.client_instance_id),
+                ('snapshot_semantic_sha256',frame.snapshot_semantic_sha256),
+                ('state_reducer_revision',frame.state_reducer_revision),
+                ('kernel_ruleset_id',frame.kernel_ruleset_id),
+                ('game_data_revision',frame.game_data_revision),
+            )
+            if not value
+        )
+        if goal in actionable_goals and missing_identity:
+            result=PlannerResult('FAULT',reason='DECISION_FRAME_PROVENANCE_MISSING',failure_code='FRAME_PROVENANCE_MISSING')
+        elif goal in ('FIGHT_TURN','COMBAT_TURN'):result=self._fight(frame)
         elif goal in ('PLACEMENT','FIGHT_PLACEMENT'):result=self._placement(frame)
         elif goal in ('WORLD_MOVE','PATROL_STEP'):result=self._world(frame)
         elif goal in ('FIGHT_ENTRY','START_FIGHT'):result=self._fight_entry(frame)
         elif goal in ('JOIN_FIGHT','PARTY_JOIN'):result=self._join_fight(frame)
-        elif goal=='READY':result=self._simple(frame,'READY',(('phase','placement'),),('READY_OR_PHASE_CONFIRMED',))
+        elif goal=='READY':result=self._ready(frame)
         else:result=PlannerResult('NO_ACTION',reason='DECISION_WORKFLOW_GOAL_UNSUPPORTED')
         payload={'frame_id':frame.frame_id,'disposition':result.disposition,'reason':result.reason}
         if result.plan is not None:payload.update({'plan_id':result.plan.plan_id,'kind':result.plan.kind,'action_key':result.plan.action_key})
@@ -93,25 +121,32 @@ class DeterministicPlanner:
         return PlannerResult('PLAN',plan=plan)
 
     def _fight(self,frame):
-        missing=self._required_known(frame,('fight_phase','turn_owner','actor_cell','ap','mp','loadout'))
+        missing=self._required_known(frame,('fight_phase','turn_owner','actor_cell','ap','mp','loadout','targets'))
         if missing:return self._wait(*missing,reason='DECISION_REQUIRED_FIGHT_EVIDENCE_MISSING')
         if frame.actor_id is None or frame.turn_owner_id is None:return self._wait('actor_identity','turn_owner',reason='DECISION_ACTOR_OR_TURN_UNKNOWN')
         if frame.actor_id!=frame.turn_owner_id:return self._wait('turn_owner',reason='DECISION_NOT_ACTOR_TURN')
         if frame.ap is None or frame.mp is None or frame.actor_cell is None:return self._wait('actor_resources','actor_cell',reason='DECISION_REQUIRED_VALUE_MISSING')
+        if frame.map_id is None:return self._wait('fight_map',reason='DECISION_FIGHT_MAP_UNKNOWN')
         if not frame.available_spells:return self._wait('loadout',reason='DECISION_NO_PROVEN_AVAILABLE_SPELLS')
         if not frame.target_cells:return self._wait('targets',reason='DECISION_NO_PROVEN_TARGETS')
         steps=0;unknown=[];saw_legal_quarantined=False
         # Input order is explicit policy order. Old CRA/ENU priorities are retained
         # as provenance data; a current loadout must prove what is actually available.
         policy=self.policies.get(frame.policy_profile)
-        if policy is not None and frame.class_id is not None and policy.class_id!=frame.class_id:
+        if frame.policy_profile and policy is None:
+            return PlannerResult('FAULT',reason='DECISION_POLICY_PROFILE_UNKNOWN',failure_code='POLICY_PROFILE_UNKNOWN')
+        if policy is not None and frame.class_id is None:
+            return PlannerResult('FAULT',reason='DECISION_POLICY_CLASS_UNKNOWN',failure_code='POLICY_CLASS_UNKNOWN')
+        if policy is not None and policy.class_id!=frame.class_id:
             return PlannerResult('FAULT',reason='DECISION_POLICY_CLASS_MISMATCH',failure_code='POLICY_CLASS_MISMATCH')
         for spell_id,grade in order_proven_spells(frame.available_spells,policy):
             for cell in frame.target_cells:
                 steps+=1
                 if steps>frame.budget_steps:return self._wait('planner_budget',reason='DECISION_BUDGET_EXHAUSTED')
                 plan=_plan(frame,'CAST',(('spell_id',str(spell_id)),('grade',str(grade)),('target_cell',str(cell))),('SPELL_CAST_CONFIRMED','RESOURCE_DELTA_OR_TURN_PROGRESS'))
-                verdict=self.kernel.validate_plan(frame,plan)
+                verdict,fault=self._kernel_verdict(frame,plan)
+                if fault is not None:return fault
+                assert verdict is not None
                 if verdict.status=='ILLEGAL':continue
                 if verdict.status=='INDETERMINATE':unknown.append(verdict.reason);continue
                 if plan.action_key in frame.quarantined_action_keys:saw_legal_quarantined=True;continue
@@ -126,6 +161,8 @@ class DeterministicPlanner:
     def _placement(self,frame):
         missing=self._required_known(frame,('fight_phase','actor_cell'))
         if missing:return self._wait(*missing,reason='DECISION_PLACEMENT_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_PLACEMENT_ACTOR_UNKNOWN')
         if not frame.candidate_move_cells:return PlannerResult('NO_ACTION',reason='DECISION_NO_PLACEMENT_CANDIDATE')
         unknown=[]
         for i,cell in enumerate(frame.candidate_move_cells,1):
@@ -133,15 +170,27 @@ class DeterministicPlanner:
             
             if frame.map_id is None:return self._wait('fight_map',reason='DECISION_PLACEMENT_MAP_UNKNOWN')
             plan=_plan(frame,'MOVE',(('map_id',str(frame.map_id)),('target_cell',str(cell))),('ACTOR_CELL_CHANGED',))
-            verdict=self.kernel.validate_plan(frame,plan)
+            verdict,fault=self._kernel_verdict(frame,plan)
+            if fault is not None:return fault
+            assert verdict is not None
             if verdict.status=='LEGAL' and plan.action_key not in frame.quarantined_action_keys:return PlannerResult('PLAN',plan=plan)
             if verdict.status=='INDETERMINATE':unknown.append(verdict.reason)
         if unknown:return self._wait(*tuple(sorted(set(unknown))),reason='DECISION_KERNEL_INDETERMINATE')
         return PlannerResult('NO_ACTION',reason='DECISION_NO_LEGAL_PLACEMENT')
 
+    def _ready(self,frame):
+        missing=self._required_known(frame,('fight_phase','actor_cell'))
+        if missing:return self._wait(*missing,reason='DECISION_READY_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_READY_ACTOR_UNKNOWN')
+        return self._simple(frame,'READY',(('phase','placement'),),('READY_OR_PHASE_CONFIRMED',))
+
     def _world(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell'))
         if missing:return self._wait(*missing,reason='DECISION_WORLD_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_WORLD_ACTOR_UNKNOWN')
+        if frame.map_id is None:return self._wait('world_map',reason='DECISION_WORLD_MAP_UNKNOWN')
         if not frame.candidate_move_cells:return PlannerResult('NO_ACTION',reason='DECISION_NO_ROUTE_STEP')
         # World policy expresses a semantic route step only. Execution/Client own
         # projection/input and Workflow owns whether this step is still desired.
@@ -154,6 +203,8 @@ class DeterministicPlanner:
     def _fight_entry(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell','encounter_target'))
         if missing:return self._wait(*missing,reason='DECISION_FIGHT_ENTRY_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_FIGHT_ENTRY_ACTOR_UNKNOWN')
         if frame.encounter_id is None or frame.map_id is None:
             return self._wait('encounter_target',reason='DECISION_FIGHT_ENTRY_TARGET_UNKNOWN')
         target=(('encounter_id',frame.encounter_id),('map_id',str(frame.map_id)))
@@ -162,6 +213,8 @@ class DeterministicPlanner:
     def _join_fight(self,frame):
         missing=self._required_known(frame,('world_map','actor_cell','fight_identity','join_target'))
         if missing:return self._wait(*missing,reason='DECISION_JOIN_EVIDENCE_MISSING')
+        if frame.actor_id is None or frame.actor_cell is None:
+            return self._wait('actor_identity','actor_cell',reason='DECISION_JOIN_ACTOR_UNKNOWN')
         if frame.target_fight_id is None or frame.target_fight_epoch is None:
             return self._wait('fight_identity','join_target',reason='DECISION_JOIN_TARGET_UNKNOWN')
         target=(('target_fight_id',frame.target_fight_id),('target_fight_epoch',str(frame.target_fight_epoch)))
