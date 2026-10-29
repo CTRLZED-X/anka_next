@@ -11,6 +11,7 @@ from hashlib import sha256
 import json,sqlite3
 from anka_contracts.action import ActionCommand
 from anka_contracts.execution import ExecutionLedgerAction,ExecutionOutcomeEvidence
+from anka_execution.outcomes import correlate
 
 class DefinitiveExecutionLedgerError(RuntimeError):pass
 class DefinitiveExecutionLedgerRejected(ValueError):pass
@@ -87,7 +88,7 @@ class DefinitiveExecutionLedger:
         return self.get(action_id)
     def cancel_pre_send(self,action_id,reason):return self._transition(action_id,{'PREPARED'},'REJECTED_NOT_SENT','CANCELLED_BEFORE_SEND',reason,send_state='NOT_SENT',obligations=())
     def mark_send_started(self,action_id,attempt_id):return self._transition(action_id,{'PREPARED'},'SEND_STARTED','SEND_STARTED','EXTERNAL_BOUNDARY_ENTERED',attempt_id=attempt_id,send_state='SEND_STARTED')
-    def _transition_with_resolved_passthrough(self,action_id,allowed,new_status,event,reason,*,resolved=frozenset(),resolved_event=None,attempt_id=None,send_state=None,evidence_add=(),obligations=None):
+    def _transition_with_resolved_passthrough(self,action_id,allowed,new_status,event,reason,*,resolved=frozenset(),resolved_event=None,preserve=frozenset(),preserve_event=None,attempt_id=None,send_state=None,evidence_add=(),obligations=None):
         """Atomically decide whether to transition or preserve a raced-ahead outcome.
 
         Driver return and Canonical outcome reconciliation run on different call
@@ -99,11 +100,25 @@ class DefinitiveExecutionLedger:
         with self._db() as con:
             con.execute('BEGIN IMMEDIATE')
             try:
-                row=con.execute('SELECT status,attempt_id,send_state,evidence_json,obligations_json FROM actions WHERE action_id=?',(action_id,)).fetchone()
+                row=con.execute('SELECT status,attempt_id,send_state,evidence_json,obligations_json,reason FROM actions WHERE action_id=?',(action_id,)).fetchone()
                 if row is None:raise DefinitiveExecutionLedgerRejected('UNKNOWN_ACTION')
                 if row[0] in resolved:
                     if resolved_event is not None:
                         self._append(con,action_id,resolved_event,{'status_before':row[0],'status_after':row[0],'reason':reason,'attempt_id':row[1],'send_state':row[2]})
+                    con.commit()
+                    return self.get(action_id)
+                if row[0] in preserve:
+                    ev=list(json.loads(row[3]));ev.extend(x for x in evidence_add if x not in ev)
+                    obs=list(json.loads(row[4]))
+                    aid=row[1] if attempt_id is None else attempt_id
+                    ss=row[2] if send_state is None else send_state
+                    event_id=self._append(con,action_id,preserve_event or event,{
+                        'status_before':row[0],'status_after':row[0],'reason':row[5],
+                        'transport_reason':reason,'attempt_id':aid,'send_state':ss,
+                        'evidence_ids':ev,'obligations':obs})
+                    if event_id not in ev:ev.append(event_id)
+                    con.execute('UPDATE actions SET attempt_id=?,send_state=?,evidence_json=? WHERE action_id=?',
+                                (aid,ss,_json(ev),action_id))
                     con.commit()
                     return self.get(action_id)
                 if row[0] not in allowed:raise DefinitiveExecutionLedgerRejected(f'ILLEGAL_EXECUTION_TRANSITION:{row[0]}:{event}')
@@ -126,8 +141,61 @@ class DefinitiveExecutionLedger:
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED'},'PENDING','DRIVER_ACCEPTED_SEND',reason,
             resolved=self.TERMINAL|{'CONFIRMED_UNSETTLED'},resolved_event='DRIVER_RETURNED_AFTER_OUTCOME',send_state='SENT')
     def mark_uncertain(self,action_id,reason):
-        return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','CONFIRMED_UNSETTLED','UNCERTAIN'},'UNCERTAIN','SEND_UNCERTAIN',reason,
-            resolved=self.TERMINAL,send_state='MAY_HAVE_SENT')
+        # A late ambiguous driver result cannot erase authoritative partial outcome
+        # proof already accumulated. Preserve CONFIRMED_UNSETTLED while recording
+        # the more conservative transport state.
+        return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN'},'UNCERTAIN','SEND_UNCERTAIN',reason,
+            resolved=self.TERMINAL,preserve={'CONFIRMED_UNSETTLED'},
+            preserve_event='SEND_UNCERTAIN_AFTER_CONFIRMED_OUTCOME',send_state='MAY_HAVE_SENT')
+    def settle_outcome(self,action_id,evidence:ExecutionOutcomeEvidence):
+        """Atomically correlate and settle one authoritative outcome observation.
+
+        Correlation executes while holding SQLite ``BEGIN IMMEDIATE`` so every
+        service/process sharing this ledger observes one serial durable settlement
+        order.  A second reconciler therefore cannot calculate from a stale
+        obligation/evidence projection and overwrite proof accumulated by another.
+        Ignored, duplicate, and terminal observations do not append a misleading
+        authoritative-outcome event.
+        """
+        with self._db() as con:
+            con.execute('BEGIN IMMEDIATE')
+            try:
+                row=con.execute(
+                    'SELECT command_json,status,attempt_id,send_state,evidence_json,obligations_json,reason '
+                    'FROM actions WHERE action_id=?',(action_id,)
+                ).fetchone()
+                if row is None:raise DefinitiveExecutionLedgerRejected('UNKNOWN_ACTION')
+                command_json,current_status,attempt_id,send_state,evidence_json,obligations_json,current_reason=row
+                current_evidence=list(json.loads(evidence_json));current_obligations=list(json.loads(obligations_json))
+                if current_status in self.TERMINAL:
+                    con.commit();return self.get(action_id),'TERMINAL_ACTION_ALREADY_RESOLVED',False
+                if evidence.evidence_id in current_evidence:
+                    con.commit();return self.get(action_id),'DUPLICATE_OUTCOME_EVIDENCE_ALREADY_APPLIED',False
+                try:command=command_from_dict(json.loads(command_json))
+                except Exception as exc:
+                    raise DefinitiveExecutionLedgerError('EXECUTION_COMMAND_PROJECTION_CORRUPTED') from exc
+                verdict=correlate(command,evidence,current_status=current_status,
+                                  unresolved_obligations=tuple(current_obligations))
+                if verdict.status=='IGNORE':
+                    con.commit();return self.get(action_id),verdict.reason,False
+                if current_status not in ('SEND_STARTED','PENDING','UNCERTAIN','CONFIRMED_UNSETTLED'):
+                    raise DefinitiveExecutionLedgerRejected(
+                        f'ILLEGAL_EXECUTION_TRANSITION:{current_status}:AUTHORITATIVE_OUTCOME')
+                ev=list(current_evidence);ev.append(evidence.evidence_id)
+                obs=list(verdict.unresolved)
+                event_id=self._append(con,action_id,'AUTHORITATIVE_OUTCOME',{
+                    'status_before':current_status,'status_after':verdict.status,
+                    'reason':verdict.reason,'attempt_id':attempt_id,'send_state':send_state,
+                    'evidence_ids':ev,'obligations':obs})
+                if event_id not in ev:ev.append(event_id)
+                con.execute(
+                    'UPDATE actions SET status=?,evidence_json=?,obligations_json=?,reason=? WHERE action_id=?',
+                    (verdict.status,_json(ev),_json(obs),verdict.reason,action_id))
+                con.commit()
+            except Exception:
+                con.rollback();raise
+        return self.get(action_id),verdict.reason,True
+
     def apply_outcome(self,action_id,status,evidence:ExecutionOutcomeEvidence,reason,obligations):
         if status not in ('PENDING','CONFIRMED_UNSETTLED','SETTLED_SUCCESS','PROVEN_FAILURE','UNCERTAIN'):raise DefinitiveExecutionLedgerRejected('INVALID_OUTCOME_STATUS')
         return self._transition_with_resolved_passthrough(action_id,{'SEND_STARTED','PENDING','UNCERTAIN','CONFIRMED_UNSETTLED'},status,'AUTHORITATIVE_OUTCOME',reason,
@@ -155,21 +223,103 @@ class DefinitiveExecutionLedger:
             elif a.status=='SEND_STARTED':changed.append(self.mark_uncertain(a.action_id,'RESTART_AFTER_SEND_STARTED_MAY_HAVE_SENT'))
         return tuple(changed)
     def audit(self):
+        """Verify the hash chain and every safety-relevant actions projection field."""
         with self._db() as con:
-            rows=con.execute('SELECT seq,action_id,event_type,payload,previous_hash,record_hash FROM events ORDER BY seq').fetchall()
-            actions=con.execute('SELECT action_id,status,command_json,run_generation,authority_generation,prepared_ref FROM actions').fetchall()
-        prev='GENESIS';expected=1;last={};first={}
-        for seq,aid,ev,payload,p,h in rows:
-            if seq!=expected or p!=prev or h!=_hash(seq,aid,ev,payload,p):raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_CHAIN_CORRUPTED')
+            rows=con.execute(
+                'SELECT seq,action_id,event_type,payload,previous_hash,record_hash FROM events ORDER BY seq'
+            ).fetchall()
+            actions=con.execute(
+                'SELECT action_id,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch,'
+                'status,command_json,run_generation,authority_generation,attempt_id,send_state,prepared_ref,'
+                'evidence_json,obligations_json,reason FROM actions'
+            ).fetchall()
+
+        prev='GENESIS';expected_seq=1;per_action={};first={}
+        for seq,aid,event,payload,previous_hash,record_hash in rows:
+            if (seq!=expected_seq or previous_hash!=prev or
+                    record_hash!=_hash(seq,aid,event,payload,prev)):
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_CHAIN_CORRUPTED')
             try:obj=json.loads(payload)
-            except Exception as exc:raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED') from exc
+            except Exception as exc:
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED') from exc
+            if not isinstance(obj,dict):
+                raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PAYLOAD_CORRUPTED')
             first.setdefault(aid,obj)
-            if 'status_after' in obj:last[aid]=obj['status_after']
-            prev=h;expected+=1
-        for aid,status,command_json,run_generation,authority_generation,prepared_ref in actions:
-            if aid not in last or last[aid]!=status:raise DefinitiveExecutionLedgerError('EXECUTION_PROJECTION_MISMATCH')
+            per_action.setdefault(aid,[]).append((seq,event,obj))
+            prev=record_hash;expected_seq+=1
+
+        action_ids=[row[0] for row in actions]
+        if set(action_ids)!=set(per_action):
+            raise DefinitiveExecutionLedgerError('EXECUTION_ACTION_EVENT_SET_MISMATCH')
+
+        for row in actions:
+            (aid,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch,
+             status,command_json,run_generation,authority_generation,attempt_id,send_state,
+             prepared_ref,evidence_json,obligations_json,reason)=row
+            try:
+                command=command_from_dict(json.loads(command_json))
+                stored_evidence=list(json.loads(evidence_json))
+                stored_obligations=list(json.loads(obligations_json))
+            except Exception as exc:
+                raise DefinitiveExecutionLedgerError('EXECUTION_ACTION_PROJECTION_CORRUPTED') from exc
+
+            immutable=(aid,action_key,run_id,account_id,client_instance_id,fight_epoch,turn_epoch)
+            expected_immutable=(command.action_id,command.action_key,command.run_id,command.account_id,
+                                command.client_instance_id,command.fight_epoch,command.turn_epoch)
+            if immutable!=expected_immutable:
+                raise DefinitiveExecutionLedgerError('EXECUTION_IMMUTABLE_SCOPE_PROJECTION_CORRUPTED')
+
             meta=first.get(aid,{})
             cmd_hash=sha256(command_json.encode()).hexdigest()
-            if meta.get('command_sha256')!=cmd_hash or meta.get('run_generation')!=run_generation or meta.get('authority_generation')!=authority_generation or meta.get('prepared_ref')!=prepared_ref:
+            if (meta.get('command_sha256')!=cmd_hash or
+                    meta.get('run_generation')!=run_generation or
+                    meta.get('authority_generation')!=authority_generation or
+                    meta.get('prepared_ref')!=prepared_ref):
                 raise DefinitiveExecutionLedgerError('EXECUTION_IMMUTABLE_PROJECTION_CORRUPTED')
-        return tuple(self.get(aid) for aid,_,_,_,_,_ in actions)
+
+            events=per_action[aid]
+            first_seq,first_event,first_payload=events[0]
+            if (first_event not in ('PREPARED','REJECTED_NOT_SENT') or
+                    first_payload.get('status_after')!=first_event):
+                raise DefinitiveExecutionLedgerError('EXECUTION_INITIAL_EVENT_INVALID')
+            projected_status=first_payload['status_after']
+            projected_attempt=None
+            projected_send_state='NOT_SENT'
+            projected_evidence=[]
+            projected_obligations=list(command.expected_outcome_proofs)
+            projected_reason=first_payload.get('reason')
+
+            for seq,event,obj in events[1:]:
+                if obj.get('status_before')!=projected_status:
+                    raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_STATUS_CAUSALITY_INVALID')
+                mutating=('evidence_ids' in obj or 'obligations' in obj)
+                if mutating:
+                    if not ('evidence_ids' in obj and 'obligations' in obj and
+                            'status_after' in obj and 'send_state' in obj and
+                            'attempt_id' in obj and 'reason' in obj):
+                        raise DefinitiveExecutionLedgerError('EXECUTION_EVENT_PROJECTION_INCOMPLETE')
+                    projected_status=obj['status_after']
+                    projected_attempt=obj['attempt_id']
+                    projected_send_state=obj['send_state']
+                    projected_evidence=list(obj['evidence_ids'])
+                    event_id=f'exec-event-{seq}'
+                    if event_id not in projected_evidence:
+                        projected_evidence.append(event_id)
+                    projected_obligations=list(obj['obligations'])
+                    projected_reason=obj['reason']
+                else:
+                    # Resolved driver-return journal events are append-only evidence,
+                    # not projection mutations.  They must agree with current truth.
+                    if (obj.get('status_after')!=projected_status or
+                            obj.get('attempt_id')!=projected_attempt or
+                            obj.get('send_state')!=projected_send_state):
+                        raise DefinitiveExecutionLedgerError('EXECUTION_PASSTHROUGH_EVENT_CONTRADICTS_PROJECTION')
+
+            if status!=projected_status:
+                raise DefinitiveExecutionLedgerError('EXECUTION_PROJECTION_MISMATCH')
+            if (attempt_id!=projected_attempt or send_state!=projected_send_state or
+                    stored_evidence!=projected_evidence or
+                    stored_obligations!=projected_obligations or reason!=projected_reason):
+                raise DefinitiveExecutionLedgerError('EXECUTION_MUTABLE_PROJECTION_CORRUPTED')
+
+        return tuple(self.get(aid) for aid in action_ids)

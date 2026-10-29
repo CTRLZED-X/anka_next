@@ -1,13 +1,14 @@
 """Definitive M11 sole action admission / external-boundary authority."""
 from __future__ import annotations
 from hashlib import sha256
+from threading import Lock
 import json,time
 from anka_contracts.action import ActionCommand,ActionOutcome
 from anka_contracts.execution import ExecutionAdmission,ExecutionClientAttestation,ExecutionOutcomeEvidence
 from anka_execution.arbiter import HostInputArbiter,InputLeaseBusy
 from anka_execution.definitive_ledger import DefinitiveExecutionLedger,DefinitiveExecutionLedgerRejected
 from anka_execution.drivers.fake_input import InputDriverFailure
-from anka_execution.outcomes import correlate,validates_minimum_outcome_policy
+from anka_execution.outcomes import validates_minimum_outcome_policy
 
 class ExecutionServiceRejected(RuntimeError):pass
 
@@ -28,7 +29,16 @@ class DefinitiveExecutionService:
         if not run_id.startswith('run-') or type(run_generation) is not int or run_generation<=0:raise ExecutionServiceRejected('INVALID_EXECUTION_RUN')
         self.run_id=run_id;self.run_generation=run_generation;self.ledger=ledger;self.arbiter=arbiter;self.state_reader=state_reader;self.client=client;self.mechanics=mechanics;self.coordination=coordination;self.driver=driver;self.clock_ns=clock_ns or time.monotonic_ns;self._observer=observer
         self._armed=False;self._authority_generation=0;self.physical_input_count=0;self._last_safety_fault=None
-        self.ledger.recover_after_restart()
+        self._settlement_lock=Lock()
+        # Never recover or arm from an unchecked projection.  The durable event
+        # chain is the authority; a coherently-looking actions row may have been
+        # corrupted or partially rewritten after a crash/disk fault.
+        try:
+            self.ledger.audit()
+            self.ledger.recover_after_restart()
+            self.ledger.audit()
+        except Exception as exc:
+            raise ExecutionServiceRejected('EXECUTION_LEDGER_BOOTSTRAP_INTEGRITY_FAILED:'+type(exc).__name__) from exc
     def _record(self,name:str,command:ActionCommand|None=None,**kwargs)->None:
         if self._observer is None:return
         if command is not None:
@@ -58,6 +68,13 @@ class DefinitiveExecutionService:
         # action fence: this service instance itself is no longer trusted to own
         # physical input. Surface that root cause first and require reconstruction.
         if self._last_safety_fault is not None:raise ExecutionServiceRejected('SAFETY_FAULT_REQUIRES_NEW_SERVICE_INSTANCE')
+        # Re-audit immediately before granting authority so corruption that occurs
+        # after service construction cannot turn an unresolved send into an
+        # apparently settled/retryable action.
+        try:self.ledger.audit()
+        except Exception as exc:
+            self._last_safety_fault='EXECUTION_LEDGER_INTEGRITY_FAILED:'+type(exc).__name__;self._armed=False
+            raise ExecutionServiceRejected(self._last_safety_fault) from exc
         if self.ledger.unresolved():raise ExecutionServiceRejected('UNRESOLVED_ACTIONS_BLOCK_ARM')
         self._authority_generation=authority_generation;self._armed=True
     def disarm(self,reason='DISARM_REQUESTED'):
@@ -198,18 +215,17 @@ class DefinitiveExecutionService:
                     a=self.ledger.mark_uncertain(command.action_id,reason)
                     return self._durable_outcome(a,attempt)
                 except Exception as ledger_exc:
-                    if driver_invoked:
-                        # The external driver boundary was entered but the durable
-                        # ledger can no longer record/re-read uncertainty.  Never
-                        # manufacture NOT_SENT or permit a blind retry.  Permanently
-                        # disarm this service instance and return an explicitly local
-                        # fail-safe marker (not an authoritative game outcome proof).
-                        reason='EXECUTION_LEDGER_UNAVAILABLE_AFTER_DRIVER:'+type(ledger_exc).__name__
-                        self._last_safety_fault=reason;self.disarm(reason)
-                        self._record('execution.safety_fault',command,boundary='execution.durable_settlement',
-                                     attempt_id=attempt,severity='CRITICAL',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
-                        marker='exec-failsafe-'+sha256(f'{command.action_id}:{attempt}:{reason}'.encode()).hexdigest()[:32]
-                        return ActionOutcome(command.action_id,attempt,'UNCERTAIN',(marker,),False,(),reason)
+                    # SEND_STARTED is already durable whenever attempt exists. Even
+                    # if the driver call itself has not yet begun, losing the ledger
+                    # now means a safe NOT_SENT transition can no longer be proven.
+                    prefix=('EXECUTION_LEDGER_UNAVAILABLE_AFTER_DRIVER:' if driver_invoked
+                            else 'EXECUTION_LEDGER_UNAVAILABLE_AFTER_SEND_STARTED:')
+                    reason=prefix+type(ledger_exc).__name__
+                    self._last_safety_fault=reason;self.disarm(reason)
+                    self._record('execution.safety_fault',command,boundary='execution.durable_settlement',
+                                 attempt_id=attempt,severity='CRITICAL',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
+                    marker='exec-failsafe-'+sha256(f'{command.action_id}:{attempt}:{reason}'.encode()).hexdigest()[:32]
+                    return ActionOutcome(command.action_id,attempt,'UNCERTAIN',(marker,),False,(),reason)
             reason='EXECUTION_EXCEPTION_BEFORE_SEND:'+type(exc).__name__
             try:self.ledger.cancel_pre_send(command.action_id,reason)
             except Exception:pass
@@ -228,28 +244,29 @@ class DefinitiveExecutionService:
                              attempt_id=attempt,severity='CRITICAL',failure_code=self._last_safety_fault,
                              physical_input_state=self._physical_state('MAY_HAVE_SENT') if attempt is not None else 'NOT_SENT')
     def reconcile(self,action_id:str,evidence:ExecutionOutcomeEvidence)->ActionOutcome:
-        command=self.ledger.get_command(action_id);current=self.ledger.get(action_id)
-        if current.status in self.ledger.TERMINAL:
-            return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids,False,current.unresolved_obligations,'TERMINAL_ACTION_ALREADY_RESOLVED')
-        verdict=correlate(command,evidence,current_status=current.status,unresolved_obligations=current.unresolved_obligations)
-        if verdict.status=='IGNORE':
-            # Ignored evidence must never make the outward status look less certain
-            # than the durable action ledger.  Preserve why it was ignored so a
-            # postmortem can distinguish stale/wrong-scope evidence from absence.
-            self._record('execution.outcome_ignored',command,boundary='execution.outcome_correlation',
-                         attempt_id=current.attempt_id,severity='WARNING',failure_code=verdict.reason,
-                         payload={'evidence_id':evidence.evidence_id,'current_status':current.status,
-                                  'evidence_result':evidence.result,'evidence_cursor':evidence.canonical_cursor,
-                                  'evidence_authoritative':evidence.authoritative,
-                                  'evidence_proofs':list(evidence.proofs),
-                                  'evidence_correlated_action_id':evidence.correlated_action_id})
-            return ActionOutcome(action_id,current.attempt_id,current.status,current.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,current.unresolved_obligations,verdict.reason)
-        a=self.ledger.apply_outcome(action_id,verdict.status,evidence,verdict.reason,verdict.unresolved)
-        self._record('execution.outcome_settled',command,boundary='execution.outcome_settlement',attempt_id=a.attempt_id,severity='SETTLEMENT',payload={'status':a.status,'reason':a.reason,'evidence_id':evidence.evidence_id})
-        return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,a.reason)
+        # Same-instance serialization is retained as a cheap local guard, but the
+        # correctness boundary is the shared SQLite ledger: settle_outcome performs
+        # durable read -> correlate -> append/update under one BEGIN IMMEDIATE.
+        with self._settlement_lock:
+            command=self.ledger.get_command(action_id)
+            a,settlement_reason,mutated=self.ledger.settle_outcome(action_id,evidence)
+            if not mutated:
+                if settlement_reason=='TERMINAL_ACTION_ALREADY_RESOLVED':
+                    return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,settlement_reason)
+                self._record('execution.outcome_ignored',command,boundary='execution.outcome_correlation',
+                             attempt_id=a.attempt_id,severity='WARNING',failure_code=settlement_reason,
+                             payload={'evidence_id':evidence.evidence_id,'current_status':a.status,
+                                      'evidence_result':evidence.result,'evidence_cursor':evidence.canonical_cursor,
+                                      'evidence_authoritative':evidence.authoritative,
+                                      'evidence_proofs':list(evidence.proofs),
+                                      'evidence_correlated_action_id':evidence.correlated_action_id})
+                return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids or ('exec-ignore-'+evidence.evidence_id,),False,a.unresolved_obligations,settlement_reason)
+            self._record('execution.outcome_settled',command,boundary='execution.outcome_settlement',attempt_id=a.attempt_id,severity='SETTLEMENT',payload={'status':a.status,'reason':a.reason,'evidence_id':evidence.evidence_id})
+            return ActionOutcome(action_id,a.attempt_id,a.status,a.evidence_ids,False,a.unresolved_obligations,a.reason)
     def terminalize_unresolved(self,action_id:str,reason='OUTCOME_COULD_NOT_BE_RESOLVED_SAFELY')->ActionOutcome:
-        command=self.ledger.get_command(action_id)
-        a=self.ledger.mark_terminal_unresolved(action_id,reason)
-        self._record('execution.outcome_terminal_unresolved',command,boundary='execution.outcome_settlement',
-                     attempt_id=a.attempt_id,severity='SAFETY',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
-        return self._durable_outcome(a,a.attempt_id)
+        with self._settlement_lock:
+            command=self.ledger.get_command(action_id)
+            a=self.ledger.mark_terminal_unresolved(action_id,reason)
+            self._record('execution.outcome_terminal_unresolved',command,boundary='execution.outcome_settlement',
+                         attempt_id=a.attempt_id,severity='SAFETY',failure_code=reason,physical_input_state=self._physical_state('MAY_HAVE_SENT'))
+            return self._durable_outcome(a,a.attempt_id)
